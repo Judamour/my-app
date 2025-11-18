@@ -1,67 +1,71 @@
-import { NextAuthOptions } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
-import { prisma } from "./prisma";
-import bcrypt from "bcrypt";
+import NextAuth from 'next-auth'
+import Credentials from 'next-auth/providers/credentials'
+import { prisma } from './prisma'
+import bcrypt from 'bcrypt'
 
-export const authOptions: NextAuthOptions = {
+export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
-    CredentialsProvider({
-      name: "Credentials",
+    Credentials({
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+        password: { label: "Password", type: "password" }
       },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null;
-        }
+      authorize: async (credentials) => {
+  if (!credentials?.email || !credentials?.password) {
+    return null
+  }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        });
+  try {
+    const user = await prisma.user.findUnique({
+      where: { 
+        email: credentials.email as string
+      }
+    })
 
-        if (!user) {
-          return null;
-        }
+    if (!user) {
+      return null
+    }
 
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password,
-        );
+    const isPasswordValid = await bcrypt.compare(
+      credentials.password as string,
+      user.password
+    )
 
-        if (!isPasswordValid) {
-          return null;
-        }
+    if (!isPasswordValid) {
+      return null
+    }
 
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        };
-      },
-    }),
+    // ✅ Solution : Typer correctement le retour
+ return {
+  id: user.id,
+  email: user.email,
+  name: user.name,
+  role: user.role as string  // ← Convertir en string pour NextAuth
+}
+  } catch (error) {
+    console.error('Auth error:', error)
+    return null
+  }
+}
+    })
   ],
-  session: {
-    strategy: "jwt",
+  callbacks: {
+    jwt({ token, user }) {
+      if (user) {
+        token.role = user.role
+        token.id = user.id
+      }
+      return token
+    },
+    session({ session, token }) {
+      if (session.user) {
+        session.user.role = token.role as string
+        session.user.id = token.id as string
+      }
+      return session
+    }
   },
   pages: {
-    signIn: "/login",
-  },
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.role = user.role;
-        token.id = user.id;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.role = token.role as string;
-        session.user.id = token.id as string;
-      }
-      return session;
-    },
-  },
-};
+    signIn: '/login'
+  }
+})
