@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,19 +8,69 @@ datasource db {
 }
 
 enum UserRole {
+  USER
   ADMIN
-  OWNER
-  TENANT
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum PropertyType {
+  APARTMENT
+  HOUSE
+  STUDIO
+  ROOM
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  password  String
-  role      UserRole @default(TENANT)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(cuid())
+  email           String   @unique
+  firstName       String
+  lastName        String
+  password        String
+  
+  gender          Gender?
+  phone           String?
+  address         String?
+  
+  role            UserRole @default(USER)
+  isOwner         Boolean  @default(false)
+  isTenant        Boolean  @default(false)
+  profileComplete Boolean  @default(false)
+  
+  ownedProperties   Property[] @relation("OwnedProperties")
+  rentedProperties  Property[] @relation("RentedProperties")
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
   
   @@map("users")
+}
+
+model Property {
+  id          String       @id @default(cuid())
+  title       String
+  address     String
+  type        PropertyType
+  surface     Int
+  rooms       Int
+  bedrooms    Int
+  rent        Float
+  description String?      @db.Text
+  available   Boolean      @default(true)
+  
+  ownerId     String
+  owner       User         @relation("OwnedProperties", fields: [ownerId], references: [id], onDelete: Cascade)
+  
+  tenantId    String?
+  tenant      User?        @relation("RentedProperties", fields: [tenantId], references: [id], onDelete: SetNull)
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  
+  @@map("properties")
 }
