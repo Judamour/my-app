@@ -4,10 +4,11 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function RegisterPage() {
-  const [name, setName] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [role, setRole] = useState<'OWNER' | 'TENANT'>('TENANT')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -15,13 +16,31 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+
+    // Validation password match
+    if (password !== confirmPassword) {
+      setError('Les mots de passe ne correspondent pas')
+      return
+    }
+
+    // Validation longueur password
+    if (password.length < 8) {
+      setError('Le mot de passe doit contenir au moins 8 caractères')
+      return
+    }
+
     setLoading(true)
 
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, role })
+        body: JSON.stringify({ 
+          firstName, 
+          lastName, 
+          email, 
+          password 
+        })
       })
 
       const data = await response.json()
@@ -42,9 +61,12 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="text-blue-500 min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-md w-96">
-        <h1 className="text-2xl font-bold mb-6">Inscription</h1>
+        <h1 className="text-2xl font-bold mb-2">Créer un compte</h1>
+        <p className="text-sm text-gray-600 mb-6">
+          Rejoignez-nous en quelques secondes
+        </p>
         
         {error && (
           <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
@@ -53,23 +75,40 @@ export default function RegisterPage() {
         )}
         
         <form onSubmit={handleSubmit}>
+          {/* Prénom */}
           <div className="mb-4">
             <label className="block text-sm font-medium mb-2">
-              Nom complet
+              Prénom <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
               required
               className="w-full p-2 border rounded"
-              placeholder="Jean Dupont"
+              placeholder="Jean"
             />
           </div>
 
+          {/* Nom */}
           <div className="mb-4">
             <label className="block text-sm font-medium mb-2">
-              Email
+              Nom <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              required
+              className="w-full p-2 border rounded"
+              placeholder="Dupont"
+            />
+          </div>
+
+          {/* Email */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-2">
+              Email <span className="text-red-500">*</span>
             </label>
             <input
               type="email"
@@ -77,37 +116,39 @@ export default function RegisterPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full p-2 border rounded"
-              placeholder="jean@example.com"
+              placeholder="jean.dupont@example.com"
             />
           </div>
 
+          {/* Mot de passe */}
           <div className="mb-4">
             <label className="block text-sm font-medium mb-2">
-              Mot de passe
+              Mot de passe <span className="text-red-500">*</span>
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              minLength={6}
+              minLength={8}
               className="w-full p-2 border rounded"
-              placeholder="Min. 6 caractères"
+              placeholder="Min. 8 caractères"
             />
           </div>
 
+          {/* Confirmer mot de passe */}
           <div className="mb-6">
             <label className="block text-sm font-medium mb-2">
-              Je suis un(e)
+              Confirmer le mot de passe <span className="text-red-500">*</span>
             </label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value as 'OWNER' | 'TENANT')}
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
               className="w-full p-2 border rounded"
-            >
-              <option value="TENANT">Locataire</option>
-              <option value="OWNER">Propriétaire</option>
-            </select>
+              placeholder="Répétez votre mot de passe"
+            />
           </div>
 
           <button 
@@ -115,12 +156,12 @@ export default function RegisterPage() {
             disabled={loading}
             className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:bg-gray-400"
           >
-            {loading ? 'Inscription...' : 'S\'inscrire'}
+            {loading ? 'Inscription...' : 'Créer mon compte'}
           </button>
         </form>
 
-        <p className="text-center text-sm mt-4">
-          Déjà un compte ?{' '}
+        <p className="text-center text-sm mt-4 text-gray-600">
+          Déjà inscrit ?{' '}
           <a href="/login" className="text-blue-500 hover:underline">
             Se connecter
           </a>
