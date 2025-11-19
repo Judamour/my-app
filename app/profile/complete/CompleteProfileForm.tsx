@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+
 import { useRouter } from 'next/navigation'
 
 interface Session {
@@ -12,12 +13,13 @@ interface Session {
 }
 
 export default function CompleteProfileForm({ 
-  session, 
+  session: initialSession, 
   required 
 }: { 
   session: Session
   required?: string 
 }) {
+  
   const router = useRouter()
 
   const [gender, setGender] = useState('')
@@ -25,7 +27,6 @@ export default function CompleteProfileForm({
   const [address, setAddress] = useState('')
   const [isOwner, setIsOwner] = useState(false)
   const [isTenant, setIsTenant] = useState(false)
-
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -34,17 +35,17 @@ export default function CompleteProfileForm({
     setError('')
 
     if (!isOwner && !isTenant) {
-      setError('Veuillez cocher au moins une case (propriétaire ou locataire)')
+      setError('Veuillez cocher au moins une case')
       return
     }
 
     if (required === 'owner' && !isOwner) {
-      setError('Vous devez cocher "Je suis propriétaire" pour accéder à cette page')
+      setError('Vous devez cocher "Je suis propriétaire"')
       return
     }
 
     if (required === 'tenant' && !isTenant) {
-      setError('Vous devez cocher "Je suis locataire" pour accéder à cette page')
+      setError('Vous devez cocher "Je suis locataire"')
       return
     }
 
@@ -68,21 +69,23 @@ export default function CompleteProfileForm({
 
       if (!response.ok) {
         setError(data.error || 'Erreur lors de la mise à jour')
+        setLoading(false)
         return
       }
 
-      if (isOwner) {
-        router.push('/owner/properties')
-      } else if (isTenant) {
-        router.push('/tenant/dashboard')
-      } else {
-        router.push('/')
-      }
+      // ✅ Forcer la mise à jour de la session
+// Rediriger avec un refresh complet pour mettre à jour la session
+if (isOwner) {
+  window.location.href = '/owner/properties'
+} else if (isTenant) {
+  window.location.href = '/tenant/dashboard'
+} else {
+  window.location.href = '/'
+}
       
       router.refresh()
     } catch (err) {
       setError('Erreur de connexion au serveur')
-    } finally {
       setLoading(false)
     }
   }
@@ -92,7 +95,7 @@ export default function CompleteProfileForm({
       <div className="bg-white p-8 rounded-lg shadow-md w-[500px]">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-800">
-            Bienvenue {session.user.firstName} ! 👋
+            Bienvenue {initialSession.user.firstName} ! 👋
           </h1>
           <p className="text-gray-600 mt-2">
             Complétez votre profil pour continuer
@@ -101,8 +104,8 @@ export default function CompleteProfileForm({
 
         {required && (
           <div className="bg-blue-50 border border-blue-200 text-blue-700 p-3 rounded mb-4 text-sm">
-            {required === 'owner' && '🏠 Vous devez être propriétaire pour accéder à cette page'}
-            {required === 'tenant' && '🔑 Vous devez être locataire pour accéder à cette page'}
+            {required === 'owner' && '🏠 Vous devez être propriétaire'}
+            {required === 'tenant' && '🔑 Vous devez être locataire'}
           </div>
         )}
 
@@ -117,11 +120,7 @@ export default function CompleteProfileForm({
             <label className="block text-sm font-medium mb-2">
               Civilité <span className="text-gray-400 text-xs">(optionnel)</span>
             </label>
-            <select
-              value={gender}
-              onChange={(e) => setGender(e.target.value)}
-              className="w-full p-2 border rounded"
-            >
+            <select value={gender} onChange={(e) => setGender(e.target.value)} className="w-full p-2 border rounded">
               <option value="">-- Choisir --</option>
               <option value="MALE">Monsieur</option>
               <option value="FEMALE">Madame</option>
@@ -134,26 +133,14 @@ export default function CompleteProfileForm({
             <label className="block text-sm font-medium mb-2">
               Téléphone <span className="text-gray-400 text-xs">(optionnel)</span>
             </label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="w-full p-2 border rounded"
-              placeholder="06 12 34 56 78"
-            />
+            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full p-2 border rounded" placeholder="06 12 34 56 78" />
           </div>
 
           <div className="mb-6">
             <label className="block text-sm font-medium mb-2">
               Adresse <span className="text-gray-400 text-xs">(optionnel)</span>
             </label>
-            <textarea
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              className="w-full p-2 border rounded"
-              rows={2}
-              placeholder="12 rue de la Paix, 75001 Paris"
-            />
+            <textarea value={address} onChange={(e) => setAddress(e.target.value)} className="w-full p-2 border rounded" rows={2} placeholder="12 rue de la Paix" />
           </div>
 
           <div className="mb-6 p-4 bg-gray-50 rounded">
@@ -163,40 +150,18 @@ export default function CompleteProfileForm({
             
             <div className="space-y-3">
               <label className="flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isOwner}
-                  onChange={(e) => setIsOwner(e.target.checked)}
-                  className="w-4 h-4 text-blue-600"
-                />
-                <span className="ml-3 text-sm">
-                  🏠 <strong>Propriétaire</strong> - Je possède des biens à louer
-                </span>
+                <input type="checkbox" checked={isOwner} onChange={(e) => setIsOwner(e.target.checked)} className="w-4 h-4" />
+                <span className="ml-3 text-sm">🏠 <strong>Propriétaire</strong></span>
               </label>
 
               <label className="flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isTenant}
-                  onChange={(e) => setIsTenant(e.target.checked)}
-                  className="w-4 h-4 text-blue-600"
-                />
-                <span className="ml-3 text-sm">
-                  🔑 <strong>Locataire</strong> - Je loue un bien
-                </span>
+                <input type="checkbox" checked={isTenant} onChange={(e) => setIsTenant(e.target.checked)} className="w-4 h-4" />
+                <span className="ml-3 text-sm">🔑 <strong>Locataire</strong></span>
               </label>
             </div>
-
-            <p className="text-xs text-gray-500 mt-3">
-              Vous pouvez cocher les deux si vous êtes à la fois propriétaire et locataire
-            </p>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-500 text-white p-3 rounded hover:bg-blue-600 disabled:bg-gray-400 font-medium"
-          >
+          <button type="submit" disabled={loading} className="w-full bg-blue-500 text-white p-3 rounded hover:bg-blue-600 disabled:bg-gray-400">
             {loading ? 'Enregistrement...' : 'Valider mon profil'}
           </button>
         </form>
