@@ -1,3 +1,5 @@
+// prisma/schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -6,6 +8,10 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// ============================================
+// ENUMS
+// ============================================
 
 enum UserRole {
   USER
@@ -24,7 +30,57 @@ enum PropertyType {
   HOUSE
   STUDIO
   ROOM
+  PARKING
+  OFFICE
 }
+
+enum LeaseStatus {
+  PENDING     // En attente de signature
+  ACTIVE      // En cours
+  ENDED       // Terminée
+  CANCELLED   // Annulée
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum ReviewStatus {
+  PENDING     // En attente de l'autre avis
+  REVEALED    // Les deux avis visibles
+  EXPIRED     // Délai dépassé, révélé automatiquement
+}
+
+enum DocumentType {
+  ID_CARD           // Carte identité
+  PAYSLIP           // Fiche de paie
+  CONTRACT          // Contrat de location
+  INVENTORY         // État des lieux
+  RECEIPT           // Quittance
+  PROOF_ADDRESS     // Justificatif domicile
+  TAX_NOTICE        // Avis imposition
+  INSURANCE         // Attestation assurance
+  OTHER
+}
+
+enum NotificationType {
+  NEW_MESSAGE
+  NEW_APPLICATION
+  APPLICATION_ACCEPTED
+  APPLICATION_REJECTED
+  REVIEW_REQUEST
+  REVIEW_RECEIVED
+  LEASE_STARTED
+  LEASE_ENDING_SOON
+  LEASE_ENDED
+  SYSTEM
+}
+
+// ============================================
+// MODELS PRINCIPAUX
+// ============================================
 
 model User {
   id              String   @id @default(cuid())
@@ -42,12 +98,36 @@ model User {
   isTenant        Boolean  @default(false)
   profileComplete Boolean  @default(false)
   
+  // Relations propriétés
   ownedProperties   Property[] @relation("OwnedProperties")
   rentedProperties  Property[] @relation("RentedProperties")
+  
+  // Relations locations
+  tenantLeases      Lease[]    @relation("TenantLeases")
+  
+  // Relations candidatures
+  applications      Application[] @relation("TenantApplications")
+  
+  // Relations avis
+  reviewsAuthored   Review[]   @relation("AuthoredReviews")
+  reviewsReceived   Review[]   @relation("ReceivedReviews")
+  
+  // Relations messages
+  conversationsAsUser1 Conversation[] @relation("User1Conversations")
+  conversationsAsUser2 Conversation[] @relation("User2Conversations")
+  messages             Message[]
+  
+  // Relations documents
+  documents         Document[]
+  
+  // Relations notifications
+  notifications     Notification[]
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   
+  @@index([email])
+  @@index([role])
   @@map("users")
 }
 
@@ -69,8 +149,239 @@ model Property {
   tenantId    String?
   tenant      User?        @relation("RentedProperties", fields: [tenantId], references: [id], onDelete: SetNull)
   
+  // Relations
+  leases        Lease[]
+  applications  Application[]
+  conversations Conversation[]
+  documents     Document[]
+  
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   
+  @@index([ownerId])
+  @@index([type])
+  @@index([available])
+  @@index([rent])
   @@map("properties")
+}
+
+model Lease {
+  id            String      @id @default(cuid())
+  
+  propertyId    String
+  property      Property    @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  tenantId      String
+  tenant        User        @relation("TenantLeases", fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  startDate     DateTime
+  endDate       DateTime?
+  monthlyRent   Float
+  deposit       Float?
+  charges       Float?
+  
+  status        LeaseStatus @default(ACTIVE)
+  
+  // Relations
+  reviews       Review[]
+  documents     Document[]
+  affiliateConversions AffiliateConversion[]
+  
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  @@index([propertyId])
+  @@index([tenantId])
+  @@index([status])
+  @@map("leases")
+}
+
+model Application {
+  id          String            @id @default(cuid())
+  
+  propertyId  String
+  property    Property          @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  tenantId    String
+  tenant      User              @relation("TenantApplications", fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  message     String?           @db.Text
+  status      ApplicationStatus @default(PENDING)
+  
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  
+  @@unique([propertyId, tenantId])
+  @@index([propertyId])
+  @@index([tenantId])
+  @@index([status])
+  @@map("applications")
+}
+
+model Review {
+  id              String       @id @default(cuid())
+  
+  leaseId         String
+  lease           Lease        @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  
+  authorId        String
+  author          User         @relation("AuthoredReviews", fields: [authorId], references: [id], onDelete: Cascade)
+  
+  targetId        String
+  target          User         @relation("ReceivedReviews", fields: [targetId], references: [id], onDelete: Cascade)
+  
+  // Notation
+  rating          Int          // 1-5 étoiles
+  comment         String?      @db.Text
+  
+  // Critères détaillés (JSON)
+  criteria        Json?
+  
+  // Bonus caution
+  depositReturned Boolean?
+  
+  // Double-blind logic
+  status          ReviewStatus @default(PENDING)
+  submittedAt     DateTime     @default(now())
+  revealedAt      DateTime?
+  
+  // Modération
+  reported        Boolean      @default(false)
+  reportReason    String?
+  moderatedAt     DateTime?
+  moderatorNote   String?
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  @@unique([leaseId, authorId])
+  @@index([leaseId])
+  @@index([authorId])
+  @@index([targetId])
+  @@index([status])
+  @@map("reviews")
+}
+
+model Conversation {
+  id          String    @id @default(cuid())
+  
+  user1Id     String
+  user1       User      @relation("User1Conversations", fields: [user1Id], references: [id], onDelete: Cascade)
+  
+  user2Id     String
+  user2       User      @relation("User2Conversations", fields: [user2Id], references: [id], onDelete: Cascade)
+  
+  propertyId  String?
+  property    Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  
+  messages    Message[]
+  
+  lastMessageAt DateTime?
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@unique([user1Id, user2Id, propertyId])
+  @@index([user1Id])
+  @@index([user2Id])
+  @@index([lastMessageAt])
+  @@map("conversations")
+}
+
+model Message {
+  id              String       @id @default(cuid())
+  
+  conversationId  String
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  senderId        String
+  sender          User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  
+  content         String       @db.Text
+  attachments     Json?
+  
+  read            Boolean      @default(false)
+  readAt          DateTime?
+  
+  createdAt       DateTime     @default(now())
+  
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([createdAt])
+  @@map("messages")
+}
+
+model Document {
+  id          String       @id @default(cuid())
+  
+  ownerId     String
+  owner       User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  
+  propertyId  String?
+  property    Property?    @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  
+  leaseId     String?
+  lease       Lease?       @relation(fields: [leaseId], references: [id], onDelete: SetNull)
+  
+  type        DocumentType
+  name        String
+  url         String
+  size        Int?
+  mimeType    String?
+  
+  verified    Boolean      @default(false)
+  verifiedAt  DateTime?
+  verifiedBy  String?
+  
+  uploadedAt  DateTime     @default(now())
+  
+  @@index([ownerId])
+  @@index([propertyId])
+  @@index([leaseId])
+  @@index([type])
+  @@map("documents")
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type        NotificationType
+  title       String
+  message     String           @db.Text
+  link        String?
+  
+  read        Boolean          @default(false)
+  readAt      DateTime?
+  
+  createdAt   DateTime         @default(now())
+  
+  @@index([userId])
+  @@index([read])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model AffiliateConversion {
+  id          String   @id @default(cuid())
+  
+  leaseId     String
+  lease       Lease    @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  
+  category    String   // 'gli', 'habitation', 'energie', etc.
+  partner     String   // 'luko', 'selectra', etc.
+  
+  clickedAt   DateTime?
+  convertedAt DateTime?
+  
+  commission  Float?
+  status      String   // 'pending', 'validated', 'paid'
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([leaseId])
+  @@index([status])
+  @@map("affiliate_conversions")
 }

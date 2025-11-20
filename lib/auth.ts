@@ -7,33 +7,48 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Credentials({
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' },
       },
-      authorize: async (credentials) => {
+      authorize: async credentials => {
+        console.log('1️⃣ Credentials reçues:', credentials)
+
         if (!credentials?.email || !credentials?.password) {
+          console.log('❌ Credentials manquantes')
           return null
         }
 
         try {
+          console.log('2️⃣ Recherche user:', credentials.email)
+
           const user = await prisma.user.findUnique({
-            where: { 
-              email: credentials.email as string
-            }
+            where: {
+              email: credentials.email as string,
+            },
           })
 
+          console.log('3️⃣ User trouvé ?', user ? 'OUI' : 'NON')
+
           if (!user) {
+            console.log('❌ User inexistant')
             return null
           }
+
+          console.log('4️⃣ Vérification password...')
 
           const isPasswordValid = await bcrypt.compare(
             credentials.password as string,
             user.password
           )
 
+          console.log('5️⃣ Password valide ?', isPasswordValid ? 'OUI' : 'NON')
+
           if (!isPasswordValid) {
+            console.log('❌ Password incorrect')
             return null
           }
+
+          console.log('✅ Authentification réussie pour:', user.email)
 
           return {
             id: user.id,
@@ -42,17 +57,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             lastName: user.lastName,
             role: user.role as string,
             isOwner: user.isOwner,
-            isTenant: user.isTenant
+            isTenant: user.isTenant,
           }
         } catch (error) {
-          console.error('Auth error:', error)
+          console.error('💥 ERREUR DANS AUTHORIZE:', error)
+          console.error('💥 Stack:', (error as Error).stack)
           return null
         }
-      }
-    })
+      },
+    }),
   ],
   callbacks: {
-    async jwt({ token, user, trigger }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id as string
         token.role = user.role as string
@@ -61,28 +77,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.firstName = user.firstName as string
         token.lastName = user.lastName as string
       }
-      
-      if (trigger === "update" && token.id) {
-        const freshUser = await prisma.user.findUnique({
-          where: { id: token.id as string },
-          select: {
-            isOwner: true,
-            isTenant: true,
-            role: true,
-            firstName: true,
-            lastName: true
-          }
-        })
-        
-        if (freshUser) {
-          token.isOwner = freshUser.isOwner
-          token.isTenant = freshUser.isTenant
-          token.role = freshUser.role
-          token.firstName = freshUser.firstName
-          token.lastName = freshUser.lastName
-        }
-      }
-      
       return token
     },
     async session({ session, token }) {
@@ -95,9 +89,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.lastName = token.lastName as string
       }
       return session
-    }
+    },
   },
   pages: {
-    signIn: '/login'
-  }
+    signIn: '/login',
+  },
 })

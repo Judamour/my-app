@@ -17,7 +17,7 @@ export async function POST(request: Request) {
 
     // Vérifier si l'email existe déjà
     const existingUser = await prisma.user.findUnique({
-      where: { email }
+      where: { email },
     })
 
     if (existingUser) {
@@ -37,11 +37,11 @@ export async function POST(request: Request) {
         lastName,
         email,
         password: hashedPassword,
-        role: 'USER',
-        isOwner: false,
-        isTenant: false,
-        profileComplete: false
-      }
+        role: 'USER', // Par défaut USER
+        isOwner: false, // Par défaut false
+        isTenant: false, // Par défaut false
+        profileComplete: false, // Profil pas encore complété
+      },
     })
 
     // Ne pas retourner le password
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Register error:', error)
     return NextResponse.json(
-      { error: 'Erreur lors de l\'inscription' },
+      { error: "Erreur lors de l'inscription" },
       { status: 500 }
     )
   }

@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+
 
 export default function RegisterPage() {
   const [firstName, setFirstName] = useState('')
@@ -51,8 +53,8 @@ export default function RegisterPage() {
       }
 
       // Succès ! Rediriger vers login
-      alert('✅ Inscription réussie ! Vous pouvez maintenant vous connecter.')
-      router.push('/login')
+     toast.success('Inscription réussie ! Vous pouvez maintenant vous connecter.')
+router.push('/login')
     } catch (err) {
       setError('Erreur de connexion au serveur')
     } finally {

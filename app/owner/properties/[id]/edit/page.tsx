@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
+import { toast } from 'sonner' // ← AJOUT
+
 
 export default function EditPropertyPage() {
   const router = useRouter()
@@ -54,40 +56,52 @@ export default function EditPropertyPage() {
     fetchProperty()
   }, [id, router])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-    try {
-      const propertyData = {
-        title,
-        address,
-        type,
-        surface: Number(surface),
-        rooms: Number(rooms),
-        bedrooms: Number(bedrooms),
-        rent: Number(rent),
-        description: description || null,
-        available,
-      }
-      const response = await fetch(`/api/properties/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(propertyData),
-      })
-      const data = await response.json()
-      if (!response.ok) {
-        setError(data.error || 'Erreur lors de la modification')
-        return
-      }
-      router.push(`/owner/properties/${id}`)
-      router.refresh()
-    } catch {
-      setError('Erreur de connexion au serveur')
-    } finally {
-      setLoading(false)
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  setError('')
+  setLoading(true)
+  
+  try {
+    const propertyData = {
+      title,
+      address,
+      type,
+      surface: Number(surface),
+      rooms: Number(rooms),
+      bedrooms: Number(bedrooms),
+      rent: Number(rent),
+      description: description || null,
+      available,
     }
+    
+    const response = await fetch(`/api/properties/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(propertyData),
+    })
+    
+    const data = await response.json()
+    
+    if (!response.ok) {
+      const errorMsg = data.error || 'Erreur lors de la modification'
+      setError(errorMsg)
+      toast.error(errorMsg) // ← AJOUT TOAST
+      return
+    }
+    
+    // ✅ Succès !
+    toast.success('Propriété modifiée avec succès') // ← AJOUT TOAST
+    
+    router.push(`/owner/properties/${id}`)
+    router.refresh()
+  } catch {
+    const errorMsg = 'Erreur de connexion au serveur'
+    setError(errorMsg)
+    toast.error(errorMsg) // ← AJOUT TOAST
+  } finally {
+    setLoading(false)
   }
+}
 
   if (loadingData) {
     return (

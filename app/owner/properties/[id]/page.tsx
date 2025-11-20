@@ -1,7 +1,9 @@
+// app/owner/properties/[id]/page.tsx
 import { requireOwner } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
+import DeletePropertyButton from '@/components/properties/DeletePropertyButton'
 
 export default async function PropertyDetailPage({
   params,
@@ -174,56 +176,40 @@ export default async function PropertyDetailPage({
         {/* Boutons d'action */}
         <div className="mt-6 flex flex-col md:flex-row gap-3">
           {property.available ? (
-            // ✅ Bien disponible → Bouton actif
             <Link
               href={`/owner/properties/${property.id}/edit`}
               className="
-        flex-1 
-        px-6 py-3 
-        bg-blue-500 text-white 
-        text-center
-        rounded-lg font-medium
-        hover:bg-blue-600
-      "
+                flex-1 
+                px-6 py-3 
+                bg-blue-500 text-white 
+                text-center
+                rounded-lg font-medium
+                hover:bg-blue-600
+              "
             >
               Modifier
             </Link>
           ) : (
-            // ❌ Bien loué → Bouton désactivé
             <div
               className="
-        flex-1 
-        px-6 py-3 
-        bg-gray-300 text-gray-500 
-        text-center
-        rounded-lg font-medium
-        cursor-not-allowed
-      "
+                flex-1 
+                px-6 py-3 
+                bg-gray-300 text-gray-500 
+                text-center
+                rounded-lg font-medium
+                cursor-not-allowed
+              "
               title="Impossible de modifier un bien loué"
             >
               Modifier
             </div>
           )}
 
-          <button
-            disabled={!property.available}
-            className={`
-      px-6 py-3 
-      rounded-lg font-medium
-      ${
-        property.available
-          ? 'bg-red-500 text-white hover:bg-red-600'
-          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-      }
-    `}
-            title={
-              property.available
-                ? 'Supprimer ce bien'
-                : 'Impossible de supprimer un bien loué'
-            }
-          >
-            Supprimer
-          </button>
+          <DeletePropertyButton
+            propertyId={property.id}
+            propertyTitle={property.title}
+            isAvailable={property.available}
+          />
         </div>
       </div>
     </div>

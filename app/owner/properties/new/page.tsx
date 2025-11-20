@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { toast } from 'sonner' // ← AJOUT
 
 export default function NewPropertyPage() {
   // --- ÉTATS (un par champ du formulaire) ---
@@ -22,51 +23,58 @@ export default function NewPropertyPage() {
   const router = useRouter()
 
   // --- FONCTION DE SOUMISSION ---
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  setError('')
+  setLoading(true)
 
-    try {
-      // Construire l'objet à envoyer
-      const propertyData = {
-        title,
-        address,
-        type,
-        surface: Number(surface),
-        rooms: Number(rooms),
-        bedrooms: Number(bedrooms),
-        rent: Number(rent),
-        description: description || null,
-        // Le champ 'available' sera mis à true par défaut dans l'API
-      }
+  let success = false // ← AJOUT
 
-      // Envoyer à l'API
-      const response = await fetch('/api/properties', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(propertyData),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        setError(data.error || 'Erreur lors de la création')
-        return
-      }
-
-      // Succès ! Rediriger vers la liste
-      router.push('/owner/properties')
-      router.refresh()
-    } catch (err) {
-      setError('Erreur de connexion au serveur')
-    } finally {
-      setLoading(false)
+  try {
+    const propertyData = {
+      title,
+      address,
+      type,
+      surface: Number(surface),
+      rooms: Number(rooms),
+      bedrooms: Number(bedrooms),
+      rent: Number(rent),
+      description: description || null,
     }
-  }
 
+    const response = await fetch('/api/properties', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(propertyData),
+    })
+
+    const result = await response.json()
+
+    if (!response.ok) {
+      const errorMsg = result.error || 'Erreur lors de la création'
+      setError(errorMsg)
+      toast.error(errorMsg)
+      return
+    }
+
+    // ✅ Succès !
+    success = true // ← AJOUT
+    toast.success('Propriété créée avec succès')
+    
+    router.push('/owner/properties')
+    router.refresh()
+  } catch {
+    if (!success) { // ← AJOUT
+      const errorMsg = 'Erreur de connexion au serveur'
+      setError(errorMsg)
+      toast.error(errorMsg)
+    }
+  } finally {
+    setLoading(false)
+  }
+}
   // --- JSX (Interface) ---
   return (
     <div className=" min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8">

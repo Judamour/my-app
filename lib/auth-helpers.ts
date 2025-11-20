@@ -7,11 +7,11 @@ import { redirect } from 'next/navigation'
  */
 export async function requireAuth() {
   const session = await auth()
-  
+
   if (!session) {
     redirect('/login')
   }
-  
+
   return session
 }
 
@@ -21,11 +21,11 @@ export async function requireAuth() {
  */
 export async function requireOwner() {
   const session = await requireAuth()
-  
+
   if (!session.user.isOwner) {
     redirect('/profile/complete?required=owner')
   }
-  
+
   return session
 }
 
@@ -35,11 +35,11 @@ export async function requireOwner() {
  */
 export async function requireTenant() {
   const session = await requireAuth()
-  
+
   if (!session.user.isTenant) {
     redirect('/profile/complete?required=tenant')
   }
-  
+
   return session
 }
 
@@ -49,11 +49,11 @@ export async function requireTenant() {
  */
 export async function requireAdmin() {
   const session = await requireAuth()
-  
+
   if (session.user.role !== 'ADMIN') {
     redirect('/')
   }
-  
+
   return session
 }
 
@@ -63,11 +63,11 @@ export async function requireAdmin() {
  */
 export async function requireProfileComplete() {
   const session = await requireAuth()
-  
+
   // On vérifie qu'il est au moins owner OU tenant
   if (!session.user.isOwner && !session.user.isTenant) {
     redirect('/profile/complete')
   }
-  
+
   return session
 }
