@@ -1,6 +1,8 @@
 import { requireOwner } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'  // ← AJOUTER cette ligne
+
 
 export default async function OwnerDashboardPage() {
   const session = await requireOwner()
@@ -15,10 +17,13 @@ export default async function OwnerDashboardPage() {
     }
   })
 
-  if (!user) {
-    throw new Error('Utilisateur introuvable')
-  }
-  
+if (!user) {
+  throw new Error('Utilisateur introuvable')
+}
+
+if (!user) {
+  redirect('/login')
+}
   // Récupérer les stats
   const propertiesCount = await prisma.property.count({
     where: { ownerId: user.id }

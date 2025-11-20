@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner' // ← AJOUT
+import ImageUploader from '@/components/properties/ImageUploader'
 
 export default function NewPropertyPage() {
   // --- ÉTATS (un par champ du formulaire) ---
@@ -15,6 +16,7 @@ export default function NewPropertyPage() {
   const [bedrooms, setBedrooms] = useState('1')
   const [rent, setRent] = useState('')
   const [description, setDescription] = useState('')
+  const [images, setImages] = useState<string[]>([])
 
   // États pour gérer l'UI
   const [error, setError] = useState('')
@@ -40,6 +42,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       bedrooms: Number(bedrooms),
       rent: Number(rent),
       description: description || null,
+      images,
     }
 
     const response = await fetch('/api/properties', {
@@ -270,6 +273,12 @@ const handleSubmit = async (e: React.FormEvent) => {
                 placeholder="1200"
               />
             </div>
+            {/* Images */}
+<ImageUploader
+  images={images}
+  onImagesChange={setImages}
+  maxImages={10}
+/>
             {/* 8. Description (optionnel) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">

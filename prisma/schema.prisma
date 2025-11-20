@@ -142,6 +142,8 @@ model Property {
   rent        Float
   description String?      @db.Text
   available   Boolean      @default(true)
+
+  images      String[]     @default([])  // ← AJOUTER cette ligne
   
   ownerId     String
   owner       User         @relation("OwnedProperties", fields: [ownerId], references: [id], onDelete: Cascade)

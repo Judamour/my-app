@@ -10,7 +10,7 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -31,7 +31,7 @@ export default function LoginPage() {
       // Redirection vers dashboard owner
       router.push('/owner')
       router.refresh()
-    } catch (err) {
+    } catch  {
       setError('Une erreur est survenue')
     } finally {
       setLoading(false)
