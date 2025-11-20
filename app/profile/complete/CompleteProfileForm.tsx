@@ -55,18 +55,20 @@ const handleSubmit = async (e: React.FormEvent) => {
   setLoading(true)
 
   try {
-    const response = await fetch('/api/profile', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        gender: gender || null,
-        phone: phone || null,
-        address: address || null,
-        isOwner,
-        isTenant,
-        profileComplete: true,
-      }),
-    })
+const hasOptionalInfo = !!(gender || phone || address)
+
+const response = await fetch('/api/profile', {
+  method: 'PATCH',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    gender: gender || null,
+    phone: phone || null,
+    address: address || null,
+    isOwner,
+    isTenant,
+    profileComplete: hasOptionalInfo,  // ← Calculé !
+  }),
+})
 
     const data = await response.json()
 
@@ -79,16 +81,19 @@ const handleSubmit = async (e: React.FormEvent) => {
     }
 
     // ✅ Succès
-    toast.success('Profil complété avec succès !')
+toast.success('Profil complété ! Redirection...')
 
-    // ✅ Redirection
-    if (isOwner) {
-      window.location.href = '/owner'
-    } else if (isTenant) {
-      window.location.href = '/tenant/dashboard'
-    } else {
-      window.location.href = '/'
-    }
+// Forcer reload complet pour mettre à jour session
+setTimeout(() => {
+  if (isOwner) {
+    window.location.href = '/owner'
+  } else if (isTenant) {
+    window.location.href = '/tenant/dashboard'
+  } else {
+    window.location.href = '/'
+  }
+}, 500)
+
   } catch {
     const errorMsg = 'Erreur de connexion au serveur'
     setError(errorMsg)

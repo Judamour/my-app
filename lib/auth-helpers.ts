@@ -1,4 +1,5 @@
 import { auth } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 
 /**
@@ -22,7 +23,12 @@ export async function requireAuth() {
 export async function requireOwner() {
   const session = await requireAuth()
 
-  if (!session.user.isOwner) {
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { isOwner: true, profileComplete: true }
+  })
+
+  if (!user?.isOwner) {
     redirect('/profile/complete?required=owner')
   }
 
@@ -36,7 +42,12 @@ export async function requireOwner() {
 export async function requireTenant() {
   const session = await requireAuth()
 
-  if (!session.user.isTenant) {
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { isTenant: true, profileComplete: true }
+  })
+
+  if (!user?.isTenant) {
     redirect('/profile/complete?required=tenant')
   }
 
@@ -64,8 +75,12 @@ export async function requireAdmin() {
 export async function requireProfileComplete() {
   const session = await requireAuth()
 
-  // On vérifie qu'il est au moins owner OU tenant
-  if (!session.user.isOwner && !session.user.isTenant) {
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { isOwner: true, isTenant: true, profileComplete: true }
+  })
+
+  if (!user?.isOwner && !user?.isTenant) {
     redirect('/profile/complete')
   }
 

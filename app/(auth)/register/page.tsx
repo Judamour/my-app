@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 
-
 export default function RegisterPage() {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
@@ -37,12 +36,12 @@ export default function RegisterPage() {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          firstName, 
-          lastName, 
-          email, 
-          password 
-        })
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email,
+          password,
+        }),
       })
 
       const data = await response.json()
@@ -53,8 +52,10 @@ export default function RegisterPage() {
       }
 
       // Succès ! Rediriger vers login
-     toast.success('Inscription réussie ! Vous pouvez maintenant vous connecter.')
-router.push('/login')
+      toast.success(
+        'Inscription réussie ! Vous pouvez maintenant vous connecter.'
+      )
+      router.push('/login')
     } catch (err) {
       setError('Erreur de connexion au serveur')
     } finally {
@@ -69,13 +70,13 @@ router.push('/login')
         <p className="text-sm text-gray-600 mb-6">
           Rejoignez-nous en quelques secondes
         </p>
-        
+
         {error && (
           <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
             {error}
           </div>
         )}
-        
+
         <form onSubmit={handleSubmit}>
           {/* Prénom */}
           <div className="mb-4">
@@ -85,7 +86,7 @@ router.push('/login')
             <input
               type="text"
               value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
+              onChange={e => setFirstName(e.target.value)}
               required
               className="w-full p-2 border rounded"
               placeholder="Jean"
@@ -100,7 +101,7 @@ router.push('/login')
             <input
               type="text"
               value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
+              onChange={e => setLastName(e.target.value)}
               required
               className="w-full p-2 border rounded"
               placeholder="Dupont"
@@ -115,7 +116,7 @@ router.push('/login')
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={e => setEmail(e.target.value)}
               required
               className="w-full p-2 border rounded"
               placeholder="jean.dupont@example.com"
@@ -130,7 +131,7 @@ router.push('/login')
             <input
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)}
               required
               minLength={8}
               className="w-full p-2 border rounded"
@@ -146,14 +147,14 @@ router.push('/login')
             <input
               type="password"
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={e => setConfirmPassword(e.target.value)}
               required
               className="w-full p-2 border rounded"
               placeholder="Répétez votre mot de passe"
             />
           </div>
 
-          <button 
+          <button
             type="submit"
             disabled={loading}
             className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:bg-gray-400"

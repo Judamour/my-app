@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import DeletePropertyButton from '@/components/properties/DeletePropertyButton'
+import ImageCarousel from '@/components/properties/ImageCarousel'
 
 export default async function PropertyDetailPage({
   params,
@@ -74,6 +75,11 @@ export default async function PropertyDetailPage({
             </span>
           </div>
         </div>
+
+        {/* Carrousel d'images */}
+        {property.images && property.images.length > 0 && (
+          <ImageCarousel images={property.images} title={property.title} />
+        )}
 
         {/* Card principale */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">

@@ -34,6 +34,7 @@ export const createPropertySchema = z.object({
     .max(2000, 'Description trop longue (max 2000 caractères)')
     .optional()
     .nullable(),
+  images: z.array(z.string().url()).default([]),
 })
 
 export const updatePropertySchema = createPropertySchema.extend({

@@ -65,9 +65,15 @@ export async function POST(request: Request) {
       throw new UnauthorizedError()
     }
     
-    if (!session.user.isOwner) {
-      throw new ForbiddenError('Vous devez être propriétaire pour créer une propriété')
-    }
+// Vérifier isOwner depuis DB (pas session)
+const user = await prisma.user.findUnique({
+  where: { id: session.user.id },
+  select: { isOwner: true }
+})
+
+if (!user?.isOwner) {
+  throw new ForbiddenError('Vous devez être propriétaire pour créer une propriété')
+}
     
     const body = await request.json()
     
