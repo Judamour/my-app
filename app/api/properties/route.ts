@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-
 /**
  * GET /api/properties
  * Liste toutes les propriétés de l'utilisateur connecté
@@ -16,7 +15,6 @@ export async function GET(request: Request) {
         { status: 401 }
       )
     }
-
     // Vérifier que l'user est propriétaire
     if (!session.user.isOwner) {
       return NextResponse.json(
@@ -24,7 +22,6 @@ export async function GET(request: Request) {
         { status: 403 }
       )
     }
-
     // Récupérer toutes les propriétés de l'owner
     const properties = await prisma.property.findMany({
       where: {
@@ -44,7 +41,6 @@ export async function GET(request: Request) {
         }
       }
     })
-
     return NextResponse.json(properties, { status: 200 })
   } catch (error) {
     console.error('GET /api/properties error:', error)
@@ -54,7 +50,6 @@ export async function GET(request: Request) {
     )
   }
 }
-
 /**
  * POST /api/properties
  * Créer une nouvelle propriété
@@ -69,7 +64,6 @@ export async function POST(request: Request) {
         { status: 401 }
       )
     }
-
     // Vérifier que l'user est propriétaire
     if (!session.user.isOwner) {
       return NextResponse.json(
@@ -77,18 +71,15 @@ export async function POST(request: Request) {
         { status: 403 }
       )
     }
-
     const body = await request.json()
     const { title, address, type, surface, rooms, bedrooms, rent, description } = body
-
-    // Validation des champs obligatoires
-    if (!title || !address || !type || !surface || !rooms || !bedrooms || !rent) {
+    // Validation des champs obligatoires (accepte 0 pour bedrooms)
+    if (!title || !address || !type || surface == null || rooms == null || bedrooms == null || rent == null) {
       return NextResponse.json(
         { error: 'Tous les champs obligatoires doivent être remplis' },
         { status: 400 }
       )
     }
-
     // Validation des types
     if (typeof surface !== 'number' || surface <= 0) {
       return NextResponse.json(
@@ -96,14 +87,12 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
-
     if (typeof rent !== 'number' || rent <= 0) {
       return NextResponse.json(
         { error: 'Le loyer doit être un nombre positif' },
         { status: 400 }
       )
     }
-
     // Créer la propriété
     const property = await prisma.property.create({
       data: {
@@ -119,7 +108,6 @@ export async function POST(request: Request) {
         available: true  // Par défaut disponible
       }
     })
-
     return NextResponse.json(property, { status: 201 })
   } catch (error) {
     console.error('POST /api/properties error:', error)

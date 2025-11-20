@@ -10,8 +10,8 @@ export default function NewPropertyPage() {
   const [address, setAddress] = useState('')
   const [type, setType] = useState('APARTMENT')
   const [surface, setSurface] = useState('')
-  const [rooms, setRooms] = useState('')
-  const [bedrooms, setBedrooms] = useState('')
+  const [rooms, setRooms] = useState('2')
+  const [bedrooms, setBedrooms] = useState('1')
   const [rent, setRent] = useState('')
   const [description, setDescription] = useState('')
 
@@ -28,10 +28,40 @@ export default function NewPropertyPage() {
     setLoading(true)
 
     try {
-      // TODO: Envoyer à l'API
-      console.log('Envoi des données...')
+      // Construire l'objet à envoyer
+      const propertyData = {
+        title,
+        address,
+        type,
+        surface: Number(surface),
+        rooms: Number(rooms),
+        bedrooms: Number(bedrooms),
+        rent: Number(rent),
+        description: description || null,
+        // Le champ 'available' sera mis à true par défaut dans l'API
+      }
+
+      // Envoyer à l'API
+      const response = await fetch('/api/properties', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(propertyData),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.error || 'Erreur lors de la création')
+        return
+      }
+
+      // Succès ! Rediriger vers la liste
+      router.push('/owner/properties')
+      router.refresh()
     } catch (err) {
-      setError('Erreur de connexion')
+      setError('Erreur de connexion au serveur')
     } finally {
       setLoading(false)
     }
@@ -107,6 +137,31 @@ export default function NewPropertyPage() {
                 placeholder="12 rue de la Paix, 75001 Paris"
               />
             </div>
+            {/* 3. Type de bien */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Type de bien <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={type}
+                onChange={e => setType(e.target.value)}
+                required
+                className="
+                  text-gray-900 
+                  w-full p-3 text-base 
+                  border border-gray-300 rounded-lg
+                  focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                "
+              >
+                <option value="APARTMENT">Appartement</option>
+                <option value="HOUSE">Maison</option>
+                <option value="STUDIO">Studio</option>
+                <option value="ROOM">Chambre</option>
+                <option value="PARKING">Parking</option>
+                <option value="OFFICE">Bureau</option>
+              </select>
+            </div>
+
             {/* 4-5-6. Surface, Pièces, Chambres (Grid responsive) */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Surface */}
@@ -149,7 +204,6 @@ export default function NewPropertyPage() {
       focus:ring-2 focus:ring-blue-500 focus:border-transparent
     "
               >
-                <option value="">Choisir</option>
                 <option value="1">1 pièce</option>
                 <option value="2">2 pièces</option>
                 <option value="3">3 pièces</option>
@@ -177,7 +231,6 @@ export default function NewPropertyPage() {
       focus:ring-2 focus:ring-blue-500 focus:border-transparent
     "
               >
-                <option value="">Choisir</option>
                 <option value="0">Studio (0 chambre)</option>
                 <option value="1">1 chambre</option>
                 <option value="2">2 chambres</option>
