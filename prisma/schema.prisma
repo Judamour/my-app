@@ -122,6 +122,8 @@ model User {
   
   // Relations notifications
   notifications     Notification[]
+
+  shareLinks    ShareLink[] @relation("UserShareLinks")
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -156,6 +158,8 @@ model Property {
   applications  Application[]
   conversations Conversation[]
   documents     Document[]
+
+  shareLinks    ShareLink[]
   
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -386,4 +390,31 @@ model AffiliateConversion {
   @@index([leaseId])
   @@index([status])
   @@map("affiliate_conversions")
+}
+
+model ShareLink {
+  id          String    @id @default(cuid())
+  shortCode   String    @unique
+  type        ShareType
+  
+  // Si c'est un profil
+  userId      String?
+  user        User?     @relation("UserShareLinks", fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Si c'est une propriété
+  propertyId  String?
+  property    Property? @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  views       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  
+  @@index([shortCode])
+  @@index([userId])
+  @@index([propertyId])
+  @@map("share_links")
+}
+
+enum ShareType {
+  PROFILE
+  PROPERTY
 }
