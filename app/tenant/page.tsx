@@ -32,16 +32,16 @@ export default async function TenantDashboardPage() {
   })
 
   const pendingApplications = await prisma.application.count({
-    where: { 
+    where: {
       tenantId: user.id,
-      status: 'PENDING'
+      status: 'PENDING',
     },
   })
 
   const activeLeases = await prisma.lease.count({
-    where: { 
+    where: {
       tenantId: user.id,
-      status: 'ACTIVE'
+      status: 'ACTIVE',
     },
   })
 
@@ -65,7 +65,9 @@ export default async function TenantDashboardPage() {
                 className="flex items-center gap-3 px-5 py-3 bg-gray-50 rounded-full hover:bg-gray-100 transition-all duration-200"
               >
                 <span className="text-xl">🏠</span>
-                <span className="font-medium text-gray-700">Mode propriétaire</span>
+                <span className="font-medium text-gray-700">
+                  Mode propriétaire
+                </span>
               </Link>
             )}
           </div>
@@ -100,19 +102,26 @@ export default async function TenantDashboardPage() {
 
         {/* Stats - Style Airbnb cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <div className="bg-gray-50 rounded-2xl p-6 hover:bg-gray-100 transition-colors cursor-pointer">
+          <Link
+            href="/tenant/applications"
+            className="bg-gray-50 rounded-2xl p-6 hover:bg-gray-100 transition-colors block"
+          >
             <div className="flex items-center justify-between mb-4">
               <span className="text-4xl">📝</span>
-              <span className="text-3xl font-semibold text-gray-900">{applicationsCount}</span>
+              <span className="text-3xl font-semibold text-gray-900">
+                {applicationsCount}
+              </span>
             </div>
             <p className="font-medium text-gray-900">Candidatures</p>
             <p className="text-sm text-gray-500 mt-1">Total envoyées</p>
-          </div>
+          </Link>
 
           <div className="bg-orange-50 rounded-2xl p-6 hover:bg-orange-100 transition-colors cursor-pointer">
             <div className="flex items-center justify-between mb-4">
               <span className="text-4xl">⏳</span>
-              <span className="text-3xl font-semibold text-orange-600">{pendingApplications}</span>
+              <span className="text-3xl font-semibold text-orange-600">
+                {pendingApplications}
+              </span>
             </div>
             <p className="font-medium text-gray-900">En attente</p>
             <p className="text-sm text-gray-500 mt-1">Réponse propriétaire</p>
@@ -121,7 +130,9 @@ export default async function TenantDashboardPage() {
           <div className="bg-emerald-50 rounded-2xl p-6 hover:bg-emerald-100 transition-colors cursor-pointer">
             <div className="flex items-center justify-between mb-4">
               <span className="text-4xl">🏡</span>
-              <span className="text-3xl font-semibold text-emerald-600">{activeLeases}</span>
+              <span className="text-3xl font-semibold text-emerald-600">
+                {activeLeases}
+              </span>
             </div>
             <p className="font-medium text-gray-900">Bail actif</p>
             <p className="text-sm text-gray-500 mt-1">Logement actuel</p>
@@ -143,14 +154,15 @@ export default async function TenantDashboardPage() {
                 Tout voir →
               </Link>
             </div>
-            
+
             <div className="bg-gray-50 rounded-2xl p-8 text-center">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-3xl">📭</span>
               </div>
               <p className="font-medium text-gray-900">Aucune candidature</p>
               <p className="text-sm text-gray-500 mt-2 max-w-xs mx-auto">
-                Vous recevrez un lien de la part d&apos;un propriétaire pour découvrir son bien
+                Vous recevrez un lien de la part d&apos;un propriétaire pour
+                découvrir son bien
               </p>
             </div>
           </div>
@@ -173,7 +185,8 @@ export default async function TenantDashboardPage() {
               {/* Mini profil */}
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-16 h-16 bg-gradient-to-br from-rose-400 to-orange-300 rounded-full flex items-center justify-center text-white text-xl font-semibold">
-                  {user.firstName[0]}{user.lastName[0]}
+                  {user.firstName[0]}
+                  {user.lastName[0]}
                 </div>
                 <div>
                   <p className="font-semibold text-lg text-gray-900">
@@ -182,15 +195,31 @@ export default async function TenantDashboardPage() {
                   <div className="flex items-center gap-2 mt-1">
                     {user.profileComplete ? (
                       <span className="inline-flex items-center gap-1 text-sm text-emerald-600">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        <svg
+                          className="w-4 h-4"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                         Profil vérifié
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 text-sm text-orange-500">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        <svg
+                          className="w-4 h-4"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                         À compléter
                       </span>
@@ -200,8 +229,8 @@ export default async function TenantDashboardPage() {
               </div>
 
               {/* Bouton partager */}
-           <ShareButton type="PROFILE" className="w-full" />
-       
+              <ShareButton type="PROFILE" className="w-full" />
+
               <p className="text-center text-sm text-gray-500 mt-3">
                 Envoyez votre passport à un propriétaire pour postuler
               </p>

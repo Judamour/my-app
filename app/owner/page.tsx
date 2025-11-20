@@ -64,7 +64,9 @@ export default async function OwnerDashboardPage() {
                 className="flex items-center gap-3 px-5 py-3 bg-gray-50 rounded-full hover:bg-gray-100 transition-all duration-200"
               >
                 <span className="text-xl">🔑</span>
-                <span className="font-medium text-gray-700">Mode locataire</span>
+                <span className="font-medium text-gray-700">
+                  Mode locataire
+                </span>
               </Link>
             )}
           </div>
@@ -99,13 +101,15 @@ export default async function OwnerDashboardPage() {
 
         {/* Stats - Style Airbnb cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <Link 
+          <Link
             href="/owner/properties"
             className="bg-gray-50 rounded-2xl p-6 hover:bg-gray-100 transition-colors cursor-pointer"
           >
             <div className="flex items-center justify-between mb-4">
               <span className="text-4xl">🏠</span>
-              <span className="text-3xl font-semibold text-gray-900">{propertiesCount}</span>
+              <span className="text-3xl font-semibold text-gray-900">
+                {propertiesCount}
+              </span>
             </div>
             <p className="font-medium text-gray-900">Mes biens</p>
             <p className="text-sm text-gray-500 mt-1">Total propriétés</p>
@@ -114,19 +118,23 @@ export default async function OwnerDashboardPage() {
           <div className="bg-emerald-50 rounded-2xl p-6 hover:bg-emerald-100 transition-colors cursor-pointer">
             <div className="flex items-center justify-between mb-4">
               <span className="text-4xl">✅</span>
-              <span className="text-3xl font-semibold text-emerald-600">{availableCount}</span>
+              <span className="text-3xl font-semibold text-emerald-600">
+                {availableCount}
+              </span>
             </div>
             <p className="font-medium text-gray-900">Disponibles</p>
             <p className="text-sm text-gray-500 mt-1">Prêts à louer</p>
           </div>
 
-          <Link 
+          <Link
             href="/owner/applications"
-            className="bg-orange-50 rounded-2xl p-6 hover:bg-orange-100 transition-colors cursor-pointer"
+            className="bg-gray-50 rounded-2xl p-6 hover:bg-gray-100 transition-colors block"
           >
             <div className="flex items-center justify-between mb-4">
-              <span className="text-4xl">📬</span>
-              <span className="text-3xl font-semibold text-orange-600">{applicationsCount}</span>
+              <span className="text-4xl">📝</span>
+              <span className="text-3xl font-semibold text-gray-900">
+                {applicationsCount}
+              </span>
             </div>
             <p className="font-medium text-gray-900">Candidatures</p>
             <p className="text-sm text-gray-500 mt-1">En attente de réponse</p>
@@ -138,7 +146,7 @@ export default async function OwnerDashboardPage() {
           <h2 className="text-xl font-semibold text-gray-900 mb-6">
             Actions rapides
           </h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Ajouter un bien */}
             <Link
@@ -149,7 +157,9 @@ export default async function OwnerDashboardPage() {
                 <span className="text-2xl">➕</span>
               </div>
               <div>
-                <p className="font-semibold text-white text-lg">Ajouter un bien</p>
+                <p className="font-semibold text-white text-lg">
+                  Ajouter un bien
+                </p>
                 <p className="text-gray-300 mt-1">Créer une nouvelle fiche</p>
               </div>
             </Link>
@@ -163,7 +173,9 @@ export default async function OwnerDashboardPage() {
                 <span className="text-2xl">📋</span>
               </div>
               <div>
-                <p className="font-semibold text-gray-900 text-lg">Mes propriétés</p>
+                <p className="font-semibold text-gray-900 text-lg">
+                  Mes propriétés
+                </p>
                 <p className="text-gray-500 mt-1">Gérer mes biens</p>
               </div>
             </Link>
@@ -185,7 +197,7 @@ export default async function OwnerDashboardPage() {
                 Tout voir →
               </Link>
             </div>
-            
+
             {applicationsCount === 0 ? (
               <div className="bg-gray-50 rounded-2xl p-8 text-center">
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -199,15 +211,26 @@ export default async function OwnerDashboardPage() {
             ) : (
               <div className="bg-orange-50 rounded-2xl p-6">
                 <p className="font-medium text-gray-900">
-                  {applicationsCount} candidature{applicationsCount > 1 ? 's' : ''} en attente
+                  {applicationsCount} candidature
+                  {applicationsCount > 1 ? 's' : ''} en attente
                 </p>
                 <Link
                   href="/owner/applications"
                   className="inline-flex items-center gap-2 mt-4 text-orange-600 font-medium hover:text-orange-700"
                 >
                   Voir les candidatures
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
                   </svg>
                 </Link>
               </div>
@@ -239,12 +262,22 @@ export default async function OwnerDashboardPage() {
                 href="/owner/properties"
                 className="flex items-center justify-center gap-3 w-full py-4 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-colors"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                  />
                 </svg>
                 Choisir un bien à partager
               </Link>
-              
+
               <p className="text-center text-sm text-gray-500 mt-3">
                 Le locataire recevra un lien pour voir votre bien et postuler
               </p>
