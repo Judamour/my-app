@@ -136,7 +136,9 @@ model User {
 model Property {
   id          String       @id @default(cuid())
   title       String
-  address     String
+  address     String    
+  city        String    
+  postalCode  String   
   type        PropertyType
   surface     Int
   rooms       Int

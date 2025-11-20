@@ -7,7 +7,9 @@ export const createPropertySchema = z.object({
     .string()
     .min(5, 'Titre trop court (min 5 caractères)')
     .max(100, 'Titre trop long (max 100 caractères)'),
-  address: z.string().min(10, 'Adresse trop courte (min 10 caractères)'),
+  address: z.string().min(5, 'Adresse trop courte (min 5 caractères)'),
+  city: z.string().min(2, 'Ville requise'),
+  postalCode: z.string().regex(/^\d{5}$/, 'Code postal invalide (5 chiffres)'),
   type: z.enum(['APARTMENT', 'HOUSE', 'STUDIO', 'ROOM', 'PARKING', 'OFFICE']),
   surface: z
     .number()

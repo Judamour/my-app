@@ -99,7 +99,7 @@ export default async function PropertyPreviewPage({ params }: PageProps) {
             {property.title}
           </h1>
           <p className="text-gray-500">
-            📍 {property.address.split(',')[0]}... <span className="text-gray-400">(ville masquée)</span>
+            📍 {property.city} ({property.postalCode})
           </p>
         </div>
 
