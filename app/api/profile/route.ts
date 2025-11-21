@@ -6,21 +6,28 @@ export async function PATCH(request: Request) {
   try {
     // Vérifier l'authentification
     const session = await auth()
-    
+
     if (!session || !session.user) {
-      return NextResponse.json(
-        { error: 'Non authentifié' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
     const body = await request.json()
-    const { gender, phone, address, isOwner, isTenant, profileComplete } = body
-
+    const {
+      gender,
+      birthDate,
+      phone,
+      address,
+      isOwner,
+      isTenant,
+      profileComplete,
+    } = body
     // Validation : au moins un rôle doit être true
     if (profileComplete && !isOwner && !isTenant) {
       return NextResponse.json(
-        { error: 'Vous devez sélectionner au moins un rôle (propriétaire ou locataire)' },
+        {
+          error:
+            'Vous devez sélectionner au moins un rôle (propriétaire ou locataire)',
+        },
         { status: 400 }
       )
     }
@@ -30,21 +37,22 @@ export async function PATCH(request: Request) {
       where: { id: session.user.id },
       data: {
         gender: gender || null,
+        birthDate: birthDate ? new Date(birthDate) : null,
         phone: phone || null,
         address: address || null,
         isOwner: isOwner || false,
         isTenant: isTenant || false,
-        profileComplete: profileComplete || false
-      }
+        profileComplete: profileComplete || false,
+      },
     })
 
     // Ne pas retourner le password
     const { password: _, ...userWithoutPassword } = updatedUser
 
     return NextResponse.json(
-      { 
+      {
         message: 'Profil mis à jour avec succès',
-        user: userWithoutPassword 
+        user: userWithoutPassword,
       },
       { status: 200 }
     )
