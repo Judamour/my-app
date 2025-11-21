@@ -1,7 +1,7 @@
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { notFound, redirect } from 'next/navigation'
-import Link from 'next/link'
+import ContactButton from '@/components/messages/ContactButton'
 import BackButton from '@/components/BackButton'
 
 interface PageProps {
@@ -88,7 +88,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
       {/* Header */}
       <div className="border-b border-gray-100">
         <div className="max-w-4xl mx-auto px-6 py-4">
-    <BackButton />
+          <BackButton />
         </div>
       </div>
 
@@ -385,7 +385,10 @@ export default async function PublicProfilePage({ params }: PageProps) {
                 </div>
               </div>
             )}
-
+            {/* Bouton Contacter */}
+            {session.user.id !== id && (
+              <ContactButton recipientId={id} recipientName={user.firstName} />
+            )}
             {/* Note de sécurité */}
             <div className="bg-blue-50 rounded-xl p-4">
               <p className="text-xs text-blue-600">

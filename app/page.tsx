@@ -1,66 +1,504 @@
-import Image from "next/image";
+import Link from 'next/link'
+import { auth } from '@/lib/auth'
 
+export default async function LandingPage() {
+  const session = await auth()
 
-export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for bite  a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="min-h-screen bg-white">
+      {/* Navigation */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">🏠</span>
+              <span className="text-xl font-bold text-gray-900">LocaTop</span>
+            </div>
+            
+            <div className="hidden md:flex items-center gap-8">
+              <a href="#features" className="text-gray-600 hover:text-gray-900 transition-colors">Fonctionnalités</a>
+              <a href="#how-it-works" className="text-gray-600 hover:text-gray-900 transition-colors">Comment ça marche</a>
+              <a href="#pricing" className="text-gray-600 hover:text-gray-900 transition-colors">Tarifs</a>
+            </div>
+
+            <div className="flex items-center gap-4">
+              {session?.user ? (
+                <Link
+                  href="/profile"
+                  className="px-5 py-2.5 bg-gray-900 text-white font-medium rounded-xl hover:bg-gray-800 transition-colors"
+                >
+                  Mon espace
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                  >
+                    Connexion
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="px-5 py-2.5 bg-gray-900 text-white font-medium rounded-xl hover:bg-gray-800 transition-colors"
+                  >
+                    Inscription
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="pt-32 pb-20 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 rounded-full text-emerald-700 text-sm font-medium mb-6">
+                <span>✨</span>
+                <span>La gestion locative simplifiée</span>
+              </div>
+              
+              <h1 className="text-5xl md:text-6xl font-bold text-gray-900 leading-tight mb-6">
+                Gérez vos locations en toute
+                <span className="bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent"> confiance</span>
+              </h1>
+              
+              <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+                La plateforme qui connecte propriétaires et locataires. 
+                Candidatures, baux, quittances et paiements au même endroit.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link
+                  href="/register"
+                  className="px-8 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-xl hover:from-emerald-600 hover:to-teal-600 transition-all shadow-lg shadow-emerald-500/30 text-center"
+                >
+                  Commencer gratuitement
+                </Link>
+                <a
+                  href="#how-it-works"
+                  className="px-8 py-4 border-2 border-gray-200 text-gray-700 font-semibold rounded-xl hover:border-gray-300 hover:bg-gray-50 transition-all text-center"
+                >
+                  Découvrir →
+                </a>
+              </div>
+
+              {/* Trust badges */}
+              <div className="flex items-center gap-6 mt-10 pt-10 border-t border-gray-100">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-gray-900">100%</p>
+                  <p className="text-sm text-gray-500">Gratuit locataires</p>
+                </div>
+                <div className="w-px h-10 bg-gray-200"></div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-gray-900">🔒</p>
+                  <p className="text-sm text-gray-500">Données sécurisées</p>
+                </div>
+                <div className="w-px h-10 bg-gray-200"></div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-gray-900">⭐</p>
+                  <p className="text-sm text-gray-500">Avis vérifiés</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Hero image/illustration */}
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-3xl transform rotate-3"></div>
+              <div className="relative bg-white rounded-3xl shadow-2xl p-8 transform -rotate-1">
+                <div className="space-y-4">
+                  {/* Fake dashboard preview */}
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">🏠</div>
+                      <div>
+                        <p className="font-semibold text-gray-900">Appartement Paris 11</p>
+                        <p className="text-sm text-gray-500">2 pièces • 45m²</p>
+                      </div>
+                    </div>
+                    <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm">Loué</span>
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">🏢</div>
+                      <div>
+                        <p className="font-semibold text-gray-900">Studio Lyon 6</p>
+                        <p className="text-sm text-gray-500">1 pièce • 25m²</p>
+                      </div>
+                    </div>
+                    <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm">3 candidats</span>
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">🏡</div>
+                      <div>
+                        <p className="font-semibold text-gray-900">Maison Bordeaux</p>
+                        <p className="text-sm text-gray-500">4 pièces • 90m²</p>
+                      </div>
+                    </div>
+                    <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm">Loué</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="py-20 px-6 bg-gray-50">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Tout ce dont vous avez besoin
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Une solution complète pour gérer vos locations du début à la fin
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Feature 1 */}
+            <div className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center mb-6">
+                <span className="text-2xl">📝</span>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Candidatures simplifiées</h3>
+              <p className="text-gray-600">
+                Recevez et gérez les candidatures en un clic. Profils vérifiés et dossiers complets.
+              </p>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center mb-6">
+                <span className="text-2xl">📄</span>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Baux dématérialisés</h3>
+              <p className="text-gray-600">
+                Créez et signez vos baux en ligne. Tout est archivé et accessible à tout moment.
+              </p>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center mb-6">
+                <span className="text-2xl">🧾</span>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Quittances automatiques</h3>
+              <p className="text-gray-600">
+                Générez et envoyez vos quittances de loyer automatiquement chaque mois.
+              </p>
+            </div>
+
+            {/* Feature 4 */}
+            <div className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center mb-6">
+                <span className="text-2xl">💰</span>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Suivi des paiements</h3>
+              <p className="text-gray-600">
+                Suivez les paiements en temps réel. Confirmations bidirectionnelles sécurisées.
+              </p>
+            </div>
+
+            {/* Feature 5 */}
+            <div className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-14 h-14 bg-rose-100 rounded-2xl flex items-center justify-center mb-6">
+                <span className="text-2xl">⭐</span>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Avis double-blind</h3>
+              <p className="text-gray-600">
+                Système d&apos;avis équitable où propriétaires et locataires s&apos;évaluent mutuellement.
+              </p>
+            </div>
+
+            {/* Feature 6 */}
+            <div className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-14 h-14 bg-teal-100 rounded-2xl flex items-center justify-center mb-6">
+                <span className="text-2xl">🏆</span>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Badges et Gamification</h3>
+              <p className="text-gray-600">
+                Gagnez des badges et construisez votre réputation pour des locations en confiance.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section id="how-it-works" className="py-20 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Comment ça marche ?
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              En quelques étapes simples, gérez vos locations sereinement
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+            {/* Pour les propriétaires */}
+            <div>
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                  <span className="text-xl">🏠</span>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900">Pour les propriétaires</h3>
+              </div>
+
+              <div className="space-y-6">
+                <div className="flex gap-4">
+                  <div className="w-10 h-10 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold shrink-0">1</div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-1">Ajoutez vos biens</h4>
+                    <p className="text-gray-600">Créez vos fiches propriétés avec photos et caractéristiques.</p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="w-10 h-10 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold shrink-0">2</div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-1">Recevez des candidatures</h4>
+                    <p className="text-gray-600">Les locataires intéressés postulent avec leur profil vérifié.</p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="w-10 h-10 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold shrink-0">3</div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-1">Gérez vos baux</h4>
+                    <p className="text-gray-600">Créez le bail, suivez les paiements et générez les quittances.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Pour les locataires */}
+            <div>
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <span className="text-xl">🔑</span>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900">Pour les locataires</h3>
+              </div>
+
+              <div className="space-y-6">
+                <div className="flex gap-4">
+                  <div className="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold shrink-0">1</div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-1">Créez votre profil</h4>
+                    <p className="text-gray-600">Complétez votre passport de confiance une seule fois.</p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold shrink-0">2</div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-1">Postulez facilement</h4>
+                    <p className="text-gray-600">Envoyez votre candidature en un clic aux biens qui vous plaisent.</p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold shrink-0">3</div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-1">Gérez votre location</h4>
+                    <p className="text-gray-600">Déclarez vos paiements et téléchargez vos quittances.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section id="pricing" className="py-20 px-6 bg-gray-50">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Tarifs simples et transparents
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Gratuit pour les locataires, abordable pour les propriétaires
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {/* Locataire */}
+            <div className="bg-white rounded-2xl p-8 shadow-sm border-2 border-gray-100">
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <span className="text-3xl">🔑</span>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Locataire</h3>
+                <div className="flex items-baseline justify-center gap-1">
+                  <span className="text-4xl font-bold text-gray-900">Gratuit</span>
+                </div>
+                <p className="text-gray-500 mt-2">Pour toujours</p>
+              </div>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-center gap-2 text-gray-600">
+                  <span className="text-emerald-500">✓</span> Candidatures illimitées
+                </li>
+                <li className="flex items-center gap-2 text-gray-600">
+                  <span className="text-emerald-500">✓</span> Passport de confiance
+                </li>
+                <li className="flex items-center gap-2 text-gray-600">
+                  <span className="text-emerald-500">✓</span> Suivi des paiements
+                </li>
+                <li className="flex items-center gap-2 text-gray-600">
+                  <span className="text-emerald-500">✓</span> Quittances téléchargeables
+                </li>
+              </ul>
+              <Link
+                href="/register"
+                className="block w-full py-3 text-center border-2 border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
+              >
+                Commencer
+              </Link>
+            </div>
+
+            {/* Propriétaire */}
+            <div className="bg-white rounded-2xl p-8 shadow-lg border-2 border-emerald-500 relative">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-emerald-500 text-white text-sm font-medium rounded-full">
+                Populaire
+              </div>
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <span className="text-3xl">🏠</span>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Propriétaire</h3>
+                <div className="flex items-baseline justify-center gap-1">
+                  <span className="text-4xl font-bold text-gray-900">Gratuit</span>
+                </div>
+                <p className="text-gray-500 mt-2">Jusqu&apos;à 4 biens</p>
+              </div>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-center gap-2 text-gray-600">
+                  <span className="text-emerald-500">✓</span> Gestion de 4 biens
+                </li>
+                <li className="flex items-center gap-2 text-gray-600">
+                  <span className="text-emerald-500">✓</span> Candidatures et baux
+                </li>
+                <li className="flex items-center gap-2 text-gray-600">
+                  <span className="text-emerald-500">✓</span> Quittances automatiques
+                </li>
+                <li className="flex items-center gap-2 text-gray-600">
+                  <span className="text-emerald-500">✓</span> Suivi des paiements
+                </li>
+              </ul>
+              <Link
+                href="/register"
+                className="block w-full py-3 text-center bg-emerald-500 text-white font-semibold rounded-xl hover:bg-emerald-600 transition-colors"
+              >
+                Commencer
+              </Link>
+            </div>
+
+            {/* Pro */}
+            <div className="bg-white rounded-2xl p-8 shadow-sm border-2 border-gray-100">
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <span className="text-3xl">🏢</span>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Pro</h3>
+                <div className="flex items-baseline justify-center gap-1">
+                  <span className="text-4xl font-bold text-gray-900">39,90€</span>
+                  <span className="text-gray-500">/mois</span>
+                </div>
+                <p className="text-gray-500 mt-2">5 biens et plus</p>
+              </div>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-center gap-2 text-gray-600">
+                  <span className="text-emerald-500">✓</span> Biens illimités
+                </li>
+                <li className="flex items-center gap-2 text-gray-600">
+                  <span className="text-emerald-500">✓</span> Toutes les fonctionnalités
+                </li>
+                <li className="flex items-center gap-2 text-gray-600">
+                  <span className="text-emerald-500">✓</span> Support prioritaire
+                </li>
+                <li className="flex items-center gap-2 text-gray-600">
+                  <span className="text-emerald-500">✓</span> Export comptable
+                </li>
+              </ul>
+              <Link
+                href="/register"
+                className="block w-full py-3 text-center border-2 border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
+              >
+                Commencer
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Final */}
+      <section className="py-20 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-4xl font-bold text-gray-900 mb-6">
+            Prêt à simplifier votre gestion locative ?
+          </h2>
+          <p className="text-xl text-gray-600 mb-8">
+            Rejoignez des milliers de propriétaires et locataires qui nous font confiance.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/register"
+            className="inline-block px-10 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-xl hover:from-emerald-600 hover:to-teal-600 transition-all shadow-lg shadow-emerald-500/30"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/8 px-5 transition-colors hover:border-transparent hover:bg-black/4 dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            Créer mon compte gratuitement
+          </Link>
         </div>
-      </main>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-16 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-2xl">🏠</span>
+                <span className="text-xl font-bold">LocaTop</span>
+              </div>
+              <p className="text-gray-400">
+                La gestion locative moderne et simplifiée.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-4">Produit</h4>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#features" className="hover:text-white transition-colors">Fonctionnalités</a></li>
+                <li><a href="#pricing" className="hover:text-white transition-colors">Tarifs</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">FAQ</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-4">Légal</h4>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#" className="hover:text-white transition-colors">Mentions légales</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">CGU</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Confidentialité</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-4">Contact</h4>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="mailto:contact@locatop.fr" className="hover:text-white transition-colors">contact@locatop.fr</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Support</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="pt-8 border-t border-gray-800 text-center text-gray-500">
+            <p>© 2025 LocaTop. Tous droits réservés.</p>
+          </div>
+        </div>
+      </footer>
     </div>
-  );
+  )
 }

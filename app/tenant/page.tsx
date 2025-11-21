@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import ShareButton from '@/components/ShareButton'
+import LogoutButton from '@/components/LogoutButton'
 
 export default async function TenantDashboardPage() {
   const session = await requireAuth()
@@ -195,7 +196,19 @@ export default async function TenantDashboardPage() {
             <p className="text-sm text-gray-500 mt-1">Disponibles</p>
           </Link>
         </div>
-
+        {/* Messages */}
+        <Link
+          href="/messages"
+          className="group flex items-center gap-5 p-6 border-2 border-gray-200 rounded-2xl hover:border-gray-300 hover:bg-gray-50 transition-all duration-200"
+        >
+          <div className="w-14 h-14 bg-purple-50 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform">
+            <span className="text-2xl">💬</span>
+          </div>
+          <div>
+            <p className="font-semibold text-gray-900 text-lg">Messages</p>
+            <p className="text-gray-500 mt-1">Mes conversations</p>
+          </div>
+        </Link>
         {/* Alerte paiement en attente */}
         {pendingPayments > 0 && (
           <div className="mb-10 bg-orange-50 rounded-2xl p-6 border border-orange-200">
@@ -364,6 +377,10 @@ export default async function TenantDashboardPage() {
             </div>
           </div>
         </div>
+      </div>
+      {/* Déconnexion */}
+      <div className="mt-12 pt-8 border-t border-gray-100">
+        <LogoutButton />
       </div>
     </div>
   )

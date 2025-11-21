@@ -124,6 +124,8 @@ model User {
   // Relations notifications
   notifications     Notification[]
 
+
+
   shareLinks    ShareLink[] @relation("UserShareLinks")
   
   createdAt       DateTime @default(now())
@@ -161,6 +163,8 @@ model Property {
   applications  Application[]
   conversations Conversation[]
   documents     Document[]
+
+  
 
   shareLinks    ShareLink[]
   
@@ -451,6 +455,8 @@ model ShareLink {
   @@index([propertyId])
   @@map("share_links")
 }
+
+
 
 enum ShareType {
   PROFILE

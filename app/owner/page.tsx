@@ -2,6 +2,7 @@ import { requireAuth } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import LogoutButton from '@/components/LogoutButton'
 
 export default async function OwnerDashboardPage() {
   const session = await requireAuth()
@@ -69,6 +70,64 @@ export default async function OwnerDashboardPage() {
     },
   })
 
+  // Calcul des revenus du mois en cours
+  const now = new Date()
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+  const endOfMonth = new Date(
+    now.getFullYear(),
+    now.getMonth() + 1,
+    0,
+    23,
+    59,
+    59
+  )
+
+  const monthlyPayments = await prisma.receipt.findMany({
+    where: {
+      lease: {
+        property: { ownerId: user.id },
+      },
+      status: 'CONFIRMED',
+      paidAt: {
+        gte: startOfMonth,
+        lte: endOfMonth,
+      },
+    },
+    select: {
+      totalAmount: true,
+    },
+  })
+
+  const monthlyTotal = monthlyPayments.reduce(
+    (sum, r) => sum + r.totalAmount,
+    0
+  )
+  // Total tous temps
+  const allTimePayments = await prisma.receipt.aggregate({
+    where: {
+      lease: {
+        property: { ownerId: user.id },
+      },
+      status: 'CONFIRMED',
+    },
+    _sum: {
+      totalAmount: true,
+    },
+  })
+
+  const allTimeTotal = allTimePayments._sum?.totalAmount || 0
+  const formatPrice = (amount: number) => {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+      maximumFractionDigits: 0,
+    }).format(amount)
+  }
+
+  const getMonthName = () => {
+    return new Date().toLocaleDateString('fr-FR', { month: 'long' })
+  }
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -88,7 +147,9 @@ export default async function OwnerDashboardPage() {
                 className="flex items-center gap-3 px-5 py-3 bg-gray-50 rounded-full hover:bg-gray-100 transition-all duration-200"
               >
                 <span className="text-xl">🔑</span>
-                <span className="font-medium text-gray-700">Mode locataire</span>
+                <span className="font-medium text-gray-700">
+                  Mode locataire
+                </span>
               </Link>
             )}
           </div>
@@ -130,7 +191,8 @@ export default async function OwnerDashboardPage() {
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-gray-900">
-                  {pendingPayments} paiement{pendingPayments > 1 ? 's' : ''} à confirmer
+                  {pendingPayments} paiement{pendingPayments > 1 ? 's' : ''} à
+                  confirmer
                 </h3>
                 <p className="text-gray-600 text-sm mt-1">
                   Des locataires ont déclaré avoir payé leur loyer
@@ -145,6 +207,45 @@ export default async function OwnerDashboardPage() {
             </div>
           </div>
         )}
+
+        {/* Carte Revenus du mois */}
+        <Link
+          href="/owner/payments"
+          className="block mb-10 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl p-6 text-white hover:from-emerald-600 hover:to-teal-600 transition-all shadow-lg"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-emerald-100 text-sm mb-1">
+                Revenus {getMonthName()}
+              </p>
+              <p className="text-4xl font-bold">{formatPrice(monthlyTotal)}</p>
+              <p className="text-emerald-100 text-sm mt-2">
+                Total perçu : {formatPrice(allTimeTotal)}
+              </p>
+            </div>
+            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+              <span className="text-3xl">💰</span>
+            </div>
+          </div>
+          <div className="mt-4 pt-4 border-t border-white/20 flex items-center justify-between">
+            <span className="text-sm text-emerald-100">
+              Voir le détail des paiements
+            </span>
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </div>
+        </Link>
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
@@ -218,7 +319,9 @@ export default async function OwnerDashboardPage() {
                 <span className="text-2xl">➕</span>
               </div>
               <div>
-                <p className="font-semibold text-white text-lg">Ajouter un bien</p>
+                <p className="font-semibold text-white text-lg">
+                  Ajouter un bien
+                </p>
                 <p className="text-gray-300 mt-1">Créer une nouvelle fiche</p>
               </div>
             </Link>
@@ -232,7 +335,9 @@ export default async function OwnerDashboardPage() {
                 <span className="text-2xl">📋</span>
               </div>
               <div>
-                <p className="font-semibold text-gray-900 text-lg">Mes propriétés</p>
+                <p className="font-semibold text-gray-900 text-lg">
+                  Mes propriétés
+                </p>
                 <p className="text-gray-500 mt-1">Gérer mes biens</p>
               </div>
             </Link>
@@ -246,12 +351,29 @@ export default async function OwnerDashboardPage() {
                 <span className="text-2xl">🧾</span>
               </div>
               <div>
-                <p className="font-semibold text-gray-900 text-lg">Quittances</p>
-                <p className="text-gray-500 mt-1">{receiptsCount} générée{receiptsCount > 1 ? 's' : ''}</p>
+                <p className="font-semibold text-gray-900 text-lg">
+                  Quittances
+                </p>
+                <p className="text-gray-500 mt-1">
+                  {receiptsCount} générée{receiptsCount > 1 ? 's' : ''}
+                </p>
               </div>
             </Link>
           </div>
         </div>
+        {/* Messages */}
+        <Link
+          href="/messages"
+          className="group flex items-center gap-5 p-6 border-2 border-gray-200 rounded-2xl hover:border-gray-300 hover:bg-gray-50 transition-all duration-200"
+        >
+          <div className="w-14 h-14 bg-gray-100 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform">
+            <span className="text-2xl">💬</span>
+          </div>
+          <div>
+            <p className="font-semibold text-gray-900 text-lg">Messages</p>
+            <p className="text-gray-500 mt-1">Mes conversations</p>
+          </div>
+        </Link>
 
         {/* Candidatures récentes */}
         <div>
@@ -280,19 +402,35 @@ export default async function OwnerDashboardPage() {
           ) : (
             <div className="bg-orange-50 rounded-2xl p-6">
               <p className="font-medium text-gray-900">
-                {applicationsCount} candidature{applicationsCount > 1 ? 's' : ''} en attente
+                {applicationsCount} candidature
+                {applicationsCount > 1 ? 's' : ''} en attente
               </p>
               <Link
                 href="/owner/applications"
                 className="inline-flex items-center gap-2 mt-4 text-orange-600 font-medium hover:text-orange-700"
               >
                 Voir les candidatures
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
                 </svg>
               </Link>
             </div>
           )}
+        </div>
+
+        {/* Déconnexion */}
+        <div className="mt-12 pt-8 border-t border-gray-100">
+          <LogoutButton />
         </div>
       </div>
     </div>
