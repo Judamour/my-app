@@ -9,7 +9,7 @@ export default async function TenantApplicationsPage() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { isTenant: true }
+    select: { isTenant: true },
   })
 
   if (!user?.isTenant) {
@@ -19,12 +19,13 @@ export default async function TenantApplicationsPage() {
 const applications = await prisma.application.findMany({
   where: {
     tenantId: session.user.id,
-    // Exclure les candidatures qui ont un bail créé
+    // Exclure les candidatures qui ont un bail ACTIF ou PENDING
     NOT: {
       property: {
         leases: {
           some: {
-            tenantId: session.user.id
+            tenantId: session.user.id,
+            status: { in: ['ACTIVE', 'PENDING'] }
           }
         }
       }
@@ -41,13 +42,15 @@ const applications = await prisma.application.findMany({
           images: true,
           owner: {
             select: {
+              id: true,
+
               firstName: true,
-            }
-          }
-        }
-      }
+            },
+          },
+        },
+      },
     },
-    orderBy: { createdAt: 'desc' }
+    orderBy: { createdAt: 'desc' },
   })
 
   const pendingCount = applications.filter(a => a.status === 'PENDING').length
@@ -63,8 +66,18 @@ const applications = await prisma.application.findMany({
             href="/tenant"
             className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors text-sm mb-4"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
             Mon espace
           </Link>
@@ -72,7 +85,9 @@ const applications = await prisma.application.findMany({
             Mes candidatures
           </h1>
           <p className="text-gray-500 mt-1">
-            {applications.length} candidature{applications.length > 1 ? 's' : ''} envoyée{applications.length > 1 ? 's' : ''}
+            {applications.length} candidature
+            {applications.length > 1 ? 's' : ''} envoyée
+            {applications.length > 1 ? 's' : ''}
           </p>
         </div>
       </div>
@@ -81,15 +96,21 @@ const applications = await prisma.application.findMany({
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-10">
           <div className="bg-orange-50 rounded-2xl p-5 text-center">
-            <p className="text-3xl font-semibold text-orange-600">{pendingCount}</p>
+            <p className="text-3xl font-semibold text-orange-600">
+              {pendingCount}
+            </p>
             <p className="text-sm text-gray-600 mt-1">En attente</p>
           </div>
           <div className="bg-emerald-50 rounded-2xl p-5 text-center">
-            <p className="text-3xl font-semibold text-emerald-600">{acceptedCount}</p>
+            <p className="text-3xl font-semibold text-emerald-600">
+              {acceptedCount}
+            </p>
             <p className="text-sm text-gray-600 mt-1">Acceptées</p>
           </div>
           <div className="bg-gray-50 rounded-2xl p-5 text-center">
-            <p className="text-3xl font-semibold text-gray-400">{rejectedCount}</p>
+            <p className="text-3xl font-semibold text-gray-400">
+              {rejectedCount}
+            </p>
             <p className="text-sm text-gray-600 mt-1">Refusées</p>
           </div>
         </div>
@@ -104,7 +125,8 @@ const applications = await prisma.application.findMany({
               Aucune candidature
             </h2>
             <p className="text-gray-500 max-w-md mx-auto">
-              Vous n&apos;avez pas encore postulé à un bien. Attendez de recevoir un lien de la part d&apos;un propriétaire.
+              Vous n&apos;avez pas encore postulé à un bien. Attendez de
+              recevoir un lien de la part d&apos;un propriétaire.
             </p>
             <Link
               href="/tenant"
@@ -115,7 +137,7 @@ const applications = await prisma.application.findMany({
           </div>
         ) : (
           <div className="space-y-4">
-            {applications.map((application) => (
+            {applications.map(application => (
               <ApplicationCard
                 key={application.id}
                 application={application}

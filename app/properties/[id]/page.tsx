@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import ApplyButton from '@/components/properties/ApplyButton'
+import ImageGallery from '@/components/properties/ImageGallery'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -42,13 +43,26 @@ export default async function PropertyPublicPage({ params }: PageProps) {
     redirect(`/owner/properties/${id}`)
   }
 
-  // Vérifier si déjà postulé
+  // Vérifier si déjà postulé (mais permettre si le bail est terminé)
   const existingApplication = await prisma.application.findFirst({
     where: {
       propertyId: id,
       tenantId: session.user.id,
     },
   })
+
+  // Vérifier si un bail existe pour cette propriété
+  const existingLease = await prisma.lease.findFirst({
+    where: {
+      tenantId: session.user.id,
+      property: { id },
+    },
+    select: { status: true },
+  })
+
+  // Si le bail est terminé, on peut repostuler (ignorer l'ancienne candidature)
+  const canReapply = existingLease?.status === 'ENDED'
+  const showExistingApplication = existingApplication && !canReapply
 
   const formatPrice = (amount: number) => {
     return new Intl.NumberFormat('fr-FR', {
@@ -73,11 +87,15 @@ export default async function PropertyPublicPage({ params }: PageProps) {
   // Ancienneté du propriétaire
   const memberSince = new Date(property.owner.createdAt)
   const now = new Date()
-  const monthsDiff = (now.getFullYear() - memberSince.getFullYear()) * 12 + 
-                     (now.getMonth() - memberSince.getMonth())
-  const memberDuration = monthsDiff < 12 
-    ? `Membre depuis ${monthsDiff || 1} mois`
-    : `Membre depuis ${Math.floor(monthsDiff / 12)} an${Math.floor(monthsDiff / 12) > 1 ? 's' : ''}`
+  const monthsDiff =
+    (now.getFullYear() - memberSince.getFullYear()) * 12 +
+    (now.getMonth() - memberSince.getMonth())
+  const memberDuration =
+    monthsDiff < 12
+      ? `Membre depuis ${monthsDiff || 1} mois`
+      : `Membre depuis ${Math.floor(monthsDiff / 12)} an${
+          Math.floor(monthsDiff / 12) > 1 ? 's' : ''
+        }`
 
   return (
     <div className="min-h-screen bg-white">
@@ -88,8 +106,18 @@ export default async function PropertyPublicPage({ params }: PageProps) {
             href="/tenant"
             className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
             Mon espace
           </Link>
@@ -98,47 +126,18 @@ export default async function PropertyPublicPage({ params }: PageProps) {
 
       <div className="max-w-5xl mx-auto px-6 py-8">
         {/* Images */}
-        {property.images && property.images.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-8 rounded-2xl overflow-hidden">
-            <div className="relative aspect-[4/3] md:aspect-auto md:row-span-2">
-              <Image
-                src={property.images[0]}
-                alt={property.title}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 50vw"
-                priority
-              />
-            </div>
-            {property.images.slice(1, 3).map((url, index) => (
-              <div key={index} className="relative aspect-[4/3] hidden md:block">
-                <Image
-                  src={url}
-                  alt={`${property.title} ${index + 2}`}
-                  fill
-                  className="object-cover"
-                  sizes="25vw"
-                />
-              </div>
-            ))}
-            {property.images.length > 3 && (
-              <div className="absolute bottom-4 right-4 bg-white px-4 py-2 rounded-lg text-sm font-medium shadow">
-                +{property.images.length - 3} photos
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="aspect-video bg-gray-100 rounded-2xl flex items-center justify-center mb-8">
-            <span className="text-6xl">🏠</span>
-          </div>
-        )}
+        <div className="mb-8">
+          <ImageGallery images={property.images || []} title={property.title} />
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
           {/* Colonne principale */}
           <div className="lg:col-span-2">
             {/* Titre & Type */}
             <div className="mb-6">
-              <p className="text-gray-500 mb-1">{getPropertyType(property.type)}</p>
+              <p className="text-gray-500 mb-1">
+                {getPropertyType(property.type)}
+              </p>
               <h1 className="text-3xl font-semibold text-gray-900 mb-2">
                 {property.title}
               </h1>
@@ -150,15 +149,21 @@ export default async function PropertyPublicPage({ params }: PageProps) {
             {/* Caractéristiques */}
             <div className="flex gap-6 py-6 border-y border-gray-100 mb-6">
               <div className="text-center">
-                <p className="text-2xl font-semibold text-gray-900">{property.surface}</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {property.surface}
+                </p>
                 <p className="text-sm text-gray-500">m²</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-semibold text-gray-900">{property.rooms}</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {property.rooms}
+                </p>
                 <p className="text-sm text-gray-500">pièces</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-semibold text-gray-900">{property.bedrooms}</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {property.bedrooms}
+                </p>
                 <p className="text-sm text-gray-500">chambres</p>
               </div>
             </div>
@@ -182,7 +187,8 @@ export default async function PropertyPublicPage({ params }: PageProps) {
               </h2>
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center text-white text-xl font-semibold">
-                  {property.owner.firstName[0]}{property.owner.lastName[0]}
+                  {property.owner.firstName[0]}
+                  {property.owner.lastName[0]}
                 </div>
                 <div>
                   <p className="font-semibold text-gray-900">
@@ -201,21 +207,26 @@ export default async function PropertyPublicPage({ params }: PageProps) {
               <div className="mb-6">
                 <p className="text-3xl font-semibold text-gray-900">
                   {formatPrice(property.rent)}
-                  <span className="text-lg text-gray-400 font-normal">/mois</span>
+                  <span className="text-lg text-gray-400 font-normal">
+                    /mois
+                  </span>
                 </p>
               </div>
 
               {/* Statut candidature */}
-              {existingApplication ? (
+              {showExistingApplication ? (
                 <div className="mb-6 p-4 bg-blue-50 rounded-xl">
                   <p className="font-medium text-blue-800 flex items-center gap-2">
                     <span>📝</span>
                     Candidature envoyée
                   </p>
                   <p className="text-sm text-blue-600 mt-1">
-                    Statut : {existingApplication.status === 'PENDING' ? 'En attente' : 
-                              existingApplication.status === 'ACCEPTED' ? 'Acceptée ✅' : 
-                              'Refusée ❌'}
+                    Statut :{' '}
+                    {existingApplication!.status === 'PENDING'
+                      ? 'En attente'
+                      : existingApplication!.status === 'ACCEPTED'
+                      ? 'Acceptée ✅'
+                      : 'Refusée ❌'}
                   </p>
                 </div>
               ) : !property.available ? (
@@ -232,7 +243,8 @@ export default async function PropertyPublicPage({ params }: PageProps) {
               {/* Infos */}
               <div className="pt-4 border-t border-gray-100 mt-4">
                 <p className="text-xs text-gray-400 text-center">
-                  🔒 L&apos;adresse exacte sera communiquée si votre candidature est acceptée
+                  🔒 L&apos;adresse exacte sera communiquée si votre candidature
+                  est acceptée
                 </p>
               </div>
             </div>

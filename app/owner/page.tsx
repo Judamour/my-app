@@ -56,6 +56,16 @@ export default async function OwnerDashboardPage() {
       lease: {
         property: { ownerId: user.id },
       },
+      status: 'CONFIRMED',
+    },
+  })
+
+  const pendingPayments = await prisma.receipt.count({
+    where: {
+      lease: {
+        property: { ownerId: user.id },
+      },
+      status: 'DECLARED',
     },
   })
 
@@ -106,6 +116,31 @@ export default async function OwnerDashboardPage() {
                 className="px-6 py-3 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
               >
                 Compléter
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Alerte paiements en attente */}
+        {pendingPayments > 0 && (
+          <div className="mb-10 bg-orange-50 rounded-2xl p-6 border border-orange-200">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                <span className="text-xl">💰</span>
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900">
+                  {pendingPayments} paiement{pendingPayments > 1 ? 's' : ''} à confirmer
+                </h3>
+                <p className="text-gray-600 text-sm mt-1">
+                  Des locataires ont déclaré avoir payé leur loyer
+                </p>
+              </div>
+              <Link
+                href="/owner/receipts"
+                className="px-5 py-2 bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-700 transition-colors"
+              >
+                Voir
               </Link>
             </div>
           </div>

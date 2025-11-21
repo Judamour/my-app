@@ -2,13 +2,14 @@ import { requireAuth } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import Accordion from '@/components/ui/Accordion'
 
 export default async function TenantLeasesPage() {
   const session = await requireAuth()
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { isTenant: true }
+    select: { isTenant: true },
   })
 
   if (!user?.isTenant) {
@@ -17,7 +18,7 @@ export default async function TenantLeasesPage() {
 
   const leases = await prisma.lease.findMany({
     where: {
-      tenantId: session.user.id
+      tenantId: session.user.id,
     },
     include: {
       property: {
@@ -31,16 +32,19 @@ export default async function TenantLeasesPage() {
             select: {
               firstName: true,
               lastName: true,
-            }
-          }
-        }
-      }
+            },
+          },
+        },
+      },
     },
-    orderBy: { createdAt: 'desc' }
+    orderBy: { createdAt: 'desc' },
   })
 
-  const activeCount = leases.filter(l => l.status === 'ACTIVE').length
-  const pendingCount = leases.filter(l => l.status === 'PENDING').length
+  // Séparer les baux actifs/pending des baux terminés
+  const activeLeases = leases.filter(
+    l => l.status === 'ACTIVE' || l.status === 'PENDING'
+  )
+  const endedLeases = leases.filter(l => l.status === 'ENDED')
 
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString('fr-FR', {
@@ -86,6 +90,59 @@ export default async function TenantLeasesPage() {
     }
   }
 
+  const LeaseCard = ({
+    lease,
+    showAddress = false,
+  }: {
+    lease: (typeof leases)[0]
+    showAddress?: boolean
+  }) => (
+    <Link
+      href={`/tenant/leases/${lease.id}`}
+      className="block border border-gray-200 rounded-2xl p-6 hover:shadow-md transition-shadow"
+    >
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-start gap-4">
+          <div className="w-14 h-14 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <span className="text-2xl">🏠</span>
+          </div>
+          <div>
+            <div className="flex items-center gap-3 mb-1">
+              <h3 className="font-semibold text-gray-900">
+                {lease.property.title}
+              </h3>
+              {getStatusBadge(lease.status)}
+            </div>
+            <p className="text-sm text-gray-500 mb-2">
+              📍{' '}
+              {showAddress && lease.property.address
+                ? lease.property.address + ', '
+                : ''}
+              {lease.property.city}
+            </p>
+            <div className="flex items-center gap-4 text-sm text-gray-500">
+              <span>📅 Début : {formatDate(lease.startDate)}</span>
+              {lease.endDate && (
+                <span>→ Fin : {formatDate(lease.endDate)}</span>
+              )}
+            </div>
+            <p className="text-sm text-gray-500 mt-2">
+              Propriétaire : {lease.property.owner.firstName}{' '}
+              {lease.property.owner.lastName}
+            </p>
+          </div>
+        </div>
+
+        <div className="text-right">
+          <p className="text-2xl font-semibold text-gray-900">
+            {formatPrice(lease.monthlyRent)}
+          </p>
+          <p className="text-sm text-gray-500">/mois</p>
+        </div>
+      </div>
+    </Link>
+  )
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -95,16 +152,25 @@ export default async function TenantLeasesPage() {
             href="/tenant"
             className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors text-sm mb-4"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
             Mon espace
           </Link>
-          <h1 className="text-3xl font-semibold text-gray-900">
-            Mes baux
-          </h1>
+          <h1 className="text-3xl font-semibold text-gray-900">Mes baux</h1>
           <p className="text-gray-500 mt-1">
-            {leases.length} bail{leases.length > 1 ? 's' : ''}
+            {activeLeases.length} actif{activeLeases.length > 1 ? 's' : ''} •{' '}
+            {endedLeases.length} terminé{endedLeases.length > 1 ? 's' : ''}
           </p>
         </div>
       </div>
@@ -113,16 +179,20 @@ export default async function TenantLeasesPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 gap-4 mb-10">
           <div className="bg-emerald-50 rounded-2xl p-5 text-center">
-            <p className="text-3xl font-semibold text-emerald-600">{activeCount}</p>
+            <p className="text-3xl font-semibold text-emerald-600">
+              {activeLeases.filter(l => l.status === 'ACTIVE').length}
+            </p>
             <p className="text-sm text-gray-600 mt-1">Bail actif</p>
           </div>
           <div className="bg-orange-50 rounded-2xl p-5 text-center">
-            <p className="text-3xl font-semibold text-orange-600">{pendingCount}</p>
+            <p className="text-3xl font-semibold text-orange-600">
+              {activeLeases.filter(l => l.status === 'PENDING').length}
+            </p>
             <p className="text-sm text-gray-600 mt-1">En attente</p>
           </div>
         </div>
 
-        {/* Liste */}
+        {/* Aucun bail */}
         {leases.length === 0 ? (
           <div className="text-center py-20">
             <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -132,7 +202,8 @@ export default async function TenantLeasesPage() {
               Aucun bail
             </h2>
             <p className="text-gray-500 max-w-md mx-auto">
-              Vous n&apos;avez pas encore de bail actif. Postulez à des biens pour en obtenir un.
+              Vous n&apos;avez pas encore de bail actif. Postulez à des biens
+              pour en obtenir un.
             </p>
             <Link
               href="/tenant/applications"
@@ -142,51 +213,45 @@ export default async function TenantLeasesPage() {
             </Link>
           </div>
         ) : (
-          <div className="space-y-4">
-            {leases.map((lease) => (
-              <Link
-                key={lease.id}
-                href={`/tenant/leases/${lease.id}`}
-                className="block border border-gray-200 rounded-2xl p-6 hover:shadow-md transition-shadow"
-              >
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  {/* Infos principales */}
-                  <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <span className="text-2xl">🏠</span>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-3 mb-1">
-                        <h3 className="font-semibold text-gray-900">
-                          {lease.property.title}
-                        </h3>
-                        {getStatusBadge(lease.status)}
-                      </div>
-                      <p className="text-sm text-gray-500 mb-2">
-                        📍 {lease.status === 'ACTIVE' ? lease.property.address + ', ' : ''}{lease.property.city}
-                      </p>
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
-                        <span>📅 Début : {formatDate(lease.startDate)}</span>
-                        {lease.endDate && (
-                          <span>→ Fin : {formatDate(lease.endDate)}</span>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-500 mt-2">
-                        Propriétaire : {lease.property.owner.firstName} {lease.property.owner.lastName}
-                      </p>
-                    </div>
+          <div className="space-y-10">
+            {/* Baux en cours */}
+            {activeLeases.length > 0 && (
+              <div>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+                    <span>✅</span>
                   </div>
-
-                  {/* Loyer */}
-                  <div className="text-right">
-                    <p className="text-2xl font-semibold text-gray-900">
-                     {formatPrice(lease.monthlyRent)}
-                    </p>
-                    <p className="text-sm text-gray-500">/mois</p>
-                  </div>
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Baux en cours
+                  </h2>
+                  <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium">
+                    {activeLeases.length}
+                  </span>
                 </div>
-              </Link>
-            ))}
+                <div className="space-y-4">
+                  {activeLeases.map(lease => (
+                    <LeaseCard
+                      key={lease.id}
+                      lease={lease}
+                      showAddress={lease.status === 'ACTIVE'}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Baux terminés */}
+            {endedLeases.length > 0 && (
+              <Accordion
+                title="Historique"
+                count={endedLeases.length}
+                icon="📁"
+              >
+                {endedLeases.map(lease => (
+                  <LeaseCard key={lease.id} lease={lease} showAddress={false} />
+                ))}
+              </Accordion>
+            )}
           </div>
         )}
       </div>

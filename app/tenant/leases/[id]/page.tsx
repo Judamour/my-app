@@ -30,11 +30,11 @@ export default async function TenantLeaseDetailPage({ params }: PageProps) {
               lastName: true,
               email: true,
               phone: true,
-            }
-          }
-        }
-      }
-    }
+            },
+          },
+        },
+      },
+    },
   })
 
   if (!lease) {
@@ -98,8 +98,18 @@ export default async function TenantLeaseDetailPage({ params }: PageProps) {
             href="/tenant/leases"
             className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
             Mes baux
           </Link>
@@ -113,9 +123,7 @@ export default async function TenantLeaseDetailPage({ params }: PageProps) {
             <h1 className="text-3xl font-semibold text-gray-900 mb-2">
               Mon bail
             </h1>
-            <p className="text-gray-500">
-              {lease.property.title}
-            </p>
+            <p className="text-gray-500">{lease.property.title}</p>
           </div>
           {getStatusBadge(lease.status)}
         </div>
@@ -141,7 +149,9 @@ export default async function TenantLeaseDetailPage({ params }: PageProps) {
                   )}
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-900">{lease.property.title}</p>
+                  <p className="font-semibold text-gray-900">
+                    {lease.property.title}
+                  </p>
                   {lease.status === 'ACTIVE' && (
                     <p className="text-sm text-gray-500 mt-1">
                       {lease.property.address}
@@ -161,18 +171,30 @@ export default async function TenantLeaseDetailPage({ params }: PageProps) {
               </h2>
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center text-white text-xl font-semibold">
-                  {lease.property.owner.firstName[0]}{lease.property.owner.lastName[0]}
+                  {lease.property.owner.firstName[0]}
+                  {lease.property.owner.lastName[0]}
                 </div>
-                <div>
+                <div className="flex-1">
                   <p className="font-semibold text-gray-900">
-                    {lease.property.owner.firstName} {lease.property.owner.lastName}
+                    {lease.property.owner.firstName}{' '}
+                    {lease.property.owner.lastName}
                   </p>
-                  <p className="text-sm text-gray-500">{lease.property.owner.email}</p>
+                  <p className="text-sm text-gray-500">
+                    {lease.property.owner.email}
+                  </p>
                   {lease.property.owner.phone && (
-                    <p className="text-sm text-gray-500">{lease.property.owner.phone}</p>
+                    <p className="text-sm text-gray-500">
+                      {lease.property.owner.phone}
+                    </p>
                   )}
                 </div>
               </div>
+              <Link
+                href={`/profile/${lease.property.owner.id}`}
+                className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-blue-500 text-white font-medium rounded-xl hover:bg-blue-600 transition-colors text-sm"
+              >
+                👤 Voir le profil complet
+              </Link>
             </div>
 
             {/* Détails du bail */}
@@ -183,7 +205,9 @@ export default async function TenantLeaseDetailPage({ params }: PageProps) {
               <div className="grid grid-cols-2 gap-6">
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Date de début</p>
-                  <p className="font-medium text-gray-900">{formatDate(lease.startDate)}</p>
+                  <p className="font-medium text-gray-900">
+                    {formatDate(lease.startDate)}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Date de fin</p>
@@ -193,10 +217,14 @@ export default async function TenantLeaseDetailPage({ params }: PageProps) {
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Loyer mensuel</p>
-                  <p className="font-medium text-gray-900">{formatPrice(lease.monthlyRent)}</p>
+                  <p className="font-medium text-gray-900">
+                    {formatPrice(lease.monthlyRent)}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">Dépôt de garantie</p>
+                  <p className="text-sm text-gray-500 mb-1">
+                    Dépôt de garantie
+                  </p>
                   <p className="font-medium text-gray-900">
                     {lease.deposit ? formatPrice(lease.deposit) : 'Non défini'}
                   </p>
@@ -211,7 +239,11 @@ export default async function TenantLeaseDetailPage({ params }: PageProps) {
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Statut
               </h2>
-              <LeaseActions leaseId={lease.id} status={lease.status} role="tenant" />
+              <LeaseActions
+                leaseId={lease.id}
+                status={lease.status}
+                role="tenant"
+              />
             </div>
           </div>
         </div>

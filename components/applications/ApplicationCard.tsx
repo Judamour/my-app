@@ -19,6 +19,7 @@ interface Application {
     postalCode?: string
     images?: string[]
     owner?: {
+      id: string
       firstName: string
     }
   }
@@ -37,7 +38,10 @@ interface ApplicationCardProps {
   role: 'owner' | 'tenant'
 }
 
-export default function ApplicationCard({ application, role }: ApplicationCardProps) {
+export default function ApplicationCard({
+  application,
+  role,
+}: ApplicationCardProps) {
   const [loading, setLoading] = useState(false)
   const [showLeaseModal, setShowLeaseModal] = useState(false)
   const router = useRouter()
@@ -58,7 +62,9 @@ export default function ApplicationCard({ application, role }: ApplicationCardPr
         throw new Error(data.error || 'Erreur')
       }
 
-      toast.success(status === 'ACCEPTED' ? 'Candidature acceptée !' : 'Candidature refusée')
+      toast.success(
+        status === 'ACCEPTED' ? 'Candidature acceptée !' : 'Candidature refusée'
+      )
       router.refresh()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Erreur')
@@ -120,7 +126,8 @@ export default function ApplicationCard({ application, role }: ApplicationCardPr
             {/* Infos locataire */}
             <div className="flex items-start gap-4">
               <div className="w-14 h-14 bg-gradient-to-br from-rose-400 to-orange-300 rounded-full flex items-center justify-center text-white text-xl font-semibold flex-shrink-0">
-                {application.tenant.firstName[0]}{application.tenant.lastName[0]}
+                {application.tenant.firstName[0]}
+                {application.tenant.lastName[0]}
               </div>
               <div>
                 <div className="flex items-center gap-3 mb-1">
@@ -134,7 +141,10 @@ export default function ApplicationCard({ application, role }: ApplicationCardPr
                 </p>
                 <div className="flex items-center gap-4 text-sm">
                   <span className="text-gray-500">
-                    Pour : <span className="font-medium text-gray-700">{application.property.title}</span>
+                    Pour :{' '}
+                    <span className="font-medium text-gray-700">
+                      {application.property.title}
+                    </span>
                   </span>
                   <span className="text-gray-400">•</span>
                   <span className="text-gray-500">
@@ -143,7 +153,9 @@ export default function ApplicationCard({ application, role }: ApplicationCardPr
                 </div>
                 {application.message && (
                   <div className="mt-3 p-3 bg-gray-50 rounded-xl">
-                    <p className="text-sm text-gray-600 italic">&quot;{application.message}&quot;</p>
+                    <p className="text-sm text-gray-600 italic">
+                      &quot;{application.message}&quot;
+                    </p>
                   </div>
                 )}
                 <p className="text-xs text-gray-400 mt-3">
@@ -153,20 +165,26 @@ export default function ApplicationCard({ application, role }: ApplicationCardPr
             </div>
 
             {/* Actions */}
-            <div className="flex gap-2 md:flex-col">
+            <div className="flex gap-2 md:flex-col flex-shrink-0">
               {application.status === 'PENDING' && (
                 <>
+                  <Link
+                    href={`/profile/${application.tenant.id}`}
+                    className="px-5 py-2 bg-blue-500 text-white font-medium rounded-xl hover:bg-blue-600 transition-colors text-sm text-center"
+                  >
+                    👤 Profil
+                  </Link>
                   <button
                     onClick={() => handleAction('ACCEPTED')}
                     disabled={loading}
-                    className="flex-1 md:flex-none px-5 py-2 bg-emerald-500 text-white font-medium rounded-xl hover:bg-emerald-600 disabled:bg-gray-300 transition-colors text-sm"
+                    className="px-5 py-2 bg-emerald-500 text-white font-medium rounded-xl hover:bg-emerald-600 disabled:bg-gray-300 transition-colors text-sm"
                   >
                     ✓ Accepter
                   </button>
                   <button
                     onClick={() => handleAction('REJECTED')}
                     disabled={loading}
-                    className="flex-1 md:flex-none px-5 py-2 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 disabled:bg-gray-100 transition-colors text-sm"
+                    className="px-5 py-2 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 disabled:bg-gray-100 transition-colors text-sm"
                   >
                     ✗ Refuser
                   </button>
@@ -185,7 +203,7 @@ export default function ApplicationCard({ application, role }: ApplicationCardPr
                     href={`/profile/${application.tenant.id}`}
                     className="px-5 py-2 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors text-sm text-center"
                   >
-                    Voir le profil
+                    👤 Profil
                   </Link>
                 </>
               )}
@@ -214,7 +232,8 @@ export default function ApplicationCard({ application, role }: ApplicationCardPr
         {/* Infos bien */}
         <div className="flex items-start gap-4">
           <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
-            {application.property.images && application.property.images.length > 0 ? (
+            {application.property.images &&
+            application.property.images.length > 0 ? (
               <img
                 src={application.property.images[0]}
                 alt={application.property.title}
@@ -232,16 +251,26 @@ export default function ApplicationCard({ application, role }: ApplicationCardPr
               {getStatusBadge(application.status)}
             </div>
             <p className="text-sm text-gray-500 mb-1">
-              📍 {application.property.city} {application.property.postalCode && `(${application.property.postalCode})`}
+              📍 {application.property.city}{' '}
+              {application.property.postalCode &&
+                `(${application.property.postalCode})`}
             </p>
             <p className="text-lg font-semibold text-gray-900">
               {formatPrice(application.property.rent)}
               <span className="text-sm text-gray-400 font-normal">/mois</span>
             </p>
             {application.property.owner && (
-              <p className="text-sm text-gray-500 mt-2">
-                Proposé par {application.property.owner.firstName}
-              </p>
+              <div className="flex items-center gap-2 mt-2">
+                <p className="text-sm text-gray-500">
+                  Proposé par {application.property.owner.firstName}
+                </p>
+                <Link
+                  href={`/profile/${application.property.owner.id}`}
+                  className="text-sm text-blue-500 hover:text-blue-600 font-medium"
+                >
+                  Voir le profil →
+                </Link>
+              </div>
             )}
             <p className="text-xs text-gray-400 mt-2">
               Candidature envoyée le {formatDate(application.createdAt)}

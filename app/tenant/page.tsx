@@ -28,16 +28,36 @@ export default async function TenantDashboardPage() {
   }
 
   const applicationsCount = await prisma.application.count({
-    where: { tenantId: user.id },
+    where: {
+      tenantId: user.id,
+      NOT: {
+        property: {
+          leases: {
+            some: {
+              tenantId: user.id,
+            },
+          },
+        },
+      },
+    },
   })
 
   const pendingApplications = await prisma.application.count({
     where: {
       tenantId: user.id,
       status: 'PENDING',
+      NOT: {
+        property: {
+          leases: {
+            some: {
+              tenantId: user.id,
+              status: { in: ['ACTIVE', 'PENDING'] },
+            },
+          },
+        },
+      },
     },
   })
-
   const activeLeases = await prisma.lease.count({
     where: {
       tenantId: user.id,
@@ -85,7 +105,9 @@ export default async function TenantDashboardPage() {
                 className="flex items-center gap-3 px-5 py-3 bg-gray-50 rounded-full hover:bg-gray-100 transition-all duration-200"
               >
                 <span className="text-xl">🏠</span>
-                <span className="font-medium text-gray-700">Mode propriétaire</span>
+                <span className="font-medium text-gray-700">
+                  Mode propriétaire
+                </span>
               </Link>
             )}
           </div>
@@ -183,7 +205,8 @@ export default async function TenantDashboardPage() {
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-gray-900">
-                  {pendingPayments} paiement{pendingPayments > 1 ? 's' : ''} en attente de confirmation
+                  {pendingPayments} paiement{pendingPayments > 1 ? 's' : ''} en
+                  attente de confirmation
                 </h3>
                 <p className="text-gray-600 text-sm mt-1">
                   Votre propriétaire doit confirmer la réception
@@ -217,7 +240,9 @@ export default async function TenantDashboardPage() {
                 <p className="font-semibold text-gray-900 text-lg">
                   Mes paiements
                 </p>
-                <p className="text-gray-500 mt-1">Déclarer & télécharger quittances</p>
+                <p className="text-gray-500 mt-1">
+                  Déclarer & télécharger quittances
+                </p>
               </div>
             </Link>
 
@@ -230,9 +255,7 @@ export default async function TenantDashboardPage() {
                 <span className="text-2xl">📄</span>
               </div>
               <div>
-                <p className="font-semibold text-gray-900 text-lg">
-                  Mes baux
-                </p>
+                <p className="font-semibold text-gray-900 text-lg">Mes baux</p>
                 <p className="text-gray-500 mt-1">Voir mes contrats</p>
               </div>
             </Link>
@@ -260,10 +283,15 @@ export default async function TenantDashboardPage() {
                 <span className="text-3xl">📭</span>
               </div>
               <p className="font-medium text-gray-900">
-                {applicationsCount === 0 ? 'Aucune candidature' : `${applicationsCount} candidature${applicationsCount > 1 ? 's' : ''}`}
+                {applicationsCount === 0
+                  ? 'Aucune candidature'
+                  : `${applicationsCount} candidature${
+                      applicationsCount > 1 ? 's' : ''
+                    }`}
               </p>
               <p className="text-sm text-gray-500 mt-2 max-w-xs mx-auto">
-                Vous recevrez un lien de la part d&apos;un propriétaire pour découvrir son bien
+                Vous recevrez un lien de la part d&apos;un propriétaire pour
+                découvrir son bien
               </p>
             </div>
           </div>
@@ -285,7 +313,8 @@ export default async function TenantDashboardPage() {
             <div className="border border-gray-200 rounded-2xl p-6">
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-16 h-16 bg-gradient-to-br from-rose-400 to-orange-300 rounded-full flex items-center justify-center text-white text-xl font-semibold">
-                  {user.firstName[0]}{user.lastName[0]}
+                  {user.firstName[0]}
+                  {user.lastName[0]}
                 </div>
                 <div>
                   <p className="font-semibold text-lg text-gray-900">
@@ -294,15 +323,31 @@ export default async function TenantDashboardPage() {
                   <div className="flex items-center gap-2 mt-1">
                     {user.profileComplete ? (
                       <span className="inline-flex items-center gap-1 text-sm text-emerald-600">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        <svg
+                          className="w-4 h-4"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                         Profil vérifié
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 text-sm text-orange-500">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        <svg
+                          className="w-4 h-4"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                         À compléter
                       </span>

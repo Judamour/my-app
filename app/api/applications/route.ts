@@ -8,16 +8,13 @@ export async function POST(request: Request) {
     const session = await auth()
 
     if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Non authentifié' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
     // Vérifier que l'utilisateur est locataire
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { isTenant: true }
+      select: { isTenant: true },
     })
 
     if (!user?.isTenant) {
@@ -31,16 +28,13 @@ export async function POST(request: Request) {
     const { propertyId, message } = body
 
     if (!propertyId) {
-      return NextResponse.json(
-        { error: 'propertyId requis' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'propertyId requis' }, { status: 400 })
     }
 
     // Vérifier que la propriété existe et est disponible
     const property = await prisma.property.findUnique({
       where: { id: propertyId },
-      select: { id: true, available: true, ownerId: true }
+      select: { id: true, available: true, ownerId: true },
     })
 
     if (!property) {
@@ -52,7 +46,7 @@ export async function POST(request: Request) {
 
     if (!property.available) {
       return NextResponse.json(
-        { error: 'Ce bien n\'est plus disponible' },
+        { error: "Ce bien n'est plus disponible" },
         { status: 400 }
       )
     }
@@ -65,21 +59,43 @@ export async function POST(request: Request) {
       )
     }
 
-    // Vérifier qu'on n'a pas déjà postulé
+    // Vérifier si une candidature active existe (pas avec un bail terminé)
     const existingApplication = await prisma.application.findFirst({
       where: {
         propertyId,
         tenantId: session.user.id,
-      }
+      },
+      include: {
+        property: {
+          select: {
+            leases: {
+              where: { tenantId: session.user.id },
+              select: { status: true },
+            },
+          },
+        },
+      },
     })
 
     if (existingApplication) {
-      return NextResponse.json(
-        { error: 'Vous avez déjà postulé à ce bien' },
-        { status: 400 }
+      // Vérifier si tous les baux sont terminés (permet de repostuler)
+      const hasActiveLease = existingApplication.property.leases.some(
+        lease => lease.status !== 'ENDED'
       )
-    }
 
+      // Si un bail actif/pending existe, ou si pas de bail du tout (candidature en cours)
+      if (hasActiveLease || existingApplication.property.leases.length === 0) {
+        return NextResponse.json(
+          { error: 'Vous avez déjà postulé pour ce bien' },
+          { status: 400 }
+        )
+      }
+
+      // Si le bail est terminé, supprimer l'ancienne candidature pour permettre une nouvelle
+      await prisma.application.delete({
+        where: { id: existingApplication.id },
+      })
+    }
     // Créer la candidature
     const application = await prisma.application.create({
       data: {
@@ -87,14 +103,10 @@ export async function POST(request: Request) {
         tenantId: session.user.id,
         message: message || null,
         status: 'PENDING',
-      }
+      },
     })
 
-    return NextResponse.json(
-      { data: application },
-      { status: 201 }
-    )
-
+    return NextResponse.json({ data: application }, { status: 201 })
   } catch (error) {
     console.error('Application error:', error)
     return NextResponse.json(
@@ -110,10 +122,7 @@ export async function GET(request: Request) {
     const session = await auth()
 
     if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Non authentifié' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -124,8 +133,8 @@ export async function GET(request: Request) {
       const applications = await prisma.application.findMany({
         where: {
           property: {
-            ownerId: session.user.id
-          }
+            ownerId: session.user.id,
+          },
         },
         include: {
           property: {
@@ -134,7 +143,7 @@ export async function GET(request: Request) {
               title: true,
               city: true,
               rent: true,
-            }
+            },
           },
           tenant: {
             select: {
@@ -143,19 +152,18 @@ export async function GET(request: Request) {
               lastName: true,
               email: true,
               profileComplete: true,
-            }
-          }
+            },
+          },
         },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
       })
 
       return NextResponse.json({ data: applications })
-
     } else {
       // Mes candidatures envoyées
       const applications = await prisma.application.findMany({
         where: {
-          tenantId: session.user.id
+          tenantId: session.user.id,
         },
         include: {
           property: {
@@ -169,17 +177,16 @@ export async function GET(request: Request) {
               owner: {
                 select: {
                   firstName: true,
-                }
-              }
-            }
-          }
+                },
+              },
+            },
+          },
         },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
       })
 
       return NextResponse.json({ data: applications })
     }
-
   } catch (error) {
     console.error('Get applications error:', error)
     return NextResponse.json(

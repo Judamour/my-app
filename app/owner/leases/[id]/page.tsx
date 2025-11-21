@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import LeaseActions from '@/components/leases/LeaseActions'
+import OwnerDeclarePayment from '@/components/receipts/OwnerDeclarePayment'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -23,7 +24,7 @@ export default async function LeaseDetailPage({ params }: PageProps) {
           city: true,
           postalCode: true,
           ownerId: true,
-        }
+        },
       },
       tenant: {
         select: {
@@ -32,9 +33,9 @@ export default async function LeaseDetailPage({ params }: PageProps) {
           lastName: true,
           email: true,
           phone: true,
-        }
-      }
-    }
+        },
+      },
+    },
   })
 
   if (!lease) {
@@ -98,8 +99,18 @@ export default async function LeaseDetailPage({ params }: PageProps) {
             href="/owner/leases"
             className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
             Mes baux
           </Link>
@@ -123,26 +134,35 @@ export default async function LeaseDetailPage({ params }: PageProps) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Colonne principale */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Locataire */}
-            <div className="bg-gray-50 rounded-2xl p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                Locataire
-              </h2>
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-gradient-to-br from-rose-400 to-orange-300 rounded-full flex items-center justify-center text-white text-xl font-semibold">
-                  {lease.tenant.firstName[0]}{lease.tenant.lastName[0]}
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-900">
-                    {lease.tenant.firstName} {lease.tenant.lastName}
-                  </p>
-                  <p className="text-sm text-gray-500">{lease.tenant.email}</p>
-                  {lease.tenant.phone && (
-                    <p className="text-sm text-gray-500">{lease.tenant.phone}</p>
-                  )}
-                </div>
-              </div>
-            </div>
+   {/* Locataire */}
+<div className="bg-gray-50 rounded-2xl p-6">
+  <h2 className="text-lg font-semibold text-gray-900 mb-4">
+    Locataire
+  </h2>
+  <div className="flex items-center gap-4">
+    <div className="w-14 h-14 bg-gradient-to-br from-rose-400 to-orange-300 rounded-full flex items-center justify-center text-white text-xl font-semibold">
+      {lease.tenant.firstName[0]}
+      {lease.tenant.lastName[0]}
+    </div>
+    <div className="flex-1">
+      <p className="font-semibold text-gray-900">
+        {lease.tenant.firstName} {lease.tenant.lastName}
+      </p>
+      <p className="text-sm text-gray-500">{lease.tenant.email}</p>
+      {lease.tenant.phone && (
+        <p className="text-sm text-gray-500">
+          {lease.tenant.phone}
+        </p>
+      )}
+    </div>
+  </div>
+  <Link
+    href={`/profile/${lease.tenant.id}`}
+    className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-blue-500 text-white font-medium rounded-xl hover:bg-blue-600 transition-colors text-sm"
+  >
+    👤 Voir le profil complet
+  </Link>
+</div>
 
             {/* Propriété */}
             <div className="bg-gray-50 rounded-2xl p-6">
@@ -154,7 +174,9 @@ export default async function LeaseDetailPage({ params }: PageProps) {
                   <span className="text-2xl">🏠</span>
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-900">{lease.property.title}</p>
+                  <p className="font-semibold text-gray-900">
+                    {lease.property.title}
+                  </p>
                   <p className="text-sm text-gray-500">
                     {lease.property.address}
                   </p>
@@ -179,7 +201,9 @@ export default async function LeaseDetailPage({ params }: PageProps) {
               <div className="grid grid-cols-2 gap-6">
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Date de début</p>
-                  <p className="font-medium text-gray-900">{formatDate(lease.startDate)}</p>
+                  <p className="font-medium text-gray-900">
+                    {formatDate(lease.startDate)}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Date de fin</p>
@@ -189,10 +213,14 @@ export default async function LeaseDetailPage({ params }: PageProps) {
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Loyer mensuel</p>
-                  <p className="font-medium text-gray-900">{formatPrice(lease.monthlyRent)}</p>
+                  <p className="font-medium text-gray-900">
+                    {formatPrice(lease.monthlyRent)}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">Dépôt de garantie</p>
+                  <p className="text-sm text-gray-500 mb-1">
+                    Dépôt de garantie
+                  </p>
                   <p className="font-medium text-gray-900">
                     {lease.deposit ? formatPrice(lease.deposit) : 'Non défini'}
                   </p>
@@ -207,7 +235,22 @@ export default async function LeaseDetailPage({ params }: PageProps) {
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Actions
               </h2>
-              <LeaseActions leaseId={lease.id} status={lease.status} role="owner" />
+              {lease.status === 'ACTIVE' && (
+                <div className="mb-4">
+                  <OwnerDeclarePayment
+                    leaseId={lease.id}
+                    monthlyRent={lease.monthlyRent}
+                    charges={lease.charges}
+                    startDate={lease.startDate}
+                    tenantName={`${lease.tenant.firstName} ${lease.tenant.lastName}`}
+                  />
+                </div>
+              )}
+              <LeaseActions
+                leaseId={lease.id}
+                status={lease.status}
+                role="owner"
+              />{' '}
             </div>
           </div>
         </div>

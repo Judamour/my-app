@@ -6,35 +6,51 @@ import ApplicationCard from '@/components/applications/ApplicationCard'
 export default async function OwnerApplicationsPage() {
   const session = await requireOwner()
 
-  const applications = await prisma.application.findMany({
-    where: {
-      property: {
-        ownerId: session.user.id
-      }
-    },
-    include: {
-      property: {
-        select: {
-          id: true,
-          title: true,
-          city: true,
-          rent: true,
-        }
-      },
-      tenant: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          email: true,
-          profileComplete: true,
-          createdAt: true,
+const allApplications = await prisma.application.findMany({
+  where: {
+    property: { ownerId: session.user.id },
+  },
+  include: {
+    property: {
+      select: {
+        id: true,
+        title: true,
+        city: true,
+        rent: true,
+        leases: {
+          select: {
+            tenantId: true,
+            status : true
+          }
         }
       }
     },
-    orderBy: { createdAt: 'desc' }
-  })
-
+    tenant: {
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        profileComplete: true,
+        createdAt: true,
+      }
+    }
+  },
+  orderBy: { createdAt: 'desc' }
+})
+// Filtrer : exclure les candidatures ACCEPTED qui ont un bail ACTIF ou PENDING
+const applications = allApplications.filter(app => {
+  // Si pas acceptée, on garde
+  if (app.status !== 'ACCEPTED') return true
+  
+  // Si acceptée, vérifier qu'un bail ACTIF ou PENDING existe
+  const hasActiveLease = app.property.leases.some(
+    lease => lease.tenantId === app.tenantId && lease.status !== 'ENDED'
+  )
+  
+  // Garder si pas de bail actif (permet de recréer un bail après fin)
+  return !hasActiveLease
+})
   const pendingCount = applications.filter(a => a.status === 'PENDING').length
   const acceptedCount = applications.filter(a => a.status === 'ACCEPTED').length
   const rejectedCount = applications.filter(a => a.status === 'REJECTED').length

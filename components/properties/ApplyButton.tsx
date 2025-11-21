@@ -12,9 +12,13 @@ export default function ApplyButton({ propertyId }: ApplyButtonProps) {
   const [loading, setLoading] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [message, setMessage] = useState('')
+  const [hasApplied, setHasApplied] = useState(false)
   const router = useRouter()
 
   const handleApply = async () => {
+    // Protection double-clic
+    if (loading || hasApplied) return
+    
     setLoading(true)
 
     try {
@@ -33,14 +37,30 @@ export default function ApplyButton({ propertyId }: ApplyButtonProps) {
         throw new Error(data.error || 'Erreur lors de la candidature')
       }
 
+      // Marquer comme postulé AVANT de fermer le modal
+      setHasApplied(true)
       toast.success('Candidature envoyée avec succès !')
       setShowModal(false)
       router.refresh()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Erreur')
-    } finally {
       setLoading(false)
     }
+  }
+
+  // Si déjà postulé, afficher un message de confirmation
+  if (hasApplied) {
+    return (
+      <div className="w-full p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
+        <p className="font-medium text-emerald-700 flex items-center justify-center gap-2">
+          <span>✅</span>
+          Candidature envoyée
+        </p>
+        <p className="text-sm text-emerald-600 mt-1">
+          Le propriétaire va étudier votre profil
+        </p>
+      </div>
+    )
   }
 
   return (
@@ -48,7 +68,8 @@ export default function ApplyButton({ propertyId }: ApplyButtonProps) {
       {/* Bouton principal */}
       <button
         onClick={() => setShowModal(true)}
-        className="w-full py-4 bg-gradient-to-r from-rose-500 to-orange-500 text-white font-medium rounded-xl hover:from-rose-600 hover:to-orange-600 transition-all"
+        disabled={loading}
+        className="w-full py-4 bg-gradient-to-r from-rose-500 to-orange-500 text-white font-medium rounded-xl hover:from-rose-600 hover:to-orange-600 disabled:from-gray-300 disabled:to-gray-300 transition-all"
       >
         Postuler à ce bien
       </button>
@@ -59,7 +80,7 @@ export default function ApplyButton({ propertyId }: ApplyButtonProps) {
           {/* Backdrop */}
           <div 
             className="absolute inset-0 bg-black/50"
-            onClick={() => setShowModal(false)}
+            onClick={() => !loading && setShowModal(false)}
           />
           
           {/* Modal content */}
@@ -67,7 +88,8 @@ export default function ApplyButton({ propertyId }: ApplyButtonProps) {
             {/* Close button */}
             <button
               onClick={() => setShowModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+              disabled={loading}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 disabled:opacity-50"
             >
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -97,7 +119,8 @@ export default function ApplyButton({ propertyId }: ApplyButtonProps) {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 rows={4}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all resize-none"
+                disabled={loading}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all resize-none disabled:bg-gray-50"
                 placeholder="Présentez-vous brièvement..."
               />
             </div>
@@ -114,18 +137,20 @@ export default function ApplyButton({ propertyId }: ApplyButtonProps) {
             <div className="flex gap-3">
               <button
                 onClick={() => setShowModal(false)}
-                className="flex-1 px-4 py-3 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+                disabled={loading}
+                className="flex-1 px-4 py-3 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 disabled:bg-gray-100 transition-colors"
               >
                 Annuler
               </button>
               <button
                 onClick={handleApply}
                 disabled={loading}
-                className="flex-1 px-4 py-3 bg-gray-900 text-white font-medium rounded-xl hover:bg-gray-800 disabled:bg-gray-300 transition-colors"
+                className="flex-1 px-4 py-3 bg-gray-900 text-white font-medium rounded-xl hover:bg-gray-800 disabled:bg-gray-400 transition-colors"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
                     <span className="animate-spin">⏳</span>
+                    Envoi...
                   </span>
                 ) : (
                   'Envoyer'

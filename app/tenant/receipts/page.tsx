@@ -73,7 +73,11 @@ export default async function TenantReceiptsPage() {
 
   // Grouper les quittances confirmées par propriété
   const receiptsByProperty = confirmedReceipts.reduce((acc, receipt) => {
+
+
     const propertyId = receipt.lease.property.id
+
+
     const propertyTitle = receipt.lease.property.title
     const propertyCity = receipt.lease.property.city
     
@@ -88,7 +92,16 @@ export default async function TenantReceiptsPage() {
     return acc
   }, {} as Record<string, { title: string; city: string; receipts: typeof confirmedReceipts }>)
 
-  const propertyIds = Object.keys(receiptsByProperty)
+// Trier les propriétés par la quittance la plus récente
+const propertyIds = Object.keys(receiptsByProperty).sort((a, b) => {
+  const latestA = receiptsByProperty[a].receipts[0]
+  const latestB = receiptsByProperty[b].receipts[0]
+  
+  if (latestA.year !== latestB.year) {
+    return latestB.year - latestA.year
+  }
+  return latestB.month - latestA.month
+})
 
   const getMonthName = (month: number) => {
     const months = [
