@@ -16,10 +16,20 @@ export default async function TenantApplicationsPage() {
     redirect('/profile/complete?required=tenant')
   }
 
-  const applications = await prisma.application.findMany({
-    where: {
-      tenantId: session.user.id
-    },
+const applications = await prisma.application.findMany({
+  where: {
+    tenantId: session.user.id,
+    // Exclure les candidatures qui ont un bail créé
+    NOT: {
+      property: {
+        leases: {
+          some: {
+            tenantId: session.user.id
+          }
+        }
+      }
+    }
+  },
     include: {
       property: {
         select: {

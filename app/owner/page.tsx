@@ -44,6 +44,21 @@ export default async function OwnerDashboardPage() {
     },
   })
 
+  const activeLeasesCount = await prisma.lease.count({
+    where: {
+      property: { ownerId: user.id },
+      status: 'ACTIVE',
+    },
+  })
+
+  const receiptsCount = await prisma.receipt.count({
+    where: {
+      lease: {
+        property: { ownerId: user.id },
+      },
+    },
+  })
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header épuré style Airbnb */}
@@ -100,10 +115,10 @@ export default async function OwnerDashboardPage() {
         )}
 
         {/* Stats - Style Airbnb cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
           <Link
             href="/owner/properties"
-            className="bg-gray-50 rounded-2xl p-6 hover:bg-gray-100 transition-colors cursor-pointer"
+            className="bg-gray-50 rounded-2xl p-6 hover:bg-gray-100 transition-colors block"
           >
             <div className="flex items-center justify-between mb-4">
               <span className="text-4xl">🏠</span>
@@ -115,10 +130,10 @@ export default async function OwnerDashboardPage() {
             <p className="text-sm text-gray-500 mt-1">Total propriétés</p>
           </Link>
 
-          <div className="bg-emerald-50 rounded-2xl p-6 hover:bg-emerald-100 transition-colors cursor-pointer">
+          <div className="bg-blue-50 rounded-2xl p-6 hover:bg-blue-100 transition-colors">
             <div className="flex items-center justify-between mb-4">
               <span className="text-4xl">✅</span>
-              <span className="text-3xl font-semibold text-emerald-600">
+              <span className="text-3xl font-semibold text-blue-600">
                 {availableCount}
               </span>
             </div>
@@ -128,16 +143,30 @@ export default async function OwnerDashboardPage() {
 
           <Link
             href="/owner/applications"
-            className="bg-gray-50 rounded-2xl p-6 hover:bg-gray-100 transition-colors block"
+            className="bg-orange-50 rounded-2xl p-6 hover:bg-orange-100 transition-colors block"
           >
             <div className="flex items-center justify-between mb-4">
               <span className="text-4xl">📝</span>
-              <span className="text-3xl font-semibold text-gray-900">
+              <span className="text-3xl font-semibold text-orange-600">
                 {applicationsCount}
               </span>
             </div>
             <p className="font-medium text-gray-900">Candidatures</p>
-            <p className="text-sm text-gray-500 mt-1">En attente de réponse</p>
+            <p className="text-sm text-gray-500 mt-1">En attente</p>
+          </Link>
+
+          <Link
+            href="/owner/leases"
+            className="bg-emerald-50 rounded-2xl p-6 hover:bg-emerald-100 transition-colors block"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-4xl">📄</span>
+              <span className="text-3xl font-semibold text-emerald-600">
+                {activeLeasesCount}
+              </span>
+            </div>
+            <p className="font-medium text-gray-900">Baux actifs</p>
+            <p className="text-sm text-gray-500 mt-1">Locations en cours</p>
           </Link>
         </div>
 
@@ -180,6 +209,21 @@ export default async function OwnerDashboardPage() {
               </div>
             </Link>
           </div>
+          {/* Quittances */}
+          <Link
+            href="/owner/receipts"
+            className="group flex items-center gap-5 p-6 border-2 border-gray-200 rounded-2xl hover:border-gray-300 hover:bg-gray-50 transition-all duration-200"
+          >
+            <div className="w-14 h-14 bg-gray-100 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform">
+              <span className="text-2xl">🧾</span>
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900 text-lg">Quittances</p>
+              <p className="text-gray-500 mt-1">
+                {receiptsCount} générée{receiptsCount > 1 ? 's' : ''}
+              </p>
+            </div>
+          </Link>
         </div>
 
         {/* Sections en grille */}

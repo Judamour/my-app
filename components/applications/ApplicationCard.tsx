@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import CreateLeaseModal from '@/components/leases/CreateLeaseModal'
 
 interface Application {
   id: string
@@ -38,6 +39,7 @@ interface ApplicationCardProps {
 
 export default function ApplicationCard({ application, role }: ApplicationCardProps) {
   const [loading, setLoading] = useState(false)
+  const [showLeaseModal, setShowLeaseModal] = useState(false)
   const router = useRouter()
 
   const handleAction = async (status: 'ACCEPTED' | 'REJECTED') => {
@@ -112,73 +114,96 @@ export default function ApplicationCard({ application, role }: ApplicationCardPr
   // Vue propriétaire
   if (role === 'owner' && application.tenant) {
     return (
-      <div className="border border-gray-200 rounded-2xl p-6 hover:shadow-md transition-shadow">
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-          {/* Infos locataire */}
-          <div className="flex items-start gap-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-rose-400 to-orange-300 rounded-full flex items-center justify-center text-white text-xl font-semibold flex-shrink-0">
-              {application.tenant.firstName[0]}{application.tenant.lastName[0]}
-            </div>
-            <div>
-              <div className="flex items-center gap-3 mb-1">
-                <h3 className="font-semibold text-gray-900">
-                  {application.tenant.firstName} {application.tenant.lastName}
-                </h3>
-                {getStatusBadge(application.status)}
+      <>
+        <div className="border border-gray-200 rounded-2xl p-6 hover:shadow-md transition-shadow">
+          <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+            {/* Infos locataire */}
+            <div className="flex items-start gap-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-rose-400 to-orange-300 rounded-full flex items-center justify-center text-white text-xl font-semibold flex-shrink-0">
+                {application.tenant.firstName[0]}{application.tenant.lastName[0]}
               </div>
-              <p className="text-sm text-gray-500 mb-2">
-                {application.tenant.email}
-              </p>
-              <div className="flex items-center gap-4 text-sm">
-                <span className="text-gray-500">
-                  Pour : <span className="font-medium text-gray-700">{application.property.title}</span>
-                </span>
-                <span className="text-gray-400">•</span>
-                <span className="text-gray-500">
-                  {formatPrice(application.property.rent)}/mois
-                </span>
-              </div>
-              {application.message && (
-                <div className="mt-3 p-3 bg-gray-50 rounded-xl">
-                  <p className="text-sm text-gray-600 italic">&quot;{application.message}&quot;</p>
+              <div>
+                <div className="flex items-center gap-3 mb-1">
+                  <h3 className="font-semibold text-gray-900">
+                    {application.tenant.firstName} {application.tenant.lastName}
+                  </h3>
+                  {getStatusBadge(application.status)}
                 </div>
+                <p className="text-sm text-gray-500 mb-2">
+                  {application.tenant.email}
+                </p>
+                <div className="flex items-center gap-4 text-sm">
+                  <span className="text-gray-500">
+                    Pour : <span className="font-medium text-gray-700">{application.property.title}</span>
+                  </span>
+                  <span className="text-gray-400">•</span>
+                  <span className="text-gray-500">
+                    {formatPrice(application.property.rent)}/mois
+                  </span>
+                </div>
+                {application.message && (
+                  <div className="mt-3 p-3 bg-gray-50 rounded-xl">
+                    <p className="text-sm text-gray-600 italic">&quot;{application.message}&quot;</p>
+                  </div>
+                )}
+                <p className="text-xs text-gray-400 mt-3">
+                  Reçue le {formatDate(application.createdAt)}
+                </p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-2 md:flex-col">
+              {application.status === 'PENDING' && (
+                <>
+                  <button
+                    onClick={() => handleAction('ACCEPTED')}
+                    disabled={loading}
+                    className="flex-1 md:flex-none px-5 py-2 bg-emerald-500 text-white font-medium rounded-xl hover:bg-emerald-600 disabled:bg-gray-300 transition-colors text-sm"
+                  >
+                    ✓ Accepter
+                  </button>
+                  <button
+                    onClick={() => handleAction('REJECTED')}
+                    disabled={loading}
+                    className="flex-1 md:flex-none px-5 py-2 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 disabled:bg-gray-100 transition-colors text-sm"
+                  >
+                    ✗ Refuser
+                  </button>
+                </>
               )}
-              <p className="text-xs text-gray-400 mt-3">
-                Reçue le {formatDate(application.createdAt)}
-              </p>
+
+              {application.status === 'ACCEPTED' && (
+                <>
+                  <button
+                    onClick={() => setShowLeaseModal(true)}
+                    className="px-5 py-2 bg-gray-900 text-white font-medium rounded-xl hover:bg-gray-800 transition-colors text-sm"
+                  >
+                    📄 Créer le bail
+                  </button>
+                  <Link
+                    href={`/profile/${application.tenant.id}`}
+                    className="px-5 py-2 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors text-sm text-center"
+                  >
+                    Voir le profil
+                  </Link>
+                </>
+              )}
             </div>
           </div>
-
-          {/* Actions */}
-          {application.status === 'PENDING' && (
-            <div className="flex gap-2 md:flex-col">
-              <button
-                onClick={() => handleAction('ACCEPTED')}
-                disabled={loading}
-                className="flex-1 md:flex-none px-5 py-2 bg-emerald-500 text-white font-medium rounded-xl hover:bg-emerald-600 disabled:bg-gray-300 transition-colors text-sm"
-              >
-                ✓ Accepter
-              </button>
-              <button
-                onClick={() => handleAction('REJECTED')}
-                disabled={loading}
-                className="flex-1 md:flex-none px-5 py-2 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 disabled:bg-gray-100 transition-colors text-sm"
-              >
-                ✗ Refuser
-              </button>
-            </div>
-          )}
-
-          {application.status === 'ACCEPTED' && (
-            <Link
-              href={`/profile/${application.tenant.id}`}
-              className="px-5 py-2 bg-gray-900 text-white font-medium rounded-xl hover:bg-gray-800 transition-colors text-sm"
-            >
-              Voir le profil
-            </Link>
-          )}
         </div>
-      </div>
+
+        {/* Modal création bail */}
+        {showLeaseModal && application.tenant && (
+          <CreateLeaseModal
+            applicationId={application.id}
+            propertyTitle={application.property.title}
+            tenantName={`${application.tenant.firstName} ${application.tenant.lastName}`}
+            defaultRent={application.property.rent}
+            onClose={() => setShowLeaseModal(false)}
+          />
+        )}
+      </>
     )
   }
 
@@ -188,12 +213,12 @@ export default function ApplicationCard({ application, role }: ApplicationCardPr
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
         {/* Infos bien */}
         <div className="flex items-start gap-4">
-          <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
+          <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
             {application.property.images && application.property.images.length > 0 ? (
               <img
                 src={application.property.images[0]}
                 alt={application.property.title}
-                className="w-full h-full object-cover rounded-xl"
+                className="w-full h-full object-cover"
               />
             ) : (
               <span className="text-2xl">🏠</span>

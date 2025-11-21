@@ -45,6 +45,19 @@ export default async function TenantDashboardPage() {
     },
   })
 
+  const endedLeases = await prisma.lease.count({
+    where: {
+      tenantId: user.id,
+      status: 'ENDED',
+    },
+  })
+
+  const receiptsCount = await prisma.receipt.count({
+    where: {
+      lease: { tenantId: user.id },
+    },
+  })
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header épuré style Airbnb */}
@@ -101,7 +114,7 @@ export default async function TenantDashboardPage() {
         )}
 
         {/* Stats - Style Airbnb cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-12">
           <Link
             href="/tenant/applications"
             className="bg-gray-50 rounded-2xl p-6 hover:bg-gray-100 transition-colors block"
@@ -127,7 +140,10 @@ export default async function TenantDashboardPage() {
             <p className="text-sm text-gray-500 mt-1">Réponse propriétaire</p>
           </div>
 
-          <div className="bg-emerald-50 rounded-2xl p-6 hover:bg-emerald-100 transition-colors cursor-pointer">
+          <Link
+            href="/tenant/leases"
+            className="bg-emerald-50 rounded-2xl p-6 hover:bg-emerald-100 transition-colors block"
+          >
             <div className="flex items-center justify-between mb-4">
               <span className="text-4xl">🏡</span>
               <span className="text-3xl font-semibold text-emerald-600">
@@ -136,9 +152,35 @@ export default async function TenantDashboardPage() {
             </div>
             <p className="font-medium text-gray-900">Bail actif</p>
             <p className="text-sm text-gray-500 mt-1">Logement actuel</p>
-          </div>
-        </div>
+          </Link>
 
+          <Link
+            href="/tenant/leases"
+            className="bg-gray-50 rounded-2xl p-6 hover:bg-gray-100 transition-colors block"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-4xl">📋</span>
+              <span className="text-3xl font-semibold text-gray-400">
+                {endedLeases}
+              </span>
+            </div>
+            <p className="font-medium text-gray-900">Baux terminés</p>
+            <p className="text-sm text-gray-500 mt-1">Historique</p>
+          </Link>
+          <Link
+            href="/tenant/receipts"
+            className="bg-blue-50 rounded-2xl p-6 hover:bg-blue-100 transition-colors block"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-4xl">🧾</span>
+              <span className="text-3xl font-semibold text-blue-600">
+                {receiptsCount}
+              </span>
+            </div>
+            <p className="font-medium text-gray-900">Quittances</p>
+            <p className="text-sm text-gray-500 mt-1">Disponibles</p>
+          </Link>
+        </div>
         {/* Sections principales */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Mes candidatures */}

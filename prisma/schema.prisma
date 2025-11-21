@@ -193,7 +193,10 @@ model Lease {
   // Relations
   reviews       Review[]
   documents     Document[]
+  receipts      Receipt[]
   affiliateConversions AffiliateConversion[]
+
+
   
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
@@ -202,6 +205,36 @@ model Lease {
   @@index([tenantId])
   @@index([status])
   @@map("leases")
+}
+
+model Receipt {
+  id          String   @id @default(cuid())
+  
+  leaseId     String
+  lease       Lease    @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  
+  // Période
+  month       Int      // 1-12
+  year        Int      // ex: 2025
+  
+  // Montants
+  rentAmount  Float    // Loyer
+  charges     Float?   // Charges
+  totalAmount Float    // Total payé
+  
+  // Paiement
+  paidAt      DateTime?
+  paymentMethod String? // 'virement', 'chèque', 'espèces'
+  
+  // PDF
+  pdfUrl      String?
+  
+  createdAt   DateTime @default(now())
+  
+  @@unique([leaseId, month, year])
+  @@index([leaseId])
+  @@index([year, month])
+  @@map("receipts")
 }
 
 model Application {
