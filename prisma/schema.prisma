@@ -223,8 +223,10 @@ model Receipt {
   totalAmount Float    // Total payé
   
   // Paiement
-  paidAt      DateTime?
-  paymentMethod String? // 'virement', 'chèque', 'espèces'
+  status      PaymentStatus @default(DECLARED)
+  declaredAt  DateTime?     // Quand le locataire a déclaré
+  paidAt      DateTime?     // Quand le proprio a confirmé
+  paymentMethod String?
   
   // PDF
   pdfUrl      String?
@@ -452,4 +454,9 @@ model ShareLink {
 enum ShareType {
   PROFILE
   PROPERTY
+}
+
+enum PaymentStatus {
+  DECLARED    // Locataire a déclaré avoir payé
+  CONFIRMED   // Propriétaire a confirmé la réception
 }

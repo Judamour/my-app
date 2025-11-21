@@ -1,29 +1,19 @@
 import { requireOwner } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
-import CreateReceiptButton from '@/components/receipts/CreateReceiptButton'
+import ReceiptAccordion from '@/components/receipts/ReceiptAccordion'
+import ConfirmPaymentCard from '@/components/receipts/ConfirmPaymentCard'
 
 export default async function OwnerReceiptsPage() {
   const session = await requireOwner()
 
-  // Récupérer les baux actifs pour créer des quittances
-  const activeLeases = await prisma.lease.findMany({
-    where: {
-      property: { ownerId: session.user.id },
-      status: 'ACTIVE'
-    },
-    include: {
-      property: { select: { title: true } },
-      tenant: { select: { firstName: true, lastName: true } }
-    }
-  })
-
-  // Récupérer toutes les quittances
-  const receipts = await prisma.receipt.findMany({
+  // Paiements déclarés en attente de confirmation
+  const pendingPayments = await prisma.receipt.findMany({
     where: {
       lease: {
         property: { ownerId: session.user.id }
-      }
+      },
+      status: 'DECLARED'
     },
     include: {
       lease: {
@@ -36,21 +26,43 @@ export default async function OwnerReceiptsPage() {
     orderBy: [{ year: 'desc' }, { month: 'desc' }]
   })
 
-  const formatPrice = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-      maximumFractionDigits: 0,
-    }).format(amount)
-  }
+  // Quittances confirmées
+  const confirmedReceipts = await prisma.receipt.findMany({
+    where: {
+      lease: {
+        property: { ownerId: session.user.id }
+      },
+      status: 'CONFIRMED'
+    },
+    include: {
+      lease: {
+        include: {
+          property: { select: { id: true, title: true, city: true } },
+          tenant: { select: { firstName: true, lastName: true } }
+        }
+      }
+    },
+    orderBy: [{ year: 'desc' }, { month: 'desc' }]
+  })
 
-  const getMonthName = (month: number) => {
-    const months = [
-      'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-      'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
-    ]
-    return months[month - 1]
-  }
+  // Grouper les quittances confirmées par propriété
+  const receiptsByProperty = confirmedReceipts.reduce((acc, receipt) => {
+    const propertyId = receipt.lease.property.id
+    const propertyTitle = receipt.lease.property.title
+    const propertyCity = receipt.lease.property.city
+    
+    if (!acc[propertyId]) {
+      acc[propertyId] = {
+        title: propertyTitle,
+        city: propertyCity,
+        receipts: []
+      }
+    }
+    acc[propertyId].receipts.push(receipt)
+    return acc
+  }, {} as Record<string, { title: string; city: string; receipts: typeof confirmedReceipts }>)
+
+  const propertyIds = Object.keys(receiptsByProperty)
 
   return (
     <div className="min-h-screen bg-white">
@@ -66,34 +78,52 @@ export default async function OwnerReceiptsPage() {
             </svg>
             Dashboard
           </Link>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-semibold text-gray-900">
-                Quittances de loyer
-              </h1>
-              <p className="text-gray-500 mt-1">
-                {receipts.length} quittance{receipts.length > 1 ? 's' : ''} générée{receipts.length > 1 ? 's' : ''}
-              </p>
-            </div>
-            {activeLeases.length > 0 && (
-              <CreateReceiptButton leases={activeLeases} />
-            )}
+          <div>
+            <h1 className="text-3xl font-semibold text-gray-900">
+              Paiements & Quittances
+            </h1>
+            <p className="text-gray-500 mt-1">
+              {pendingPayments.length > 0 && `${pendingPayments.length} paiement${pendingPayments.length > 1 ? 's' : ''} à confirmer • `}
+              {confirmedReceipts.length} quittance{confirmedReceipts.length > 1 ? 's' : ''} générée{confirmedReceipts.length > 1 ? 's' : ''}
+            </p>
           </div>
         </div>
       </div>
 
       <div className="max-w-6xl mx-auto px-6 py-10">
-        {/* Pas de baux actifs */}
-        {activeLeases.length === 0 && receipts.length === 0 && (
+        {/* Paiements en attente de confirmation */}
+        {pendingPayments.length > 0 && (
+          <div className="mb-10">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                <span>⏳</span>
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Paiements à confirmer
+              </h2>
+              <span className="px-2.5 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-medium">
+                {pendingPayments.length}
+              </span>
+            </div>
+            <div className="space-y-3">
+              {pendingPayments.map((payment) => (
+                <ConfirmPaymentCard key={payment.id} payment={payment} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Quittances confirmées */}
+        {confirmedReceipts.length === 0 && pendingPayments.length === 0 ? (
           <div className="text-center py-20">
             <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <span className="text-4xl">📄</span>
+              <span className="text-4xl">🧾</span>
             </div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Aucun bail actif
+              Aucune quittance
             </h2>
             <p className="text-gray-500 max-w-md mx-auto">
-              Vous devez avoir un bail actif pour générer des quittances de loyer.
+              Les quittances seront générées automatiquement lorsque vous confirmerez les paiements de vos locataires.
             </p>
             <Link
               href="/owner/leases"
@@ -102,74 +132,31 @@ export default async function OwnerReceiptsPage() {
               Voir mes baux
             </Link>
           </div>
-        )}
-
-        {/* Liste des quittances */}
-        {receipts.length > 0 && (
-          <div className="space-y-4">
-            {receipts.map((receipt) => (
-              <div
-                key={receipt.id}
-                className="border border-gray-200 rounded-2xl p-6 hover:shadow-md transition-shadow"
-              >
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  {/* Infos */}
-                  <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 bg-emerald-50 rounded-xl flex items-center justify-center">
-                      <span className="text-2xl">🧾</span>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900">
-                        {getMonthName(receipt.month)} {receipt.year}
-                      </h3>
-                      <p className="text-sm text-gray-500">
-                        {receipt.lease.property.title}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Locataire : {receipt.lease.tenant.firstName} {receipt.lease.tenant.lastName}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Montant & Actions */}
-                  <div className="flex items-center gap-6">
-                    <div className="text-right">
-                      <p className="text-2xl font-semibold text-gray-900">
-                        {formatPrice(receipt.totalAmount)}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {receipt.paymentMethod === 'virement' && '💳 Virement'}
-                        {receipt.paymentMethod === 'cheque' && '📝 Chèque'}
-                        {receipt.paymentMethod === 'especes' && '💵 Espèces'}
-                      </p>
-                    </div>
-                    <Link
-                      href={`/owner/receipts/${receipt.id}`}
-                      className="px-4 py-2 bg-gray-900 text-white font-medium rounded-xl hover:bg-gray-800 transition-colors text-sm"
-                    >
-                      Voir
-                    </Link>
-                  </div>
-                </div>
+        ) : confirmedReceipts.length > 0 && (
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+                <span>✅</span>
               </div>
-            ))}
-          </div>
-        )}
-
-        {/* Baux actifs sans quittances */}
-        {activeLeases.length > 0 && receipts.length === 0 && (
-          <div className="text-center py-20">
-            <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <span className="text-4xl">✨</span>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Quittances générées
+              </h2>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Prêt à générer des quittances
-            </h2>
-            <p className="text-gray-500 max-w-md mx-auto mb-6">
-              Vous avez {activeLeases.length} bail{activeLeases.length > 1 ? 's' : ''} actif{activeLeases.length > 1 ? 's' : ''}. 
-              Générez votre première quittance de loyer.
-            </p>
-            <CreateReceiptButton leases={activeLeases} />
+            <div className="space-y-4">
+              {propertyIds.map((propertyId, index) => {
+                const property = receiptsByProperty[propertyId]
+                return (
+                  <ReceiptAccordion
+                    key={propertyId}
+                    propertyId={propertyId}
+                    propertyTitle={property.title}
+                    propertyCity={property.city}
+                    receipts={property.receipts}
+                    defaultOpen={index === 0}
+                  />
+                )
+              })}
+            </div>
           </div>
         )}
       </div>
