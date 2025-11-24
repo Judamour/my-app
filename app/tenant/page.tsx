@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import ShareButton from '@/components/ShareButton'
 import LogoutButton from '@/components/LogoutButton'
+import UnreadMessagesButton from '@/components/messages/UnreadMessagesButton'
 
 export default async function TenantDashboardPage() {
   const session = await requireAuth()
@@ -100,17 +101,20 @@ export default async function TenantDashboardPage() {
               </h1>
             </div>
 
-            {user.isOwner && (
-              <Link
-                href="/owner"
-                className="flex items-center gap-3 px-5 py-3 bg-gray-50 rounded-full hover:bg-gray-100 transition-all duration-200"
-              >
-                <span className="text-xl">🏠</span>
-                <span className="font-medium text-gray-700">
-                  Mode propriétaire
-                </span>
-              </Link>
-            )}
+            <div className="flex items-center gap-3">
+<UnreadMessagesButton userId={user.id} />
+              {user.isOwner && (
+                <Link
+                  href="/owner"
+                  className="flex items-center gap-3 px-5 py-3 bg-gray-50 rounded-full hover:bg-gray-100 transition-all duration-200"
+                >
+                  <span className="text-xl">🏠</span>
+                  <span className="font-medium text-gray-700">
+                    Mode propriétaire
+                  </span>
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       </div>

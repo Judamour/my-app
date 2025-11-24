@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { toast } from 'sonner'
+import { pusherClient } from '@/lib/pusher-client'
+
 //import { supabase } from '@/lib/supabase'
 
 interface Message {
@@ -45,62 +47,22 @@ export default function ChatMessages({
 
   // 🔴 SUPABASE REALTIME
   // 🔄 POLLING OPTIMISÉ (seulement quand l'onglet est actif)
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null
-    const fetchMessages = async () => {
-      try {
-        const response = await fetch(
-          `/api/conversations/${conversationId}/messages`
-        )
-        const data = await response.json()
+useEffect(() => {
+  const channel = pusherClient.subscribe(`conversation-${conversationId}`)
+  
+  channel.bind('new-message', (data: { message: Message }) => {
+    // Ne pas ajouter si c'est notre propre message (déjà ajouté en optimistic)
+    if (data.message.senderId === currentUserId) return
+    
+    setMessages((prev) => [...prev, data.message])
+  })
 
-        if (data.data) {
-          // Comparer le dernier message ID pour éviter les re-renders inutiles
-          const lastNewId = data.data[data.data.length - 1]?.id
-          const lastCurrentId = messages[messages.length - 1]?.id
+  return () => {
+    channel.unbind_all()
+    channel.unsubscribe()
+  }
+}, [conversationId, currentUserId])
 
-          if (lastNewId !== lastCurrentId) {
-            setMessages(data.data)
-          }
-        }
-      } catch (error) {
-        console.error('Erreur fetch messages:', error)
-      }
-    }
-
-    const startPolling = () => {
-      if (!interval) {
-        interval = setInterval(fetchMessages, 3000)
-      }
-    }
-
-    const stopPolling = () => {
-      if (interval) {
-        clearInterval(interval)
-        interval = null
-      }
-    }
-
-    // Démarrer le polling
-    startPolling()
-
-    // Arrêter quand l'onglet n'est pas visible
-    const handleVisibility = () => {
-      if (document.hidden) {
-        stopPolling()
-      } else {
-        fetchMessages() // Refresh immédiat au retour
-        startPolling()
-      }
-    }
-
-    document.addEventListener('visibilitychange', handleVisibility)
-
-    return () => {
-      stopPolling()
-      document.removeEventListener('visibilitychange', handleVisibility)
-    }
-  }, [conversationId , messages])
   const formatTime = (date: Date) => {
     return new Date(date).toLocaleTimeString('fr-FR', {
       hour: '2-digit',

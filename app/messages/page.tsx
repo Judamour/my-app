@@ -5,12 +5,17 @@ import Link from 'next/link'
 export default async function MessagesPage() {
   const session = await requireAuth()
 
+  // Récupérer le rôle de l'utilisateur
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { isOwner: true, isTenant: true },
+  })
+
+  const dashboardUrl = user?.isOwner ? '/owner' : '/tenant'
+
   const conversations = await prisma.conversation.findMany({
     where: {
-      OR: [
-        { user1Id: session.user.id },
-        { user2Id: session.user.id },
-      ],
+      OR: [{ user1Id: session.user.id }, { user2Id: session.user.id }],
     },
     include: {
       user1: {
@@ -38,7 +43,7 @@ export default async function MessagesPage() {
 
   // Calculer les messages non lus pour chaque conversation
   const conversationsWithUnread = await Promise.all(
-    conversations.map(async (conv) => {
+    conversations.map(async conv => {
       const unreadCount = await prisma.message.count({
         where: {
           conversationId: conv.id,
@@ -46,10 +51,11 @@ export default async function MessagesPage() {
           read: false,
         },
       })
-      
+
       // Déterminer l'autre participant
-      const otherUser = conv.user1Id === session.user.id ? conv.user2 : conv.user1
-      
+      const otherUser =
+        conv.user1Id === session.user.id ? conv.user2 : conv.user1
+
       return { ...conv, unreadCount, otherUser }
     })
   )
@@ -58,19 +64,28 @@ export default async function MessagesPage() {
     const now = new Date()
     const diff = now.getTime() - new Date(date).getTime()
     const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-    
+
     if (days === 0) {
-      return new Date(date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+      return new Date(date).toLocaleTimeString('fr-FR', {
+        hour: '2-digit',
+        minute: '2-digit',
+      })
     } else if (days === 1) {
       return 'Hier'
     } else if (days < 7) {
       return new Date(date).toLocaleDateString('fr-FR', { weekday: 'long' })
     } else {
-      return new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+      return new Date(date).toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'short',
+      })
     }
   }
 
-  const totalUnread = conversationsWithUnread.reduce((sum, c) => sum + c.unreadCount, 0)
+  const totalUnread = conversationsWithUnread.reduce(
+    (sum, c) => sum + c.unreadCount,
+    0
+  )
 
   return (
     <div className="min-h-screen bg-white">
@@ -78,23 +93,34 @@ export default async function MessagesPage() {
       <div className="border-b border-gray-100">
         <div className="max-w-3xl mx-auto px-6 py-8">
           <Link
-            href="/profile"
+            href={dashboardUrl}
             className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors text-sm mb-4"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
-            Retour
+            Dashboard
           </Link>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-semibold text-gray-900">
-                Messages
-              </h1>
+              <h1 className="text-3xl font-semibold text-gray-900">Messages</h1>
               <p className="text-gray-500 mt-1">
-                {conversations.length} conversation{conversations.length > 1 ? 's' : ''}
+                {conversations.length} conversation
+                {conversations.length > 1 ? 's' : ''}
                 {totalUnread > 0 && (
-                  <span className="ml-2 text-blue-600">• {totalUnread} non lu{totalUnread > 1 ? 's' : ''}</span>
+                  <span className="ml-2 text-blue-600">
+                    • {totalUnread} non lu{totalUnread > 1 ? 's' : ''}
+                  </span>
                 )}
               </p>
             </div>
@@ -112,40 +138,49 @@ export default async function MessagesPage() {
               Aucune conversation
             </h2>
             <p className="text-gray-500 max-w-md mx-auto">
-              Vos conversations avec les propriétaires et locataires apparaîtront ici.
+              Vos conversations avec les propriétaires et locataires
+              apparaîtront ici.
             </p>
           </div>
         ) : (
           <div className="space-y-2">
-            {conversationsWithUnread.map((conversation) => {
+            {conversationsWithUnread.map(conversation => {
               const lastMessage = conversation.messages[0]
               const isUnread = conversation.unreadCount > 0
-              
+
               return (
                 <Link
                   key={conversation.id}
                   href={`/messages/${conversation.id}`}
                   className={`block p-4 rounded-2xl transition-all ${
-                    isUnread 
-                      ? 'bg-blue-50 hover:bg-blue-100' 
+                    isUnread
+                      ? 'bg-blue-50 hover:bg-blue-100'
                       : 'bg-gray-50 hover:bg-gray-100'
                   }`}
                 >
                   <div className="flex items-center gap-4">
                     {/* Avatar */}
-                    <div className={`w-14 h-14 rounded-full flex items-center justify-center text-white text-lg font-semibold shrink-0 ${
-                      isUnread 
-                        ? 'bg-gradient-to-br from-blue-400 to-indigo-500' 
-                        : 'bg-gradient-to-br from-gray-400 to-gray-500'
-                    }`}>
-                      {conversation.otherUser.firstName[0]}{conversation.otherUser.lastName[0]}
+                    <div
+                      className={`w-14 h-14 rounded-full flex items-center justify-center text-white text-lg font-semibold shrink-0 ${
+                        isUnread
+                          ? 'bg-gradient-to-br from-blue-400 to-indigo-500'
+                          : 'bg-gradient-to-br from-gray-400 to-gray-500'
+                      }`}
+                    >
+                      {conversation.otherUser.firstName[0]}
+                      {conversation.otherUser.lastName[0]}
                     </div>
 
                     {/* Contenu */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <h3 className={`font-semibold truncate ${isUnread ? 'text-gray-900' : 'text-gray-700'}`}>
-                          {conversation.otherUser.firstName} {conversation.otherUser.lastName}
+                        <h3
+                          className={`font-semibold truncate ${
+                            isUnread ? 'text-gray-900' : 'text-gray-700'
+                          }`}
+                        >
+                          {conversation.otherUser.firstName}{' '}
+                          {conversation.otherUser.lastName}
                         </h3>
                         {lastMessage && (
                           <span className="text-xs text-gray-500 shrink-0">
@@ -153,16 +188,23 @@ export default async function MessagesPage() {
                           </span>
                         )}
                       </div>
-                      
+
                       {conversation.property && (
                         <p className="text-xs text-gray-500 mb-1">
                           📍 {conversation.property.title}
                         </p>
                       )}
-                      
+
                       {lastMessage && (
-                        <p className={`text-sm truncate ${isUnread ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
-                          {lastMessage.senderId === session.user.id && 'Vous : '}
+                        <p
+                          className={`text-sm truncate ${
+                            isUnread
+                              ? 'text-gray-900 font-medium'
+                              : 'text-gray-500'
+                          }`}
+                        >
+                          {lastMessage.senderId === session.user.id &&
+                            'Vous : '}
                           {lastMessage.content}
                         </p>
                       )}
@@ -171,7 +213,9 @@ export default async function MessagesPage() {
                     {/* Badge non lu */}
                     {isUnread && (
                       <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center shrink-0">
-                        <span className="text-white text-xs font-bold">{conversation.unreadCount}</span>
+                        <span className="text-white text-xs font-bold">
+                          {conversation.unreadCount}
+                        </span>
                       </div>
                     )}
                   </div>

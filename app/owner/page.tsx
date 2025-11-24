@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import LogoutButton from '@/components/LogoutButton'
+import UnreadMessagesButton from '@/components/messages/UnreadMessagesButton'
 
 export default async function OwnerDashboardPage() {
   const session = await requireAuth()
@@ -141,17 +142,20 @@ export default async function OwnerDashboardPage() {
               </h1>
             </div>
 
-            {user.isTenant && (
-              <Link
-                href="/tenant"
-                className="flex items-center gap-3 px-5 py-3 bg-gray-50 rounded-full hover:bg-gray-100 transition-all duration-200"
-              >
-                <span className="text-xl">🔑</span>
-                <span className="font-medium text-gray-700">
-                  Mode locataire
-                </span>
-              </Link>
-            )}
+            <div className="flex items-center gap-3">
+<UnreadMessagesButton userId={user.id} />
+              {user.isTenant && (
+                <Link
+                  href="/tenant"
+                  className="flex items-center gap-3 px-5 py-3 bg-gray-50 rounded-full hover:bg-gray-100 transition-all duration-200"
+                >
+                  <span className="text-xl">🔑</span>
+                  <span className="font-medium text-gray-700">
+                    Mode locataire
+                  </span>
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       </div>

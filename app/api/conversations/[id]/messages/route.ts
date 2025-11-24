@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { pusherServer } from '@/lib/pusher'
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -22,10 +23,16 @@ export async function GET(request: Request, { params }: RouteParams) {
     })
 
     if (!conversation) {
-      return NextResponse.json({ error: 'Conversation introuvable' }, { status: 404 })
+      return NextResponse.json(
+        { error: 'Conversation introuvable' },
+        { status: 404 }
+      )
     }
 
-    if (conversation.user1Id !== session.user.id && conversation.user2Id !== session.user.id) {
+    if (
+      conversation.user1Id !== session.user.id &&
+      conversation.user2Id !== session.user.id
+    ) {
       return NextResponse.json({ error: 'Accès non autorisé' }, { status: 403 })
     }
 
@@ -85,10 +92,16 @@ export async function POST(request: Request, { params }: RouteParams) {
     })
 
     if (!conversation) {
-      return NextResponse.json({ error: 'Conversation introuvable' }, { status: 404 })
+      return NextResponse.json(
+        { error: 'Conversation introuvable' },
+        { status: 404 }
+      )
     }
 
-    if (conversation.user1Id !== session.user.id && conversation.user2Id !== session.user.id) {
+    if (
+      conversation.user1Id !== session.user.id &&
+      conversation.user2Id !== session.user.id
+    ) {
       return NextResponse.json({ error: 'Accès non autorisé' }, { status: 403 })
     }
 
@@ -105,6 +118,25 @@ export async function POST(request: Request, { params }: RouteParams) {
         },
       },
     })
+
+    // 🔥 TRIGGER PUSHER
+    await pusherServer.trigger(`conversation-${id}`, 'new-message', {
+      message,
+    })
+
+    // Trigger pour la conversation
+await pusherServer.trigger(`conversation-${id}`, 'new-message', {
+  message,
+})
+
+// 🔥 Trigger pour le destinataire (compteur)
+const recipientId = conversation.user1Id === session.user.id 
+  ? conversation.user2Id 
+  : conversation.user1Id
+
+await pusherServer.trigger(`user-${recipientId}`, 'new-message', {
+  messageId: message.id,
+})
 
     // Mettre à jour lastMessageAt de la conversation
     await prisma.conversation.update({

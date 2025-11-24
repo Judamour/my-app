@@ -14,17 +14,33 @@ export default async function LandingPage() {
               <span className="text-2xl">🏠</span>
               <span className="text-xl font-bold text-gray-900">LocaTop</span>
             </div>
-            
+
             <div className="hidden md:flex items-center gap-8">
-              <a href="#features" className="text-gray-600 hover:text-gray-900 transition-colors">Fonctionnalités</a>
-              <a href="#how-it-works" className="text-gray-600 hover:text-gray-900 transition-colors">Comment ça marche</a>
-              <a href="#pricing" className="text-gray-600 hover:text-gray-900 transition-colors">Tarifs</a>
+              <a
+                href="#features"
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Fonctionnalités
+              </a>
+              <a
+                href="#how-it-works"
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Comment ça marche
+              </a>
+              <a
+                href="#pricing"
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Tarifs
+              </a>
             </div>
 
             <div className="flex items-center gap-4">
               {session?.user ? (
                 <Link
-                  href="/profile"
+                  href="/login
+                  "
                   className="px-5 py-2.5 bg-gray-900 text-white font-medium rounded-xl hover:bg-gray-800 transition-colors"
                 >
                   Mon espace
@@ -59,14 +75,17 @@ export default async function LandingPage() {
                 <span>✨</span>
                 <span>La gestion locative simplifiée</span>
               </div>
-              
+
               <h1 className="text-5xl md:text-6xl font-bold text-gray-900 leading-tight mb-6">
                 Gérez vos locations en toute
-                <span className="bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent"> confiance</span>
+                <span className="bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent">
+                  {' '}
+                  confiance
+                </span>
               </h1>
-              
+
               <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-                La plateforme qui connecte propriétaires et locataires. 
+                La plateforme qui connecte propriétaires et locataires.
                 Candidatures, baux, quittances et paiements au même endroit.
               </p>
 
@@ -112,33 +131,51 @@ export default async function LandingPage() {
                   {/* Fake dashboard preview */}
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">🏠</div>
+                      <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                        🏠
+                      </div>
                       <div>
-                        <p className="font-semibold text-gray-900">Appartement Paris 11</p>
+                        <p className="font-semibold text-gray-900">
+                          Appartement Paris 11
+                        </p>
                         <p className="text-sm text-gray-500">2 pièces • 45m²</p>
                       </div>
                     </div>
-                    <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm">Loué</span>
+                    <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm">
+                      Loué
+                    </span>
                   </div>
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">🏢</div>
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        🏢
+                      </div>
                       <div>
-                        <p className="font-semibold text-gray-900">Studio Lyon 6</p>
+                        <p className="font-semibold text-gray-900">
+                          Studio Lyon 6
+                        </p>
                         <p className="text-sm text-gray-500">1 pièce • 25m²</p>
                       </div>
                     </div>
-                    <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm">3 candidats</span>
+                    <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm">
+                      3 candidats
+                    </span>
                   </div>
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">🏡</div>
+                      <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                        🏡
+                      </div>
                       <div>
-                        <p className="font-semibold text-gray-900">Maison Bordeaux</p>
+                        <p className="font-semibold text-gray-900">
+                          Maison Bordeaux
+                        </p>
                         <p className="text-sm text-gray-500">4 pièces • 90m²</p>
                       </div>
                     </div>
-                    <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm">Loué</span>
+                    <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm">
+                      Loué
+                    </span>
                   </div>
                 </div>
               </div>
@@ -165,9 +202,12 @@ export default async function LandingPage() {
               <div className="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center mb-6">
                 <span className="text-2xl">📝</span>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">Candidatures simplifiées</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                Candidatures simplifiées
+              </h3>
               <p className="text-gray-600">
-                Recevez et gérez les candidatures en un clic. Profils vérifiés et dossiers complets.
+                Recevez et gérez les candidatures en un clic. Profils vérifiés
+                et dossiers complets.
               </p>
             </div>
 
@@ -176,9 +216,12 @@ export default async function LandingPage() {
               <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center mb-6">
                 <span className="text-2xl">📄</span>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">Baux dématérialisés</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                Baux dématérialisés
+              </h3>
               <p className="text-gray-600">
-                Créez et signez vos baux en ligne. Tout est archivé et accessible à tout moment.
+                Créez et signez vos baux en ligne. Tout est archivé et
+                accessible à tout moment.
               </p>
             </div>
 
@@ -187,9 +230,12 @@ export default async function LandingPage() {
               <div className="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center mb-6">
                 <span className="text-2xl">🧾</span>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">Quittances automatiques</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                Quittances automatiques
+              </h3>
               <p className="text-gray-600">
-                Générez et envoyez vos quittances de loyer automatiquement chaque mois.
+                Générez et envoyez vos quittances de loyer automatiquement
+                chaque mois.
               </p>
             </div>
 
@@ -198,9 +244,12 @@ export default async function LandingPage() {
               <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center mb-6">
                 <span className="text-2xl">💰</span>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">Suivi des paiements</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                Suivi des paiements
+              </h3>
               <p className="text-gray-600">
-                Suivez les paiements en temps réel. Confirmations bidirectionnelles sécurisées.
+                Suivez les paiements en temps réel. Confirmations
+                bidirectionnelles sécurisées.
               </p>
             </div>
 
@@ -209,9 +258,12 @@ export default async function LandingPage() {
               <div className="w-14 h-14 bg-rose-100 rounded-2xl flex items-center justify-center mb-6">
                 <span className="text-2xl">⭐</span>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">Avis double-blind</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                Avis double-blind
+              </h3>
               <p className="text-gray-600">
-                Système d&apos;avis équitable où propriétaires et locataires s&apos;évaluent mutuellement.
+                Système d&apos;avis équitable où propriétaires et locataires
+                s&apos;évaluent mutuellement.
               </p>
             </div>
 
@@ -220,9 +272,12 @@ export default async function LandingPage() {
               <div className="w-14 h-14 bg-teal-100 rounded-2xl flex items-center justify-center mb-6">
                 <span className="text-2xl">🏆</span>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">Badges et Gamification</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                Badges et Gamification
+              </h3>
               <p className="text-gray-600">
-                Gagnez des badges et construisez votre réputation pour des locations en confiance.
+                Gagnez des badges et construisez votre réputation pour des
+                locations en confiance.
               </p>
             </div>
           </div>
@@ -248,29 +303,52 @@ export default async function LandingPage() {
                 <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
                   <span className="text-xl">🏠</span>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900">Pour les propriétaires</h3>
+                <h3 className="text-2xl font-bold text-gray-900">
+                  Pour les propriétaires
+                </h3>
               </div>
 
               <div className="space-y-6">
                 <div className="flex gap-4">
-                  <div className="w-10 h-10 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold shrink-0">1</div>
+                  <div className="w-10 h-10 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold shrink-0">
+                    1
+                  </div>
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">Ajoutez vos biens</h4>
-                    <p className="text-gray-600">Créez vos fiches propriétés avec photos et caractéristiques.</p>
+                    <h4 className="font-semibold text-gray-900 mb-1">
+                      Ajoutez vos biens
+                    </h4>
+                    <p className="text-gray-600">
+                      Créez vos fiches propriétés avec photos et
+                      caractéristiques.
+                    </p>
                   </div>
                 </div>
                 <div className="flex gap-4">
-                  <div className="w-10 h-10 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold shrink-0">2</div>
+                  <div className="w-10 h-10 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold shrink-0">
+                    2
+                  </div>
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">Recevez des candidatures</h4>
-                    <p className="text-gray-600">Les locataires intéressés postulent avec leur profil vérifié.</p>
+                    <h4 className="font-semibold text-gray-900 mb-1">
+                      Recevez des candidatures
+                    </h4>
+                    <p className="text-gray-600">
+                      Les locataires intéressés postulent avec leur profil
+                      vérifié.
+                    </p>
                   </div>
                 </div>
                 <div className="flex gap-4">
-                  <div className="w-10 h-10 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold shrink-0">3</div>
+                  <div className="w-10 h-10 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold shrink-0">
+                    3
+                  </div>
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">Gérez vos baux</h4>
-                    <p className="text-gray-600">Créez le bail, suivez les paiements et générez les quittances.</p>
+                    <h4 className="font-semibold text-gray-900 mb-1">
+                      Gérez vos baux
+                    </h4>
+                    <p className="text-gray-600">
+                      Créez le bail, suivez les paiements et générez les
+                      quittances.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -282,29 +360,50 @@ export default async function LandingPage() {
                 <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                   <span className="text-xl">🔑</span>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900">Pour les locataires</h3>
+                <h3 className="text-2xl font-bold text-gray-900">
+                  Pour les locataires
+                </h3>
               </div>
 
               <div className="space-y-6">
                 <div className="flex gap-4">
-                  <div className="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold shrink-0">1</div>
+                  <div className="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold shrink-0">
+                    1
+                  </div>
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">Créez votre profil</h4>
-                    <p className="text-gray-600">Complétez votre passport de confiance une seule fois.</p>
+                    <h4 className="font-semibold text-gray-900 mb-1">
+                      Créez votre profil
+                    </h4>
+                    <p className="text-gray-600">
+                      Complétez votre passport de confiance une seule fois.
+                    </p>
                   </div>
                 </div>
                 <div className="flex gap-4">
-                  <div className="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold shrink-0">2</div>
+                  <div className="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold shrink-0">
+                    2
+                  </div>
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">Postulez facilement</h4>
-                    <p className="text-gray-600">Envoyez votre candidature en un clic aux biens qui vous plaisent.</p>
+                    <h4 className="font-semibold text-gray-900 mb-1">
+                      Postulez facilement
+                    </h4>
+                    <p className="text-gray-600">
+                      Envoyez votre candidature en un clic aux biens qui vous
+                      plaisent.
+                    </p>
                   </div>
                 </div>
                 <div className="flex gap-4">
-                  <div className="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold shrink-0">3</div>
+                  <div className="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold shrink-0">
+                    3
+                  </div>
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">Gérez votre location</h4>
-                    <p className="text-gray-600">Déclarez vos paiements et téléchargez vos quittances.</p>
+                    <h4 className="font-semibold text-gray-900 mb-1">
+                      Gérez votre location
+                    </h4>
+                    <p className="text-gray-600">
+                      Déclarez vos paiements et téléchargez vos quittances.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -332,24 +431,32 @@ export default async function LandingPage() {
                 <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <span className="text-3xl">🔑</span>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Locataire</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  Locataire
+                </h3>
                 <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-4xl font-bold text-gray-900">Gratuit</span>
+                  <span className="text-4xl font-bold text-gray-900">
+                    Gratuit
+                  </span>
                 </div>
                 <p className="text-gray-500 mt-2">Pour toujours</p>
               </div>
               <ul className="space-y-3 mb-8">
                 <li className="flex items-center gap-2 text-gray-600">
-                  <span className="text-emerald-500">✓</span> Candidatures illimitées
+                  <span className="text-emerald-500">✓</span> Candidatures
+                  illimitées
                 </li>
                 <li className="flex items-center gap-2 text-gray-600">
-                  <span className="text-emerald-500">✓</span> Passport de confiance
+                  <span className="text-emerald-500">✓</span> Passport de
+                  confiance
                 </li>
                 <li className="flex items-center gap-2 text-gray-600">
-                  <span className="text-emerald-500">✓</span> Suivi des paiements
+                  <span className="text-emerald-500">✓</span> Suivi des
+                  paiements
                 </li>
                 <li className="flex items-center gap-2 text-gray-600">
-                  <span className="text-emerald-500">✓</span> Quittances téléchargeables
+                  <span className="text-emerald-500">✓</span> Quittances
+                  téléchargeables
                 </li>
               </ul>
               <Link
@@ -369,9 +476,13 @@ export default async function LandingPage() {
                 <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <span className="text-3xl">🏠</span>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Propriétaire</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  Propriétaire
+                </h3>
                 <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-4xl font-bold text-gray-900">Gratuit</span>
+                  <span className="text-4xl font-bold text-gray-900">
+                    Gratuit
+                  </span>
                 </div>
                 <p className="text-gray-500 mt-2">Jusqu&apos;à 4 biens</p>
               </div>
@@ -380,13 +491,16 @@ export default async function LandingPage() {
                   <span className="text-emerald-500">✓</span> Gestion de 4 biens
                 </li>
                 <li className="flex items-center gap-2 text-gray-600">
-                  <span className="text-emerald-500">✓</span> Candidatures et baux
+                  <span className="text-emerald-500">✓</span> Candidatures et
+                  baux
                 </li>
                 <li className="flex items-center gap-2 text-gray-600">
-                  <span className="text-emerald-500">✓</span> Quittances automatiques
+                  <span className="text-emerald-500">✓</span> Quittances
+                  automatiques
                 </li>
                 <li className="flex items-center gap-2 text-gray-600">
-                  <span className="text-emerald-500">✓</span> Suivi des paiements
+                  <span className="text-emerald-500">✓</span> Suivi des
+                  paiements
                 </li>
               </ul>
               <Link
@@ -405,7 +519,9 @@ export default async function LandingPage() {
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Pro</h3>
                 <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-4xl font-bold text-gray-900">39,90€</span>
+                  <span className="text-4xl font-bold text-gray-900">
+                    39,90€
+                  </span>
                   <span className="text-gray-500">/mois</span>
                 </div>
                 <p className="text-gray-500 mt-2">5 biens et plus</p>
@@ -415,10 +531,12 @@ export default async function LandingPage() {
                   <span className="text-emerald-500">✓</span> Biens illimités
                 </li>
                 <li className="flex items-center gap-2 text-gray-600">
-                  <span className="text-emerald-500">✓</span> Toutes les fonctionnalités
+                  <span className="text-emerald-500">✓</span> Toutes les
+                  fonctionnalités
                 </li>
                 <li className="flex items-center gap-2 text-gray-600">
-                  <span className="text-emerald-500">✓</span> Support prioritaire
+                  <span className="text-emerald-500">✓</span> Support
+                  prioritaire
                 </li>
                 <li className="flex items-center gap-2 text-gray-600">
                   <span className="text-emerald-500">✓</span> Export comptable
@@ -442,7 +560,8 @@ export default async function LandingPage() {
             Prêt à simplifier votre gestion locative ?
           </h2>
           <p className="text-xl text-gray-600 mb-8">
-            Rejoignez des milliers de propriétaires et locataires qui nous font confiance.
+            Rejoignez des milliers de propriétaires et locataires qui nous font
+            confiance.
           </p>
           <Link
             href="/register"
@@ -470,26 +589,67 @@ export default async function LandingPage() {
             <div>
               <h4 className="font-semibold mb-4">Produit</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#features" className="hover:text-white transition-colors">Fonctionnalités</a></li>
-                <li><a href="#pricing" className="hover:text-white transition-colors">Tarifs</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">FAQ</a></li>
+                <li>
+                  <a
+                    href="#features"
+                    className="hover:text-white transition-colors"
+                  >
+                    Fonctionnalités
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#pricing"
+                    className="hover:text-white transition-colors"
+                  >
+                    Tarifs
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    FAQ
+                  </a>
+                </li>
               </ul>
             </div>
 
             <div>
               <h4 className="font-semibold mb-4">Légal</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Mentions légales</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">CGU</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Confidentialité</a></li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Mentions légales
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    CGU
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Confidentialité
+                  </a>
+                </li>
               </ul>
             </div>
 
             <div>
               <h4 className="font-semibold mb-4">Contact</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="mailto:contact@locatop.fr" className="hover:text-white transition-colors">contact@locatop.fr</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Support</a></li>
+                <li>
+                  <a
+                    href="mailto:contact@locatop.fr"
+                    className="hover:text-white transition-colors"
+                  >
+                    contact@locatop.fr
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Support
+                  </a>
+                </li>
               </ul>
             </div>
           </div>

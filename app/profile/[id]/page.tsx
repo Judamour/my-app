@@ -250,28 +250,92 @@ export default async function PublicProfilePage({ params }: PageProps) {
             {/* Avis reçus */}
             <div className="bg-gray-50 rounded-2xl p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                ⭐ Avis des propriétaires
+                ⭐ Avis reçus
               </h2>
 
-              {rating.count > 0 ? (
-                <div className="space-y-4">
-                  {/* Les avis seront affichés ici quand le système sera implémenté */}
-                  <p className="text-gray-500 text-sm">
-                    Ce locataire a reçu {rating.count} avis positif
-                    {rating.count > 1 ? 's' : ''}.
-                  </p>
-                </div>
-              ) : (
-                <div className="text-center py-6">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <span className="text-2xl">💬</span>
+              {await (async () => {
+                const reviews = await prisma.review.findMany({
+                  where: {
+                    targetId: user.id,
+                    status: 'REVEALED',
+                  },
+                  include: {
+                    author: {
+                      select: { firstName: true, lastName: true },
+                    },
+                    lease: {
+                      select: {
+                        property: { select: { title: true } },
+                      },
+                    },
+                  },
+                  orderBy: { revealedAt: 'desc' },
+                  take: 5,
+                })
+
+                if (reviews.length === 0) {
+                  return (
+                    <div className="text-center py-6">
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <span className="text-2xl">💬</span>
+                      </div>
+                      <p className="text-gray-400">Aucun avis pour le moment</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Les avis apparaîtront après la fin d&apos;un bail
+                      </p>
+                    </div>
+                  )
+                }
+
+                return (
+                  <div className="space-y-4">
+                    {reviews.map(review => (
+                      <div
+                        key={review.id}
+                        className="bg-white rounded-xl p-4 border border-gray-100"
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <p className="font-medium text-gray-900">
+                              {review.author.firstName} {review.author.lastName}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {review.lease.property.title}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {[1, 2, 3, 4, 5].map(star => (
+                              <span
+                                key={star}
+                                className={
+                                  star <= review.rating
+                                    ? 'text-yellow-400'
+                                    : 'text-gray-200'
+                                }
+                              >
+                                ★
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        {review.comment && (
+                          <p className="text-sm text-gray-600 mt-2">
+                            {review.comment}
+                          </p>
+                        )}
+                        {review.depositReturned !== null && (
+                          <p className="text-xs text-gray-500 mt-2">
+                            Caution :{' '}
+                            {review.depositReturned
+                              ? '✅ Restituée'
+                              : '❌ Retenue'}
+                          </p>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                  <p className="text-gray-400">Aucun avis pour le moment</p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Les avis apparaîtront après la fin d&apos;un bail
-                  </p>
-                </div>
-              )}
+                )
+              })()}
             </div>
           </div>
 
@@ -533,11 +597,25 @@ async function calculateBadges(userId: string) {
 }
 
 // Récupérer la note moyenne (préparé pour le système d'avis)
+// Récupérer la note moyenne et les avis
 async function getAverageRating(userId: string) {
-  // TODO: Implémenter quand le système de reviews sera créé
-  // Pour l'instant, retourne des valeurs par défaut
+  const reviews = await prisma.review.findMany({
+    where: {
+      targetId: userId,
+      status: 'REVEALED',
+    },
+    select: {
+      rating: true,
+    },
+  })
+
+  if (reviews.length === 0) {
+    return { average: 0, count: 0 }
+  }
+
+  const total = reviews.reduce((sum, r) => sum + r.rating, 0)
   return {
-    average: 0,
-    count: 0,
+    average: total / reviews.length,
+    count: reviews.length,
   }
 }

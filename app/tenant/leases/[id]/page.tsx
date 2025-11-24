@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import LeaseActions from '@/components/leases/LeaseActions'
+import ReviewButton from '@/components/leases/ReviewButton'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -248,6 +249,11 @@ export default async function TenantLeaseDetailPage({ params }: PageProps) {
           </div>
         </div>
       </div>
+      <ReviewButton
+        leaseId={lease.id}
+        userId={session.user.id}
+        leaseStatus={lease.status}
+      />
     </div>
   )
 }
