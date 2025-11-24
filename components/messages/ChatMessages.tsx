@@ -51,10 +51,16 @@ useEffect(() => {
   const channel = pusherClient.subscribe(`conversation-${conversationId}`)
   
   channel.bind('new-message', (data: { message: Message }) => {
-    // Ne pas ajouter si c'est notre propre message (déjà ajouté en optimistic)
+    // ✅ LIGNE CRITIQUE : Ignorer ses propres messages
     if (data.message.senderId === currentUserId) return
     
-    setMessages((prev) => [...prev, data.message])
+    // Vérifier si le message existe déjà (évite les doublons)
+    setMessages((prev) => {
+      const exists = prev.some(m => m.id === data.message.id)
+      if (exists) return prev
+      
+      return [...prev, data.message]
+    })
   })
 
   return () => {

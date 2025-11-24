@@ -24,3 +24,87 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Slider personnalisé */
+input[type="range"].slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(to right, 
+    #ef4444 0%, 
+    #f59e0b 25%, 
+    #eab308 50%, 
+    #84cc16 75%, 
+    #10b981 100%
+  );
+  outline: none;
+  border-radius: 8px;
+  height: 12px;
+}
+
+input[type="range"].slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  background: white;
+  border: 3px solid #3b82f6;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  transition: all 0.2s;
+}
+
+input[type="range"].slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+input[type="range"].slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  background: white;
+  border: 3px solid #3b82f6;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  transition: all 0.2s;
+}
+
+input[type="range"].slider::-moz-range-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+/* ```
+
+---
+
+## 🔢 **EXEMPLES DE CALCUL**
+
+### **Exemple 1 : Locataire exemplaire**
+```
+Critères : 4.5 moyenne → 4.5 × 0.25 = 1.125 pts
+Caution : 100% rendue → 5 × 0.75 = 3.75 pts
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Note finale : 1.125 + 3.75 = 4.875/5 ⭐⭐⭐⭐⭐
+```
+
+### **Exemple 2 : Locataire moyen avec caution 50%**
+```
+Critères : 3.0 moyenne → 3.0 × 0.25 = 0.75 pts
+Caution : 50% rendue → (50/100) × 5 × 0.75 = 1.875 pts
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Note finale : 0.75 + 1.875 = 2.625/5 ⭐⭐⭐
+```
+
+### **Exemple 3 : Locataire problématique**
+```
+Critères : 2.0 moyenne → 2.0 × 0.25 = 0.5 pts
+Caution : 0% rendue → 0 × 0.75 = 0 pts
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Note finale : 0.5 + 0 = 0.5/5 ⭐
+```
+
+### **Exemple 4 : Propriétaire (pas de caution)**
+```
+Critères : 4.2 moyenne → 4.2/5 ⭐⭐⭐⭐
+(100% de la note vient des critères) */

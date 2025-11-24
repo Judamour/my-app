@@ -13,22 +13,24 @@ import type { ApiResponse, PropertyWithTenant } from '@/types'
 export async function GET() {
   try {
     const session = await auth()
-    
+
     if (!session?.user) {
       throw new UnauthorizedError()
     }
-    
+
     if (!session.user.isOwner) {
-      throw new ForbiddenError('Vous devez être propriétaire pour accéder à cette ressource')
+      throw new ForbiddenError(
+        'Vous devez être propriétaire pour accéder à cette ressource'
+      )
     }
-    
+
     // Récupérer toutes les propriétés de l'owner
     const properties: PropertyWithTenant[] = await prisma.property.findMany({
       where: {
-        ownerId: session.user.id
+        ownerId: session.user.id,
       },
       orderBy: {
-        createdAt: 'desc'
+        createdAt: 'desc',
       },
       include: {
         tenant: {
@@ -36,18 +38,17 @@ export async function GET() {
             id: true,
             firstName: true,
             lastName: true,
-            email: true
-          }
-        }
-      }
+            email: true,
+          },
+        },
+      },
     })
-    
+
     const response: ApiResponse<PropertyWithTenant[]> = {
-      data: properties
+      data: properties,
     }
-    
+
     return NextResponse.json(response, { status: 200 })
-    
   } catch (error) {
     return handleApiError(error)
   }
@@ -60,41 +61,42 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const session = await auth()
-    
+
     if (!session?.user) {
       throw new UnauthorizedError()
     }
-    
-// Vérifier isOwner depuis DB (pas session)
-const user = await prisma.user.findUnique({
-  where: { id: session.user.id },
-  select: { isOwner: true }
-})
 
-if (!user?.isOwner) {
-  throw new ForbiddenError('Vous devez être propriétaire pour créer une propriété')
-}
-    
+    // Vérifier isOwner depuis DB (pas session)
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { isOwner: true },
+    })
+
+    if (!user?.isOwner) {
+      throw new ForbiddenError(
+        'Vous devez être propriétaire pour créer une propriété'
+      )
+    }
+
     const body = await request.json()
-    
+
     // ✅ Validation automatique avec Zod
     const validatedData = createPropertySchema.parse(body)
-    
+
     // Créer la propriété
     const property = await prisma.property.create({
       data: {
         ...validatedData,
         ownerId: session.user.id,
-        available: true
-      }
+        available: true,
+      },
     })
-    
+
     const response: ApiResponse = {
-      data: property
+      data: property,
     }
-    
+
     return NextResponse.json(response, { status: 201 })
-    
   } catch (error) {
     return handleApiError(error)
   }

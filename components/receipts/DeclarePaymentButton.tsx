@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState , useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+
 
 interface Lease {
   id: string
@@ -18,7 +19,9 @@ interface DeclarePaymentButtonProps {
   leases: Lease[]
 }
 
-export default function DeclarePaymentButton({ leases }: DeclarePaymentButtonProps) {
+export default function DeclarePaymentButton({
+  leases,
+}: DeclarePaymentButtonProps) {
   const [showModal, setShowModal] = useState(false)
   const [loading, setLoading] = useState(false)
   const [selectedLease, setSelectedLease] = useState<string>('')
@@ -27,43 +30,59 @@ export default function DeclarePaymentButton({ leases }: DeclarePaymentButtonPro
   const [paymentMethod, setPaymentMethod] = useState('virement')
   const router = useRouter()
 
+  useEffect(() => {
+    if (leases.length === 1 && !selectedLease) {
+      setSelectedLease(leases[0].id)
+    }
+  }, [leases, selectedLease])
+
   const selectedLeaseData = leases.find(l => l.id === selectedLease)
 
   // Générer les mois disponibles (du début du bail jusqu'au mois en cours)
   const getAvailableMonths = () => {
     if (!selectedLeaseData) return []
-    
+
     const now = new Date()
     const currentMonth = now.getMonth() + 1
     const currentYear = now.getFullYear()
-    
+
     const leaseStart = new Date(selectedLeaseData.startDate)
     const startMonth = leaseStart.getMonth() + 1
     const startYear = leaseStart.getFullYear()
-    
+
     const months: { month: number; year: number; label: string }[] = []
     const monthNames = [
-      'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-      'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+      'Janvier',
+      'Février',
+      'Mars',
+      'Avril',
+      'Mai',
+      'Juin',
+      'Juillet',
+      'Août',
+      'Septembre',
+      'Octobre',
+      'Novembre',
+      'Décembre',
     ]
-    
+
     let y = startYear
     let m = startMonth
-    
+
     while (y < currentYear || (y === currentYear && m <= currentMonth)) {
       months.push({
         month: m,
         year: y,
-        label: `${monthNames[m - 1]} ${y}`
+        label: `${monthNames[m - 1]} ${y}`,
       })
-      
+
       m++
       if (m > 12) {
         m = 1
         y++
       }
     }
-    
+
     return months.reverse()
   }
 
@@ -77,7 +96,7 @@ export default function DeclarePaymentButton({ leases }: DeclarePaymentButtonPro
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!selectedLease) {
       toast.error('Veuillez sélectionner un bail')
       return
@@ -136,18 +155,28 @@ export default function DeclarePaymentButton({ leases }: DeclarePaymentButtonPro
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div 
+          <div
             className="absolute inset-0 bg-black/50"
             onClick={() => setShowModal(false)}
           />
-          
+
           <div className="relative bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
             <button
               onClick={() => setShowModal(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
             >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
 
@@ -172,7 +201,7 @@ export default function DeclarePaymentButton({ leases }: DeclarePaymentButtonPro
                   </label>
                   <select
                     value={selectedLease}
-                    onChange={(e) => {
+                    onChange={e => {
                       setSelectedLease(e.target.value)
                       setMonth(new Date().getMonth() + 1)
                       setYear(new Date().getFullYear())
@@ -181,7 +210,7 @@ export default function DeclarePaymentButton({ leases }: DeclarePaymentButtonPro
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                   >
                     <option value="">Sélectionner</option>
-                    {leases.map((lease) => (
+                    {leases.map(lease => (
                       <option key={lease.id} value={lease.id}>
                         {lease.property.title}
                       </option>
@@ -192,8 +221,10 @@ export default function DeclarePaymentButton({ leases }: DeclarePaymentButtonPro
                 // Auto-select si un seul bail
                 <div className="p-4 bg-gray-50 rounded-xl">
                   <p className="text-sm text-gray-500">Logement</p>
-                  <p className="font-medium text-gray-900">{leases[0].property.title}</p>
-                  {!selectedLease && setSelectedLease(leases[0].id)}
+                  <p className="font-medium text-gray-900">
+                    {leases[0].property.title}
+                  </p>
+                 
                 </div>
               )}
 
@@ -205,11 +236,14 @@ export default function DeclarePaymentButton({ leases }: DeclarePaymentButtonPro
                   </label>
                   <select
                     value={`${month}-${year}`}
-                    onChange={(e) => handleMonthSelect(e.target.value)}
+                    onChange={e => handleMonthSelect(e.target.value)}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                   >
-                    {availableMonths.map((m) => (
-                      <option key={`${m.month}-${m.year}`} value={`${m.month}-${m.year}`}>
+                    {availableMonths.map(m => (
+                      <option
+                        key={`${m.month}-${m.year}`}
+                        value={`${m.month}-${m.year}`}
+                      >
                         {m.label}
                       </option>
                     ))}
@@ -227,7 +261,7 @@ export default function DeclarePaymentButton({ leases }: DeclarePaymentButtonPro
                     { value: 'virement', label: '💳 Virement' },
                     { value: 'cheque', label: '📝 Chèque' },
                     { value: 'especes', label: '💵 Espèces' },
-                  ].map((method) => (
+                  ].map(method => (
                     <button
                       key={method.value}
                       type="button"
@@ -252,18 +286,28 @@ export default function DeclarePaymentButton({ leases }: DeclarePaymentButtonPro
                   </p>
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-gray-600">Loyer</span>
-                    <span className="font-medium">{formatPrice(selectedLeaseData.monthlyRent)}</span>
+                    <span className="font-medium">
+                      {formatPrice(selectedLeaseData.monthlyRent)}
+                    </span>
                   </div>
-                  {selectedLeaseData.charges && selectedLeaseData.charges > 0 && (
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-600">Charges</span>
-                      <span className="font-medium">{formatPrice(selectedLeaseData.charges)}</span>
-                    </div>
-                  )}
+                  {selectedLeaseData.charges &&
+                    selectedLeaseData.charges > 0 && (
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-gray-600">Charges</span>
+                        <span className="font-medium">
+                          {formatPrice(selectedLeaseData.charges)}
+                        </span>
+                      </div>
+                    )}
                   <div className="flex justify-between text-sm pt-2 border-t border-blue-200 mt-2">
-                    <span className="font-medium text-gray-900">Total déclaré</span>
+                    <span className="font-medium text-gray-900">
+                      Total déclaré
+                    </span>
                     <span className="font-semibold text-blue-700">
-                      {formatPrice(selectedLeaseData.monthlyRent + (selectedLeaseData.charges || 0))}
+                      {formatPrice(
+                        selectedLeaseData.monthlyRent +
+                          (selectedLeaseData.charges || 0)
+                      )}
                     </span>
                   </div>
                 </div>

@@ -267,48 +267,36 @@ model Application {
 }
 
 model Review {
-  id              String       @id @default(cuid())
+  id        String   @id @default(cuid())
+  leaseId   String
+  authorId  String   // Celui qui écrit l'avis
+  targetId  String   // Celui qui reçoit l'avis
   
-  leaseId         String
-  lease           Lease        @relation(fields: [leaseId], references: [id], onDelete: Cascade)
-  
-  authorId        String
-  author          User         @relation("AuthoredReviews", fields: [authorId], references: [id], onDelete: Cascade)
-  
-  targetId        String
-  target          User         @relation("ReceivedReviews", fields: [targetId], references: [id], onDelete: Cascade)
-  
-  // Notation
-  rating          Int          // 1-5 étoiles
-  comment         String?      @db.Text
+  // Note finale calculée automatiquement
+  rating    Float    // Note finale (0-5)
   
   // Critères détaillés (JSON)
-  criteria        Json?
+  criteria  Json?    // { cleanliness: 4, communication: 5, ... }
   
-  // Bonus caution
-  depositReturned Boolean?
+  // Spécifique propriétaires
+  depositReturned        Boolean? // true/false/null
+  depositReturnedPercent Int?     // 0-100 si partiellement rendu
   
-  // Double-blind logic
-  status          ReviewStatus @default(PENDING)
-  submittedAt     DateTime     @default(now())
-  revealedAt      DateTime?
+  comment   String?
   
-  // Modération
-  reported        Boolean      @default(false)
-  reportReason    String?
-  moderatedAt     DateTime?
-  moderatorNote   String?
+  status     ReviewStatus @default(PENDING)
+  submittedAt DateTime    @default(now())
+  revealedAt  DateTime?
   
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  lease     Lease   @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  author    User    @relation("AuthoredReviews", fields: [authorId], references: [id], onDelete: Cascade)
+  target    User    @relation("ReceivedReviews", fields: [targetId], references: [id], onDelete: Cascade)
   
   @@unique([leaseId, authorId])
-  @@index([leaseId])
-  @@index([authorId])
   @@index([targetId])
-  @@index([status])
-  @@map("reviews")
 }
+
+
 
 model Conversation {
   id          String    @id @default(cuid())

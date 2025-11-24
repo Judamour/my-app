@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { notFound, redirect } from 'next/navigation'
 import ContactButton from '@/components/messages/ContactButton'
 import BackButton from '@/components/BackButton'
+import ReviewStats from '@/components/reviews/ReviewStats'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -246,7 +247,8 @@ export default async function PublicProfilePage({ params }: PageProps) {
                 )}
               </div>
             </div>
-
+            {/* Statistiques d'avis */}
+            <ReviewStats userId={user.id} />
             {/* Avis reçus */}
             <div className="bg-gray-50 rounded-2xl p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
@@ -261,21 +263,31 @@ export default async function PublicProfilePage({ params }: PageProps) {
                   },
                   include: {
                     author: {
-                      select: { firstName: true, lastName: true },
+                      select: {
+                        firstName: true,
+                        lastName: true,
+                        isOwner: true,
+                        isTenant: true,
+                      },
                     },
                     lease: {
                       select: {
-                        property: { select: { title: true } },
+                        property: {
+                          select: {
+                            title: true,
+                            ownerId: true,
+                          },
+                        },
                       },
                     },
                   },
                   orderBy: { revealedAt: 'desc' },
-                  take: 5,
+                  take: 10,
                 })
 
                 if (reviews.length === 0) {
                   return (
-                    <div className="text-center py-6">
+                    <div className="text-center py-8">
                       <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                         <span className="text-2xl">💬</span>
                       </div>
@@ -289,50 +301,150 @@ export default async function PublicProfilePage({ params }: PageProps) {
 
                 return (
                   <div className="space-y-4">
-                    {reviews.map(review => (
-                      <div
-                        key={review.id}
-                        className="bg-white rounded-xl p-4 border border-gray-100"
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <p className="font-medium text-gray-900">
-                              {review.author.firstName} {review.author.lastName}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {review.lease.property.title}
-                            </p>
+                    {reviews.map(review => {
+                      const isOwnerReview =
+                        review.lease.property.ownerId === review.authorId
+                      const criteria = review.criteria as Record<
+                        string,
+                        number
+                      > | null
+
+                      return (
+                        <div
+                          key={review.id}
+                          className="bg-white rounded-xl p-5 border border-gray-100 hover:shadow-md transition-shadow"
+                        >
+                          {/* Header */}
+                          <div className="flex items-start justify-between mb-3">
+                            <div>
+                              <p className="font-medium text-gray-900">
+                                {review.author.firstName}{' '}
+                                {review.author.lastName}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {review.lease.property.title}
+                              </p>
+                              <p className="text-xs text-gray-400 mt-1">
+                                {new Date(
+                                  review.revealedAt || review.submittedAt
+                                ).toLocaleDateString('fr-FR', {
+                                  day: 'numeric',
+                                  month: 'long',
+                                  year: 'numeric',
+                                })}
+                              </p>
+                            </div>
+
+                            {/* Note finale */}
+                            <div className="text-center">
+                              <div className="flex items-center gap-1">
+                                {[1, 2, 3, 4, 5].map(star => (
+                                  <span
+                                    key={star}
+                                    className={`text-lg ${
+                                      star <= Math.round(review.rating)
+                                        ? 'text-yellow-400'
+                                        : 'text-gray-200'
+                                    }`}
+                                  >
+                                    ★
+                                  </span>
+                                ))}
+                              </div>
+                              <p className="text-sm font-bold text-gray-900 mt-1">
+                                {review.rating.toFixed(1)}/5
+                              </p>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-1">
-                            {[1, 2, 3, 4, 5].map(star => (
-                              <span
-                                key={star}
-                                className={
-                                  star <= review.rating
-                                    ? 'text-yellow-400'
-                                    : 'text-gray-200'
-                                }
-                              >
-                                ★
-                              </span>
-                            ))}
-                          </div>
+
+                          {/* Critères détaillés */}
+                          {criteria && (
+                            <div className="mb-3 p-3 bg-gray-50 rounded-lg">
+                              <p className="text-xs font-medium text-gray-700 mb-2">
+                                📊 Détail des critères
+                              </p>
+                              <div className="grid grid-cols-2 gap-2">
+                                {Object.entries(criteria).map(
+                                  ([key, value]) => {
+                                    const labels: Record<string, string> = {
+                                      // Critères locataires
+                                      cleanliness: 'Propreté',
+                                      respectProperty: 'Respect du bien',
+                                      paymentPunctuality: 'Ponctualité',
+                                      communication: 'Communication',
+                                      neighborRelations: 'Voisinage',
+                                      // Critères propriétaires
+                                      propertyCondition: 'État du logement',
+                                      responsiveness: 'Réactivité',
+                                      respectCommitments: 'Engagements',
+                                      fairness: 'Équité',
+                                    }
+
+                                    return (
+                                      <div
+                                        key={key}
+                                        className="flex items-center justify-between text-xs"
+                                      >
+                                        <span className="text-gray-600">
+                                          {labels[key] || key}
+                                        </span>
+                                        <div className="flex items-center gap-0.5">
+                                          {[1, 2, 3, 4, 5].map(star => (
+                                            <span
+                                              key={star}
+                                              className={`text-xs ${
+                                                star <= value
+                                                  ? 'text-yellow-400'
+                                                  : 'text-gray-200'
+                                              }`}
+                                            >
+                                              ★
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )
+                                  }
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Badge caution (si proprio évalue locataire) */}
+                          {isOwnerReview &&
+                            review.depositReturnedPercent !== null && (
+                              <div className="mb-3">
+                                <div
+                                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium ${
+                                    review.depositReturnedPercent === 100
+                                      ? 'bg-emerald-50 text-emerald-700'
+                                      : review.depositReturnedPercent > 0
+                                      ? 'bg-orange-50 text-orange-700'
+                                      : 'bg-red-50 text-red-700'
+                                  }`}
+                                >
+                                  <span>
+                                    {review.depositReturnedPercent === 100
+                                      ? '✅'
+                                      : review.depositReturnedPercent > 0
+                                      ? '⚠️'
+                                      : '❌'}
+                                  </span>
+                                  Caution : {review.depositReturnedPercent}%
+                                  restituée
+                                </div>
+                              </div>
+                            )}
+
+                          {/* Commentaire */}
+                          {review.comment && (
+                            <p className="text-sm text-gray-600 leading-relaxed">
+                              &ldquo;{review.comment}&rdquo;
+                            </p>
+                          )}
                         </div>
-                        {review.comment && (
-                          <p className="text-sm text-gray-600 mt-2">
-                            {review.comment}
-                          </p>
-                        )}
-                        {review.depositReturned !== null && (
-                          <p className="text-xs text-gray-500 mt-2">
-                            Caution :{' '}
-                            {review.depositReturned
-                              ? '✅ Restituée'
-                              : '❌ Retenue'}
-                          </p>
-                        )}
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )
               })()}

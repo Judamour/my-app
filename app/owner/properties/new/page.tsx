@@ -41,10 +41,19 @@ export default function NewPropertyPage() {
         surface: Math.round(Number(surface)),
         rooms: Math.round(Number(rooms)),
         bedrooms: Math.round(Number(bedrooms)),
-        rent: Math.round(Number(rent)),
+        rent: Number(rent),
         description: description || null,
         images,
       }
+
+      console.log('🔍 DEBUG RENT:')
+      console.log('- State rent:', rent, typeof rent)
+      console.log('- Number(rent):', Number(rent), typeof Number(rent))
+      console.log(
+        '- propertyData.rent:',
+        propertyData.rent,
+        typeof propertyData.rent
+      )
 
       const response = await fetch('/api/properties', {
         method: 'POST',
@@ -191,8 +200,10 @@ export default function NewPropertyPage() {
                     type="number"
                     value={rent}
                     onChange={e => setRent(e.target.value)}
+                    onWheel={e => e.currentTarget.blur()} // ✅ AJOUTE CETTE LIGNE
                     required
                     min="0"
+                    step="1"
                     className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all"
                     placeholder="1200"
                   />
@@ -289,6 +300,7 @@ export default function NewPropertyPage() {
                     min="1"
                     className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all"
                     placeholder="45"
+                    onWheel={e => e.currentTarget.blur()} // ✅ AJOUTE CETTE LIGNE
                   />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
                     m²

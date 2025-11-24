@@ -68,14 +68,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
-    const { leaseId, rating, comment, criteria, depositReturned } = await request.json()
+    const { leaseId, rating, criteria, comment, depositReturned, depositReturnedPercent } = await request.json()
 
-    if (!leaseId || !rating) {
+    if (!leaseId || !rating || !criteria) {
       return NextResponse.json({ error: 'Données manquantes' }, { status: 400 })
     }
 
-    if (rating < 1 || rating > 5) {
-      return NextResponse.json({ error: 'Note invalide (1-5)' }, { status: 400 })
+    if (rating < 0 || rating > 5) {
+      return NextResponse.json({ error: 'Note invalide (0-5)' }, { status: 400 })
     }
 
     // Récupérer le bail
@@ -133,9 +133,10 @@ export async function POST(request: Request) {
         authorId: session.user.id,
         targetId,
         rating,
+        criteria,
         comment: comment || null,
-        criteria: criteria || null,
         depositReturned: depositReturned !== undefined ? depositReturned : null,
+        depositReturnedPercent: depositReturnedPercent || null,
         status: 'PENDING',
       },
     })
@@ -164,7 +165,7 @@ export async function POST(request: Request) {
       })
 
       return NextResponse.json(
-        { 
+        {
           data: review,
           message: 'Avis soumis et révélé ! Les deux parties ont évalué.',
         },
