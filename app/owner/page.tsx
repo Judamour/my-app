@@ -401,6 +401,14 @@ export default async function OwnerDashboardPage() {
               </p>
             </div>
           </Link>
+          {/* NOUVELLE CARTE Achievements */}
+          <Link
+            href="/achievements"
+            className="flex flex-col items-center justify-center p-8 bg-gradient-to-br from-yellow-500 to-orange-500 text-white rounded-xl shadow-lg hover:shadow-xl transition-shadow"
+          >
+            <div className="text-5xl mb-4">🏆</div>
+            <h3 className="text-xl font-bold">Mes achievements</h3>
+          </Link>
         </div>
         {/* Messages */}
         <Link

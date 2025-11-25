@@ -294,23 +294,31 @@ export default async function TenantDashboardPage() {
                 </p>
               </div>
             </Link>
-              {/* 🆕 Voir mon profil public */}
-  <Link
-    href={`/profile/${session.user.id}`}
-    className="group flex flex-col gap-4 p-6 border-2 border-blue-200 rounded-2xl hover:border-blue-500 hover:shadow-lg transition-all"
-  >
-    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center text-white text-2xl group-hover:scale-105 transition-transform">
-      👁️
-    </div>
-    <div>
-      <p className="font-semibold text-gray-900 text-lg">
-        Mon profil public
-      </p>
-      <p className="text-gray-500 text-sm mt-1">
-        Voir ce que les autres voient
-      </p>
-    </div>
-  </Link>
+            {/* 🆕 Voir mon profil public */}
+            <Link
+              href={`/profile/${session.user.id}`}
+              className="group flex flex-col gap-4 p-6 border-2 border-blue-200 rounded-2xl hover:border-blue-500 hover:shadow-lg transition-all"
+            >
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center text-white text-2xl group-hover:scale-105 transition-transform">
+                👁️
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900 text-lg">
+                  Mon profil public
+                </p>
+                <p className="text-gray-500 text-sm mt-1">
+                  Voir ce que les autres voient
+                </p>
+              </div>
+            </Link>
+            {/* NOUVELLE CARTE Achievements */}
+            <Link
+              href="/achievements"
+              className="flex flex-col items-center justify-center p-8 bg-gradient-to-br from-yellow-500 to-orange-500 text-white rounded-xl shadow-lg hover:shadow-xl transition-shadow"
+            >
+              <div className="text-5xl mb-4">🏆</div>
+              <h3 className="text-xl font-bold">Mes achievements</h3>
+            </Link>
           </div>
         </div>
 

@@ -1,4 +1,4 @@
-import { Badge } from '@/types/badge'
+import { Badge, BadgeCategory, BadgeRarity } from '../types/badge'
 
 // 🎯 LISTE DE TOUS LES BADGES DISPONIBLES
 export const ALL_BADGES: Badge[] = [
@@ -100,7 +100,7 @@ export const ALL_BADGES: Badge[] = [
   {
     id: 'perfect-streak',
     name: 'Série parfaite',
-    description: '5 paiements consécutifs à l\'heure',
+    description: "5 paiements consécutifs à l'heure",
     icon: '🔥',
     category: 'PERFORMANCE',
     rarity: 'RARE',
@@ -109,7 +109,7 @@ export const ALL_BADGES: Badge[] = [
   },
   {
     id: 'always-on-time',
-    name: 'Toujours à l\'heure',
+    name: "Toujours à l'heure",
     description: '0 retard sur 12 mois',
     icon: '📅',
     category: 'PERFORMANCE',

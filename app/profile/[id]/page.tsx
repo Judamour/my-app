@@ -1,43 +1,51 @@
+import { notFound, redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { notFound, redirect } from 'next/navigation'
-import ContactButton from '@/components/messages/ContactButton'
 import BackButton from '@/components/BackButton'
-import ReviewStats from '@/components/reviews/ReviewStats'
 import Link from 'next/link'
+import { calculateUserBadges, calculateUserRank, calculateLevelFromXP } from '@/lib/badges'
+import { getBadgeById } from '@/lib/badges-config'
+import RankedAvatar from '@/components/profile/RankedAvatar'
+import RankBadge from '@/components/profile/RankBadge'
+import XPProgressBar from '@/components/profile/XPProgressBar'
 
 interface PageProps {
-  params: Promise<{ id: string }>
+  params: Promise<{
+    id: string
+  }>
 }
 
-export default async function PublicProfilePage({ params }: PageProps) {
+export default async function ProfilePage({ params }: PageProps) {
+  // ⚠️ IMPORTANT : await params dans Next.js 15
   const { id } = await params
+  
   const session = await auth()
 
-  if (!session?.user) {
-    redirect(`/login?redirect=/profile/${id}`)
+  if (!session?.user?.id) {
+    redirect('/auth/signin')
   }
 
-  // Récupérer le profil (sans données sensibles)
-  // ✅ APRÈS
   const user = await prisma.user.findUnique({
-    where: { id },
+    where: { id }, // ✅ Maintenant id est défini
     select: {
       id: true,
       firstName: true,
       lastName: true,
-      gender: true,
+      email: true,
       phone: true,
       address: true,
+      gender: true,
+      birthDate: true,
       profileComplete: true,
-      createdAt: true,
-      isTenant: true,
+      role: true,
       isOwner: true,
-      // 🆕 Gamification
+      isTenant: true,
+      createdAt: true,
+      // Gamification
       xp: true,
       level: true,
       badges: true,
-      // 🆕 Préférences d'affichage
+      // Préférences d'affichage
       showBadges: true,
       showLevel: true,
       showRankBorder: true,
@@ -51,711 +59,227 @@ export default async function PublicProfilePage({ params }: PageProps) {
     notFound()
   }
 
-  // Vérifier que le visiteur a le droit de voir ce profil
-  const currentUser = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { isOwner: true, isTenant: true },
-  })
+  // Calcul des badges et du rang
+  const userBadges = await calculateUserBadges(user.id)
+  const currentLevel = calculateLevelFromXP(user.xp)
+  const rankInfo = calculateUserRank(currentLevel, userBadges.length)
 
-  const hasAccess = await checkProfileAccess(
-    session.user.id,
-    id,
-    currentUser?.isOwner || false
-  )
+  // Récupérer les détails des badges débloqués
+  const unlockedBadgesDetails = userBadges
+    .map((ub) => {
+      const badge = getBadgeById(ub.badgeId)
+      return badge ? { ...badge, unlockedAt: ub.unlockedAt } : null
+    })
+    .filter(Boolean)
 
-  if (!hasAccess && session.user.id !== id) {
-    redirect('/')
-  }
+  const isOwnProfile = session.user.id === user.id
 
-  // Calculer les badges du locataire
-  const badges = await calculateBadges(id)
+  // Stats pour avis (si activé) - targetId au lieu de reviewedUserId
+  const reviewStats = user.showReviewStats
+    ? await prisma.review.aggregate({
+        where: { targetId: user.id },
+        _avg: { rating: true },
+        _count: { id: true },
+      })
+    : null
 
-  // Récupérer la note moyenne (si système d'avis existe)
-  const rating = await getAverageRating(id)
-
-  // Ancienneté
-  const memberSince = new Date(user.createdAt)
-  const now = new Date()
-  const monthsDiff =
-    (now.getFullYear() - memberSince.getFullYear()) * 12 +
-    (now.getMonth() - memberSince.getMonth())
-  const memberDuration =
-    monthsDiff < 12
-      ? `${monthsDiff || 1} mois`
-      : `${Math.floor(monthsDiff / 12)} an${
-          Math.floor(monthsDiff / 12) > 1 ? 's' : ''
-        }`
-
-  const getGenderLabel = (gender: string | null) => {
-    const labels: Record<string, string> = {
-      MALE: 'Monsieur',
-      FEMALE: 'Madame',
-      OTHER: 'Autre',
-      PREFER_NOT_TO_SAY: 'Non précisé',
-    }
-    return gender ? labels[gender] || '' : ''
-  }
+  const hasReviews = reviewStats?._count?.id && reviewStats._count.id > 0
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="border-b border-gray-100">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <BackButton />
+    // ... reste du JSX inchangé
 
-          {/* 🆕 Bouton modifier (seulement pour son propre profil) */}
-          {session.user.id === id && (
+
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-4xl mx-auto px-4">
+        {/* Header avec boutons */}
+        <div className="mb-6 flex items-center justify-between">
+          <BackButton />
+          {isOwnProfile && (
             <Link
               href="/profile/edit"
-              className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors font-medium"
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
             >
               ✏️ Modifier mon profil
             </Link>
           )}
         </div>
-      </div>
 
-      <div className="max-w-4xl mx-auto px-6 py-10">
-        {/* Profil header */}
-        <div className="flex flex-col md:flex-row items-center md:items-start gap-6 mb-10">
-          {/* Avatar */}
-          <div className="w-28 h-28 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-white text-3xl font-semibold shadow-lg">
-            {user.firstName[0]}
-            {user.lastName[0]}
-          </div>
+        {/* Card principale */}
+        <div className="bg-white rounded-xl shadow-lg p-8">
+          {/* Header avec avatar et infos principales */}
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-6 mb-8">
+            {/* Avatar avec bordure de rang */}
+            <RankedAvatar
+              firstName={user.firstName || 'U'}
+              lastName={user.lastName || 'U'}
+              rankInfo={rankInfo}
+              showBorder={user.showRankBorder}
+              size="large"
+            />
 
-          <div className="text-center md:text-left flex-1">
-            <h1 className="text-3xl font-semibold text-gray-900">
-              {user.firstName} {user.lastName}
-            </h1>
+            {/* Infos utilisateur */}
+            <div className="flex-1 text-center md:text-left">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                {user.firstName} {user.lastName}
+              </h1>
 
-            {/* Note moyenne */}
-            {rating.count > 0 && (
-              <div className="flex items-center justify-center md:justify-start gap-2 mt-2">
-                <div className="flex items-center">
-                  {[1, 2, 3, 4, 5].map(star => (
-                    <span
-                      key={star}
-                      className={`text-lg ${
-                        star <= Math.round(rating.average)
-                          ? 'text-yellow-400'
-                          : 'text-gray-200'
-                      }`}
-                    >
-                      ★
-                    </span>
-                  ))}
+              {/* Badge de rang */}
+              {user.showRankBorder && rankInfo.rank !== 'NONE' && (
+                <div className="mb-3">
+                  <RankBadge
+                    rankInfo={rankInfo}
+                    level={currentLevel}
+                    showLevel={user.showLevel}
+                    size="medium"
+                  />
                 </div>
-                <span className="text-gray-600 font-medium">
-                  {rating.average.toFixed(1)}
-                </span>
-                <span className="text-gray-400 text-sm">
-                  ({rating.count} avis)
-                </span>
-              </div>
-            )}
+              )}
 
-            <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-3">
-              {user.isTenant && (
-                <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-                  🔑 Locataire
-                </span>
+              {/* Rôles */}
+              <div className="flex flex-wrap gap-2 justify-center md:justify-start mb-4">
+                {user.isTenant && (
+                  <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                    🏠 Locataire
+                  </span>
+                )}
+                {user.isOwner && (
+                  <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                    🏢 Propriétaire
+                  </span>
+                )}
+                {user.role === 'ADMIN' && (
+                  <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                    👑 Admin
+                  </span>
+                )}
+              </div>
+
+              {/* Barre de progression XP */}
+              {user.showLevel && (
+                <div className="mb-4">
+                  <XPProgressBar currentXP={user.xp} currentLevel={currentLevel} />
+                </div>
               )}
-              {user.isOwner && (
-                <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium">
-                  🏠 Propriétaire
-                </span>
-              )}
-              {user.profileComplete && (
-                <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                  ✓ Vérifié
-                </span>
+
+              {/* Stats avis */}
+              {user.showReviewStats && hasReviews && reviewStats && (
+                <div className="flex items-center gap-4 justify-center md:justify-start text-sm text-gray-600">
+                  <div className="flex items-center gap-1">
+                    <span className="text-yellow-500">⭐</span>
+                    <span className="font-semibold">
+                      {reviewStats._avg?.rating?.toFixed(1) || 'N/A'}
+                    </span>
+                  </div>
+                  <div>•</div>
+                  <div>{reviewStats._count.id} avis</div>
+                </div>
               )}
             </div>
-
-            <p className="text-gray-500 mt-3">Membre depuis {memberDuration}</p>
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Colonne principale */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* 🆕 Afficher les badges uniquement si showBadges = true */}
-            {user.showBadges && (
-              <div className="bg-gray-50 rounded-2xl p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                  🏆 Badges
-                </h2>
-
-                {badges.length > 0 ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {badges.map((badge, index) => (
-                      <div
-                        key={index}
-                        className="bg-white rounded-xl p-4 text-center border border-gray-100 hover:shadow-md transition-shadow"
-                      >
-                        <div className="text-3xl mb-2">{badge.icon}</div>
-                        <p className="font-medium text-gray-900 text-sm">
-                          {badge.name}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {badge.description}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-6">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <span className="text-2xl">🏅</span>
-                    </div>
-                    <p className="text-gray-400">Aucun badge pour le moment</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Informations */}
-            <div className="bg-gray-50 rounded-2xl p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                Informations
+          {/* Badges débloqués */}
+          {user.showBadges && unlockedBadgesDetails.length > 0 && (
+            <div className="border-t pt-6 mb-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">
+                🏆 Badges débloqués ({unlockedBadgesDetails.length})
               </h2>
-
-              <div className="space-y-4">
-                {user.gender && (
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                      <span className="text-gray-400">👤</span>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Civilité</p>
-                      <p className="font-medium text-gray-900">
-                        {getGenderLabel(user.gender)}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* 🆕 Condition : Afficher le téléphone uniquement si showPhone = true */}
-                {user.showPhone && user.phone && (
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                      <span className="text-gray-400">📱</span>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Téléphone</p>
-                      <p className="font-medium text-gray-900">{user.phone}</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* 🆕 Condition : Afficher l'adresse uniquement si showAddress = true */}
-                {user.showAddress && user.address && (
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                      <span className="text-gray-400">📍</span>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Adresse</p>
-                      <p className="font-medium text-gray-900">
-                        {user.address}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {!user.gender &&
-                  !(user.showPhone && user.phone) &&
-                  !(user.showAddress && user.address) && (
-                    <div className="text-center py-6">
-                      <p className="text-gray-400">
-                        Aucune information complémentaire
-                      </p>
-                    </div>
-                  )}
-              </div>
-            </div>
-            {/* 🆕 Afficher les stats uniquement si showReviewStats = true */}
-            {user.showReviewStats && <ReviewStats userId={user.id} />}
-            {/* Avis reçus */}
-            <div className="bg-gray-50 rounded-2xl p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                ⭐ Avis reçus
-              </h2>
-
-              {await (async () => {
-                const reviews = await prisma.review.findMany({
-                  where: {
-                    targetId: user.id,
-                    status: 'REVEALED',
-                  },
-                  include: {
-                    author: {
-                      select: {
-                        firstName: true,
-                        lastName: true,
-                        isOwner: true,
-                        isTenant: true,
-                      },
-                    },
-                    lease: {
-                      select: {
-                        property: {
-                          select: {
-                            title: true,
-                            ownerId: true,
-                          },
-                        },
-                      },
-                    },
-                  },
-                  orderBy: { revealedAt: 'desc' },
-                  take: 10,
-                })
-
-                if (reviews.length === 0) {
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {unlockedBadgesDetails.map((badge) => {
+                  if (!badge) return null
                   return (
-                    <div className="text-center py-8">
-                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <span className="text-2xl">💬</span>
+                    <div
+                      key={badge.id}
+                      className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-400 rounded-lg p-4 text-center hover:shadow-md transition-shadow"
+                    >
+                      <div className="text-4xl mb-2">{badge.icon}</div>
+                      <div className="font-bold text-sm text-gray-900 mb-1">
+                        {badge.name}
                       </div>
-                      <p className="text-gray-400">Aucun avis pour le moment</p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        Les avis apparaîtront après la fin d&apos;un bail
-                      </p>
+                      <div className="text-xs text-gray-600 mb-2">
+                        {badge.description}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        +{badge.points} XP
+                      </div>
                     </div>
                   )
-                }
+                })}
+              </div>
+            </div>
+          )}
 
-                return (
-                  <div className="space-y-4">
-                    {reviews.map(review => {
-                      const isOwnerReview =
-                        review.lease.property.ownerId === review.authorId
-                      const criteria = review.criteria as Record<
-                        string,
-                        number
-                      > | null
-
-                      return (
-                        <div
-                          key={review.id}
-                          className="bg-white rounded-xl p-5 border border-gray-100 hover:shadow-md transition-shadow"
-                        >
-                          {/* Header */}
-                          <div className="flex items-start justify-between mb-3">
-                            <div>
-                              <p className="font-medium text-gray-900">
-                                {review.author.firstName}{' '}
-                                {review.author.lastName}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {review.lease.property.title}
-                              </p>
-                              <p className="text-xs text-gray-400 mt-1">
-                                {new Date(
-                                  review.revealedAt || review.submittedAt
-                                ).toLocaleDateString('fr-FR', {
-                                  day: 'numeric',
-                                  month: 'long',
-                                  year: 'numeric',
-                                })}
-                              </p>
-                            </div>
-
-                            {/* Note finale */}
-                            <div className="text-center">
-                              <div className="flex items-center gap-1">
-                                {[1, 2, 3, 4, 5].map(star => (
-                                  <span
-                                    key={star}
-                                    className={`text-lg ${
-                                      star <= Math.round(review.rating)
-                                        ? 'text-yellow-400'
-                                        : 'text-gray-200'
-                                    }`}
-                                  >
-                                    ★
-                                  </span>
-                                ))}
-                              </div>
-                              <p className="text-sm font-bold text-gray-900 mt-1">
-                                {review.rating.toFixed(1)}/5
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Critères détaillés */}
-                          {criteria && (
-                            <div className="mb-3 p-3 bg-gray-50 rounded-lg">
-                              <p className="text-xs font-medium text-gray-700 mb-2">
-                                📊 Détail des critères
-                              </p>
-                              <div className="grid grid-cols-2 gap-2">
-                                {Object.entries(criteria).map(
-                                  ([key, value]) => {
-                                    const labels: Record<string, string> = {
-                                      // Critères locataires
-                                      cleanliness: 'Propreté',
-                                      respectProperty: 'Respect du bien',
-                                      paymentPunctuality: 'Ponctualité',
-                                      communication: 'Communication',
-                                      neighborRelations: 'Voisinage',
-                                      // Critères propriétaires
-                                      propertyCondition: 'État du logement',
-                                      responsiveness: 'Réactivité',
-                                      respectCommitments: 'Engagements',
-                                      fairness: 'Équité',
-                                    }
-
-                                    return (
-                                      <div
-                                        key={key}
-                                        className="flex items-center justify-between text-xs"
-                                      >
-                                        <span className="text-gray-600">
-                                          {labels[key] || key}
-                                        </span>
-                                        <div className="flex items-center gap-0.5">
-                                          {[1, 2, 3, 4, 5].map(star => (
-                                            <span
-                                              key={star}
-                                              className={`text-xs ${
-                                                star <= value
-                                                  ? 'text-yellow-400'
-                                                  : 'text-gray-200'
-                                              }`}
-                                            >
-                                              ★
-                                            </span>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    )
-                                  }
-                                )}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Badge caution (si proprio évalue locataire) */}
-                          {isOwnerReview &&
-                            review.depositReturnedPercent !== null && (
-                              <div className="mb-3">
-                                <div
-                                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium ${
-                                    review.depositReturnedPercent === 100
-                                      ? 'bg-emerald-50 text-emerald-700'
-                                      : review.depositReturnedPercent > 0
-                                      ? 'bg-orange-50 text-orange-700'
-                                      : 'bg-red-50 text-red-700'
-                                  }`}
-                                >
-                                  <span>
-                                    {review.depositReturnedPercent === 100
-                                      ? '✅'
-                                      : review.depositReturnedPercent > 0
-                                      ? '⚠️'
-                                      : '❌'}
-                                  </span>
-                                  Caution : {review.depositReturnedPercent}%
-                                  restituée
-                                </div>
-                              </div>
-                            )}
-
-                          {/* Commentaire */}
-                          {review.comment && (
-                            <p className="text-sm text-gray-600 leading-relaxed">
-                              &ldquo;{review.comment}&rdquo;
-                            </p>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                )
-              })()}
+          {/* Informations de contact */}
+          <div className="border-t pt-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
+              📞 Informations de contact
+            </h2>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <span className="text-gray-600 font-medium w-32">Email :</span>
+                <span className="text-gray-900">{user.email}</span>
+              </div>
+              {user.showPhone && user.phone && (
+                <div className="flex items-center gap-3">
+                  <span className="text-gray-600 font-medium w-32">
+                    Téléphone :
+                  </span>
+                  <span className="text-gray-900">{user.phone}</span>
+                </div>
+              )}
+              {user.showAddress && user.address && (
+                <div className="flex items-center gap-3">
+                  <span className="text-gray-600 font-medium w-32">
+                    Adresse :
+                  </span>
+                  <span className="text-gray-900">{user.address}</span>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-4">
-            {/* Indicateurs de fiabilité */}
-            <div className="border border-gray-200 rounded-2xl p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Fiabilité</h3>
-
+          {/* Informations personnelles */}
+          {(user.gender || user.birthDate) && (
+            <div className="border-t pt-6 mt-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">
+                👤 Informations personnelles
+              </h2>
               <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
-                      user.profileComplete
-                        ? 'bg-emerald-100 text-emerald-600'
-                        : 'bg-gray-100 text-gray-400'
-                    }`}
-                  >
-                    {user.profileComplete ? '✓' : '○'}
-                  </span>
-                  <span
-                    className={
-                      user.profileComplete ? 'text-gray-900' : 'text-gray-400'
-                    }
-                  >
-                    Profil complété
-                  </span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
-                      user.phone
-                        ? 'bg-emerald-100 text-emerald-600'
-                        : 'bg-gray-100 text-gray-400'
-                    }`}
-                  >
-                    {user.phone ? '✓' : '○'}
-                  </span>
-                  <span
-                    className={user.phone ? 'text-gray-900' : 'text-gray-400'}
-                  >
-                    Téléphone renseigné
-                  </span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
-                      badges.length > 0
-                        ? 'bg-emerald-100 text-emerald-600'
-                        : 'bg-gray-100 text-gray-400'
-                    }`}
-                  >
-                    {badges.length > 0 ? '✓' : '○'}
-                  </span>
-                  <span
-                    className={
-                      badges.length > 0 ? 'text-gray-900' : 'text-gray-400'
-                    }
-                  >
-                    Badges obtenus
-                  </span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
-                      rating.count > 0
-                        ? 'bg-emerald-100 text-emerald-600'
-                        : 'bg-gray-100 text-gray-400'
-                    }`}
-                  >
-                    {rating.count > 0 ? '✓' : '○'}
-                  </span>
-                  <span
-                    className={
-                      rating.count > 0 ? 'text-gray-900' : 'text-gray-400'
-                    }
-                  >
-                    Avis positifs
-                  </span>
-                </div>
+                {user.gender && (
+                  <div className="flex items-center gap-3">
+                    <span className="text-gray-600 font-medium w-32">
+                      Genre :
+                    </span>
+                    <span className="text-gray-900">
+                      {user.gender === 'MALE'
+                        ? 'Homme'
+                        : user.gender === 'FEMALE'
+                        ? 'Femme'
+                        : 'Autre'}
+                    </span>
+                  </div>
+                )}
+                {user.birthDate && (
+                  <div className="flex items-center gap-3">
+                    <span className="text-gray-600 font-medium w-32">
+                      Date de naissance :
+                    </span>
+                    <span className="text-gray-900">
+                      {new Date(user.birthDate).toLocaleDateString('fr-FR')}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
+          )}
 
-            {/* Message de confiance */}
-            {user.profileComplete ? (
-              <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-100">
-                <div className="flex items-start gap-3">
-                  <span className="text-lg">✅</span>
-                  <div>
-                    <p className="font-medium text-gray-900 text-sm">
-                      Profil de confiance
-                    </p>
-                    <p className="text-xs text-gray-600 mt-1">
-                      Ce profil a été complété et vérifié.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-orange-50 rounded-xl p-4 border border-orange-100">
-                <div className="flex items-start gap-3">
-                  <span className="text-lg">⚠️</span>
-                  <div>
-                    <p className="font-medium text-gray-900 text-sm">
-                      Profil incomplet
-                    </p>
-                    <p className="text-xs text-gray-600 mt-1">
-                      Ce profil n&apos;a pas été entièrement complété.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-            {/* Bouton Contacter */}
-            {session.user.id !== id && (
-              <ContactButton recipientId={id} recipientName={user.firstName} />
-            )}
-            {/* Note de sécurité */}
-            <div className="bg-blue-50 rounded-xl p-4">
-              <p className="text-xs text-blue-600">
-                🔒 Les informations sensibles (email, date de naissance) sont
-                protégées.
-              </p>
+          {/* Membre depuis */}
+          <div className="border-t pt-6 mt-6">
+            <div className="text-sm text-gray-500 text-center">
+              Membre depuis le {new Date(user.createdAt).toLocaleDateString('fr-FR')}
             </div>
           </div>
         </div>
       </div>
     </div>
   )
-}
-
-// Vérifier si l'utilisateur a accès au profil
-// Vérifier si l'utilisateur a accès au profil
-async function checkProfileAccess(
-  viewerId: string,
-  profileId: string,
-  isOwner: boolean
-): Promise<boolean> {
-  if (viewerId === profileId) return true
-
-  // Si le viewer est propriétaire, peut voir les locataires qui ont postulé ou ont un bail
-  if (isOwner) {
-    const hasApplication = await prisma.application.findFirst({
-      where: {
-        tenantId: profileId,
-        property: { ownerId: viewerId },
-      },
-    })
-    if (hasApplication) return true
-
-    const hasLease = await prisma.lease.findFirst({
-      where: {
-        tenantId: profileId,
-        property: { ownerId: viewerId },
-      },
-    })
-    if (hasLease) return true
-  }
-
-  // Si le viewer est locataire, peut voir les propriétaires où il a postulé ou a un bail
-  const hasApplicationAsViewer = await prisma.application.findFirst({
-    where: {
-      tenantId: viewerId,
-      property: { ownerId: profileId },
-    },
-  })
-  if (hasApplicationAsViewer) return true
-
-  const hasLeaseAsViewer = await prisma.lease.findFirst({
-    where: {
-      tenantId: viewerId,
-      property: { ownerId: profileId },
-    },
-  })
-  if (hasLeaseAsViewer) return true
-
-  return false
-}
-
-// Calculer les badges du locataire
-async function calculateBadges(userId: string) {
-  const badges: { icon: string; name: string; description: string }[] = []
-
-  // Badge "Premier pas" - A complété son profil
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { profileComplete: true, createdAt: true },
-  })
-
-  if (user?.profileComplete) {
-    badges.push({
-      icon: '🌟',
-      name: 'Premier pas',
-      description: 'Profil complété',
-    })
-  }
-
-  // Badge "Locataire fidèle" - A eu au moins 1 bail terminé
-  const endedLeases = await prisma.lease.count({
-    where: { tenantId: userId, status: 'ENDED' },
-  })
-
-  if (endedLeases >= 1) {
-    badges.push({
-      icon: '🏡',
-      name: 'Locataire fidèle',
-      description: `${endedLeases} bail${endedLeases > 1 ? 's' : ''} terminé${
-        endedLeases > 1 ? 's' : ''
-      }`,
-    })
-  }
-
-  // Badge "Ponctuel" - Tous paiements à temps (simulé pour l'instant)
-  const receipts = await prisma.receipt.count({
-    where: {
-      lease: { tenantId: userId },
-      status: 'CONFIRMED',
-    },
-  })
-
-  if (receipts >= 3) {
-    badges.push({
-      icon: '⏰',
-      name: 'Ponctuel',
-      description: 'Paiements réguliers',
-    })
-  }
-
-  // Badge "Vétéran" - Membre depuis plus d'1 an
-  if (user) {
-    const memberMonths = Math.floor(
-      (Date.now() - new Date(user.createdAt).getTime()) /
-        (1000 * 60 * 60 * 24 * 30)
-    )
-    if (memberMonths >= 12) {
-      badges.push({
-        icon: '🎖️',
-        name: 'Vétéran',
-        description: 'Membre depuis 1 an+',
-      })
-    }
-  }
-
-  // Badge "Communicant" - A un téléphone renseigné
-  const userPhone = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { phone: true },
-  })
-
-  if (userPhone?.phone) {
-    badges.push({
-      icon: '📞',
-      name: 'Communicant',
-      description: 'Joignable facilement',
-    })
-  }
-
-  return badges
-}
-
-// Récupérer la note moyenne (préparé pour le système d'avis)
-// Récupérer la note moyenne et les avis
-async function getAverageRating(userId: string) {
-  const reviews = await prisma.review.findMany({
-    where: {
-      targetId: userId,
-      status: 'REVEALED',
-    },
-    select: {
-      rating: true,
-    },
-  })
-
-  if (reviews.length === 0) {
-    return { average: 0, count: 0 }
-  }
-
-  const total = reviews.reduce((sum, r) => sum + r.rating, 0)
-  return {
-    average: total / reviews.length,
-    count: reviews.length,
-  }
 }

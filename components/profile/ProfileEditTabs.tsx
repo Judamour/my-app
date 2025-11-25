@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import PersonalInfoForm from './PersonalInfoForm'
+import PersonalInfoForm from './PersonalInfoForm' 
 import PrivacySettingsForm from './PrivacySettingsForm'
 
 type Tab = 'info' | 'privacy'
