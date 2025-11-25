@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { pusherServer } from '@/lib/pusher'
+import { awardMessageXP } from '@/lib/xp'
+
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -118,6 +120,22 @@ export async function POST(request: Request, { params }: RouteParams) {
         },
       },
     })
+
+    // Attribution XP pour message envoyé (limité à 1 par minute pour éviter spam)
+try {
+  const recentMessages = await prisma.message.count({
+    where: {
+      senderId: session.user.id,
+      createdAt: { gte: new Date(Date.now() - 60000) }, // 1 minute
+    },
+  })
+  
+  if (recentMessages <= 1) {
+    await awardMessageXP(session.user.id)
+  }
+} catch (error) {
+  console.error('Erreur attribution XP:', error)
+}
 
     // 🔥 TRIGGER PUSHER
     await pusherServer.trigger(`conversation-${id}`, 'new-message', {

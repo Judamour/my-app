@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { awardReviewGivenXP, awardReviewReceivedXP } from '@/lib/xp'
 
 // GET - Récupérer les avis (révélés uniquement)
 export async function GET(request: Request) {
@@ -10,7 +11,10 @@ export async function GET(request: Request) {
     const leaseId = searchParams.get('leaseId')
 
     if (!userId && !leaseId) {
-      return NextResponse.json({ error: 'userId ou leaseId requis' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'userId ou leaseId requis' },
+        { status: 400 }
+      )
     }
 
     const where: Record<string, unknown> = {
@@ -68,14 +72,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
-    const { leaseId, rating, criteria, comment, depositReturned, depositReturnedPercent } = await request.json()
+    const {
+      leaseId,
+      rating,
+      criteria,
+      comment,
+      depositReturned,
+      depositReturnedPercent,
+    } = await request.json()
 
     if (!leaseId || !rating || !criteria) {
       return NextResponse.json({ error: 'Données manquantes' }, { status: 400 })
     }
 
     if (rating < 0 || rating > 5) {
-      return NextResponse.json({ error: 'Note invalide (0-5)' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Note invalide (0-5)' },
+        { status: 400 }
+      )
     }
 
     // Récupérer le bail
@@ -104,7 +118,10 @@ export async function POST(request: Request) {
     const isTenant = session.user.id === lease.tenant.id
 
     if (!isOwner && !isTenant) {
-      return NextResponse.json({ error: 'Vous ne faites pas partie de ce bail' }, { status: 403 })
+      return NextResponse.json(
+        { error: 'Vous ne faites pas partie de ce bail' },
+        { status: 403 }
+      )
     }
 
     const targetId = isOwner ? lease.tenant.id : lease.property.ownerId
@@ -141,6 +158,18 @@ export async function POST(request: Request) {
       },
     })
 
+    // Attribution XP pour avoir donné un avis
+    try {
+      await awardReviewGivenXP(session.user.id)
+
+      // Attribution XP pour la personne qui reçoit l'avis (si positif)
+      if (rating >= 4.0) {
+        await awardReviewReceivedXP(targetId, rating)
+      }
+    } catch (error) {
+      console.error('Erreur attribution XP:', error)
+    }
+
     // Vérifier si l'autre partie a déjà posté son avis
     const otherReview = await prisma.review.findUnique({
       where: {
@@ -176,14 +205,15 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         data: review,
-        message: 'Avis soumis ! Il sera révélé une fois que l\'autre partie aura également évalué.',
+        message:
+          "Avis soumis ! Il sera révélé une fois que l'autre partie aura également évalué.",
       },
       { status: 201 }
     )
   } catch (error) {
     console.error('Create review error:', error)
     return NextResponse.json(
-      { error: 'Erreur lors de la création de l\'avis' },
+      { error: "Erreur lors de la création de l'avis" },
       { status: 500 }
     )
   }

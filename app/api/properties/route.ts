@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { createPropertySchema } from '@/lib/validations/property'
 import { UnauthorizedError, ForbiddenError, handleApiError } from '@/lib/errors'
 import type { ApiResponse, PropertyWithTenant } from '@/types'
+import { awardPropertyCreationXP } from '@/lib/xp'
 
 /**
  * GET /api/properties
@@ -91,6 +92,16 @@ export async function POST(request: Request) {
         available: true,
       },
     })
+
+    // Attribution XP pour création de propriété
+try {
+  await awardPropertyCreationXP(session.user.id)
+} catch (error) {
+  console.error('Erreur attribution XP:', error)
+  // Ne pas bloquer la création même si XP échoue
+}
+
+return NextResponse.json(property, { status: 201 })
 
     const response: ApiResponse = {
       data: property,

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { awardApplicationAcceptedXP } from '@/lib/xp'
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -72,9 +73,17 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       data: { status }
     })
 
-    // Si acceptée, on pourrait créer une conversation, notifier, etc.
-    // Pour l'instant on garde simple
+    // ✅ ATTRIBUTION XP - AVANT LE RETURN !
+    if (status === 'ACCEPTED' && application.tenantId) {
+      try {
+        await awardApplicationAcceptedXP(application.tenantId)
+      } catch (error) {
+        console.error('Erreur attribution XP:', error)
+        // Ne pas bloquer la réponse même si XP échoue
+      }
+    }
 
+    // Retourner la réponse
     return NextResponse.json({
       data: updatedApplication,
       message: status === 'ACCEPTED' ? 'Candidature acceptée' : 'Candidature refusée'

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { awardApplicationSubmissionXP } from '@/lib/xp'
 
 // POST - Créer une candidature
 export async function POST(request: Request) {
@@ -105,6 +106,13 @@ export async function POST(request: Request) {
         status: 'PENDING',
       },
     })
+
+    // Attribution XP pour candidature soumise
+    try {
+      await awardApplicationSubmissionXP(session.user.id)
+    } catch (error) {
+      console.error('Erreur attribution XP:', error)
+    }
 
     return NextResponse.json({ data: application }, { status: 201 })
   } catch (error) {

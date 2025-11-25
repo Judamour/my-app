@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { awardPaymentXP } from '@/lib/xp'
 
 // POST - Créer une quittance
 export async function POST(request: Request) {
@@ -78,6 +79,22 @@ export async function POST(request: Request) {
         paymentMethod: paymentMethod || 'virement',
       }
     })
+
+    // Attribution XP pour paiement effectué
+try {
+  const lease = await prisma.lease.findUnique({
+    where: { id: leaseId },
+    select: { tenantId: true },
+  })
+  
+  if (lease) {
+    await awardPaymentXP(lease.tenantId)
+  }
+} catch (error) {
+  console.error('Erreur attribution XP:', error)
+}
+
+return NextResponse.json(receipt, { status: 201 })
 
     return NextResponse.json(
       { data: receipt },

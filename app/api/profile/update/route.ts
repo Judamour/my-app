@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { awardCompleteProfileXP } from '@/lib/xp'
 
 export async function PUT(req: Request) {
   try {
@@ -37,8 +38,31 @@ export async function PUT(req: Request) {
         firstName: true,
         lastName: true,
         profileComplete: true,
+        phone: true,        // ✅ AJOUTÉ
+        address: true,      // ✅ AJOUTÉ
+        gender: true,       // ✅ AJOUTÉ
+        birthDate: true,    // ✅ AJOUTÉ
+        xp: true,           // ✅ AJOUTÉ
       },
     })
+
+    // Vérifier si le profil est maintenant 100% complet
+    const isNowComplete =
+      updatedUser.profileComplete &&
+      updatedUser.phone &&
+      updatedUser.address &&
+      updatedUser.gender &&
+      updatedUser.birthDate
+
+    // Attribution XP si profil complété à 100% (une seule fois)
+    if (isNowComplete && updatedUser.xp < 100) {
+      try {
+        await awardCompleteProfileXP(session.user.id)
+      } catch (error) {
+        console.error('Erreur attribution XP:', error)
+        // Ne pas bloquer la mise à jour même si XP échoue
+      }
+    }
 
     return NextResponse.json({
       message: 'Profil mis à jour avec succès',
