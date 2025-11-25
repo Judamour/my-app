@@ -143,7 +143,7 @@ export default async function OwnerDashboardPage() {
             </div>
 
             <div className="flex items-center gap-3">
-<UnreadMessagesButton userId={user.id} />
+              <UnreadMessagesButton userId={user.id} />
               {user.isTenant && (
                 <Link
                   href="/tenant"
@@ -313,7 +313,7 @@ export default async function OwnerDashboardPage() {
             Actions rapides
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             {/* Ajouter un bien */}
             <Link
               href="/owner/properties/new"
@@ -364,6 +364,43 @@ export default async function OwnerDashboardPage() {
               </div>
             </Link>
           </div>
+
+          {/* 🆕 Modifier mon profil - 2ème ligne */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Link
+              href="/profile/edit"
+              className="group flex items-center gap-5 p-6 border-2 border-purple-200 rounded-2xl hover:border-purple-500 hover:shadow-lg transition-all"
+            >
+              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-white text-2xl group-hover:scale-105 transition-transform">
+                ✏️
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900 text-lg">
+                  Modifier mon profil
+                </p>
+                <p className="text-gray-500 mt-1">
+                  Informations & confidentialité
+                </p>
+              </div>
+            </Link>
+          </div>
+          {/* 🆕 Voir mon profil public */}
+          <Link
+            href={`/profile/${session.user.id}`}
+            className="group flex items-center gap-5 p-6 border-2 border-blue-200 rounded-2xl hover:border-blue-500 hover:shadow-lg transition-all"
+          >
+            <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center text-white text-2xl group-hover:scale-105 transition-transform">
+              👁️
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900 text-lg">
+                Mon profil public
+              </p>
+              <p className="text-gray-500 mt-1">
+                Voir ce que les autres voient
+              </p>
+            </div>
+          </Link>
         </div>
         {/* Messages */}
         <Link

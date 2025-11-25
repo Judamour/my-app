@@ -102,7 +102,7 @@ export default async function TenantDashboardPage() {
             </div>
 
             <div className="flex items-center gap-3">
-<UnreadMessagesButton userId={user.id} />
+              <UnreadMessagesButton userId={user.id} />
               {user.isOwner && (
                 <Link
                   href="/owner"
@@ -238,17 +238,17 @@ export default async function TenantDashboardPage() {
             </div>
           </div>
         )}
-
         {/* Actions rapides */}
         <div className="mb-12">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">
             Actions rapides
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Mes paiements */}
             <Link
               href="/tenant/receipts"
-              className="group flex items-center gap-5 p-6 border-2 border-gray-200 rounded-2xl hover:border-gray-300 hover:bg-gray-50 transition-all duration-200"
+              className="group flex flex-col gap-4 p-6 border-2 border-gray-200 rounded-2xl hover:border-gray-300 hover:bg-gray-50 transition-all duration-200"
             >
               <div className="w-14 h-14 bg-emerald-50 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform">
                 <span className="text-2xl">💰</span>
@@ -257,7 +257,7 @@ export default async function TenantDashboardPage() {
                 <p className="font-semibold text-gray-900 text-lg">
                   Mes paiements
                 </p>
-                <p className="text-gray-500 mt-1">
+                <p className="text-gray-500 text-sm mt-1">
                   Déclarer & télécharger quittances
                 </p>
               </div>
@@ -266,16 +266,51 @@ export default async function TenantDashboardPage() {
             {/* Mes baux */}
             <Link
               href="/tenant/leases"
-              className="group flex items-center gap-5 p-6 border-2 border-gray-200 rounded-2xl hover:border-gray-300 hover:bg-gray-50 transition-all duration-200"
+              className="group flex flex-col gap-4 p-6 border-2 border-gray-200 rounded-2xl hover:border-gray-300 hover:bg-gray-50 transition-all duration-200"
             >
               <div className="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform">
                 <span className="text-2xl">📄</span>
               </div>
               <div>
                 <p className="font-semibold text-gray-900 text-lg">Mes baux</p>
-                <p className="text-gray-500 mt-1">Voir mes contrats</p>
+                <p className="text-gray-500 text-sm mt-1">Voir mes contrats</p>
               </div>
             </Link>
+
+            {/* 🆕 Modifier mon profil */}
+            <Link
+              href="/profile/edit"
+              className="group flex flex-col gap-4 p-6 border-2 border-purple-200 rounded-2xl hover:border-purple-500 hover:shadow-lg transition-all"
+            >
+              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-white text-2xl group-hover:scale-105 transition-transform">
+                ✏️
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900 text-lg">
+                  Modifier mon profil
+                </p>
+                <p className="text-gray-500 text-sm mt-1">
+                  Informations & confidentialité
+                </p>
+              </div>
+            </Link>
+              {/* 🆕 Voir mon profil public */}
+  <Link
+    href={`/profile/${session.user.id}`}
+    className="group flex flex-col gap-4 p-6 border-2 border-blue-200 rounded-2xl hover:border-blue-500 hover:shadow-lg transition-all"
+  >
+    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center text-white text-2xl group-hover:scale-105 transition-transform">
+      👁️
+    </div>
+    <div>
+      <p className="font-semibold text-gray-900 text-lg">
+        Mon profil public
+      </p>
+      <p className="text-gray-500 text-sm mt-1">
+        Voir ce que les autres voient
+      </p>
+    </div>
+  </Link>
           </div>
         </div>
 
@@ -320,7 +355,7 @@ export default async function TenantDashboardPage() {
                 Mon passport
               </h2>
               <Link
-                href="/profile"
+                href="/profile/edit"
                 className="text-gray-500 hover:text-gray-900 text-sm font-medium transition-colors"
               >
                 Modifier →

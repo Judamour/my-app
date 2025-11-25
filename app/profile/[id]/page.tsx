@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation'
 import ContactButton from '@/components/messages/ContactButton'
 import BackButton from '@/components/BackButton'
 import ReviewStats from '@/components/reviews/ReviewStats'
+import Link from 'next/link'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -18,6 +19,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
   }
 
   // Récupérer le profil (sans données sensibles)
+  // ✅ APRÈS
   const user = await prisma.user.findUnique({
     where: { id },
     select: {
@@ -31,7 +33,17 @@ export default async function PublicProfilePage({ params }: PageProps) {
       createdAt: true,
       isTenant: true,
       isOwner: true,
-      // PAS email ni birthDate (données privées)
+      // 🆕 Gamification
+      xp: true,
+      level: true,
+      badges: true,
+      // 🆕 Préférences d'affichage
+      showBadges: true,
+      showLevel: true,
+      showRankBorder: true,
+      showReviewStats: true,
+      showPhone: true,
+      showAddress: true,
     },
   })
 
@@ -88,8 +100,18 @@ export default async function PublicProfilePage({ params }: PageProps) {
     <div className="min-h-screen bg-white">
       {/* Header */}
       <div className="border-b border-gray-100">
-        <div className="max-w-4xl mx-auto px-6 py-4">
+        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <BackButton />
+
+          {/* 🆕 Bouton modifier (seulement pour son propre profil) */}
+          {session.user.id === id && (
+            <Link
+              href="/profile/edit"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors font-medium"
+            >
+              ✏️ Modifier mon profil
+            </Link>
+          )}
         </div>
       </div>
 
@@ -158,38 +180,40 @@ export default async function PublicProfilePage({ params }: PageProps) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Colonne principale */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Badges */}
-            <div className="bg-gray-50 rounded-2xl p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                🏆 Badges
-              </h2>
+            {/* 🆕 Afficher les badges uniquement si showBadges = true */}
+            {user.showBadges && (
+              <div className="bg-gray-50 rounded-2xl p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                  🏆 Badges
+                </h2>
 
-              {badges.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {badges.map((badge, index) => (
-                    <div
-                      key={index}
-                      className="bg-white rounded-xl p-4 text-center border border-gray-100 hover:shadow-md transition-shadow"
-                    >
-                      <div className="text-3xl mb-2">{badge.icon}</div>
-                      <p className="font-medium text-gray-900 text-sm">
-                        {badge.name}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {badge.description}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-6">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <span className="text-2xl">🏅</span>
+                {badges.length > 0 ? (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {badges.map((badge, index) => (
+                      <div
+                        key={index}
+                        className="bg-white rounded-xl p-4 text-center border border-gray-100 hover:shadow-md transition-shadow"
+                      >
+                        <div className="text-3xl mb-2">{badge.icon}</div>
+                        <p className="font-medium text-gray-900 text-sm">
+                          {badge.name}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {badge.description}
+                        </p>
+                      </div>
+                    ))}
                   </div>
-                  <p className="text-gray-400">Aucun badge pour le moment</p>
-                </div>
-              )}
-            </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <span className="text-2xl">🏅</span>
+                    </div>
+                    <p className="text-gray-400">Aucun badge pour le moment</p>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Informations */}
             <div className="bg-gray-50 rounded-2xl p-6">
@@ -212,7 +236,8 @@ export default async function PublicProfilePage({ params }: PageProps) {
                   </div>
                 )}
 
-                {user.phone && (
+                {/* 🆕 Condition : Afficher le téléphone uniquement si showPhone = true */}
+                {user.showPhone && user.phone && (
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
                       <span className="text-gray-400">📱</span>
@@ -224,7 +249,8 @@ export default async function PublicProfilePage({ params }: PageProps) {
                   </div>
                 )}
 
-                {user.address && (
+                {/* 🆕 Condition : Afficher l'adresse uniquement si showAddress = true */}
+                {user.showAddress && user.address && (
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
                       <span className="text-gray-400">📍</span>
@@ -238,17 +264,19 @@ export default async function PublicProfilePage({ params }: PageProps) {
                   </div>
                 )}
 
-                {!user.gender && !user.phone && !user.address && (
-                  <div className="text-center py-6">
-                    <p className="text-gray-400">
-                      Aucune information complémentaire
-                    </p>
-                  </div>
-                )}
+                {!user.gender &&
+                  !(user.showPhone && user.phone) &&
+                  !(user.showAddress && user.address) && (
+                    <div className="text-center py-6">
+                      <p className="text-gray-400">
+                        Aucune information complémentaire
+                      </p>
+                    </div>
+                  )}
               </div>
             </div>
-            {/* Statistiques d'avis */}
-            <ReviewStats userId={user.id} />
+            {/* 🆕 Afficher les stats uniquement si showReviewStats = true */}
+            {user.showReviewStats && <ReviewStats userId={user.id} />}
             {/* Avis reçus */}
             <div className="bg-gray-50 rounded-2xl p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">

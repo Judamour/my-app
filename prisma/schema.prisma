@@ -98,6 +98,20 @@ model User {
   isOwner         Boolean  @default(false)
   isTenant        Boolean  @default(false)
   profileComplete Boolean  @default(false)
+
+   
+  // 🆕 GAMIFICATION & XP
+  xp              Int      @default(0)
+  level           Int      @default(1)
+  badges          Json     @default("[]")  // Liste des badges débloqués
+  
+  // 🆕 PRÉFÉRENCES D'AFFICHAGE DU PROFIL PUBLIC
+  showBadges      Boolean  @default(true)
+  showLevel       Boolean  @default(true)
+  showRankBorder  Boolean  @default(true)
+  showReviewStats Boolean  @default(true)
+  showPhone       Boolean  @default(true)
+  showAddress     Boolean  @default(true)
   
   // Relations propriétés
   ownedProperties   Property[] @relation("OwnedProperties")
