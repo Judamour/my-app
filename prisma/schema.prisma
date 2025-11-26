@@ -112,6 +112,15 @@ model User {
   showReviewStats Boolean  @default(true)
   showPhone       Boolean  @default(true)
   showAddress     Boolean  @default(true)
+
+   
+  //  Abonnement Stripe
+  stripeCustomerId       String?   @unique
+  stripeSubscriptionId   String?   @unique
+  stripePriceId          String?
+  stripeCurrentPeriodEnd DateTime?
+  subscriptionPlan       String    @default("free") // free, starter, pro, business, enterprise
+  
   
   // Relations propriétés
   ownedProperties   Property[] @relation("OwnedProperties")

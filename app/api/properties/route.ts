@@ -6,7 +6,8 @@ import { createPropertySchema } from '@/lib/validations/property'
 import { UnauthorizedError, ForbiddenError, handleApiError } from '@/lib/errors'
 import type { ApiResponse, PropertyWithTenant } from '@/types'
 import { awardPropertyCreationXP } from '@/lib/xp'
-
+import { checkSubscriptionStatus } from '@/lib/subscription'
+import { PRICING_PLANS } from '@/lib/pricing'
 /**
  * GET /api/properties
  * Liste toutes les propriétés de l'utilisateur connecté
@@ -59,13 +60,33 @@ export async function GET() {
  * POST /api/properties
  * Créer une nouvelle propriété
  */
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
     const session = await auth()
 
-    if (!session?.user) {
-      throw new UnauthorizedError()
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
+
+      // ✅ NOUVEAU : Vérifier le statut d'abonnement
+    const subscriptionStatus = await checkSubscriptionStatus(session.user.id)
+
+    if (!subscriptionStatus.canAddProperty) {
+      const planConfig = PRICING_PLANS[subscriptionStatus.plan]
+      
+      return NextResponse.json(
+        {
+          error: 'Limite de propriétés atteinte',
+          message: `Votre plan ${planConfig.name} est limité à ${planConfig.maxProperties} propriétés. Veuillez upgrader votre abonnement.`,
+          currentCount: subscriptionStatus.currentCount,
+          maxProperties: subscriptionStatus.maxProperties,
+          requiresUpgrade: true,
+          nextPlan: subscriptionStatus.nextPlan,
+        },
+        { status: 403 }
+      )
+    }
+
 
     // Vérifier isOwner depuis DB (pas session)
     const user = await prisma.user.findUnique({
@@ -79,7 +100,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const body = await request.json()
+    const body = await req.json()
 
     // ✅ Validation automatique avec Zod
     const validatedData = createPropertySchema.parse(body)

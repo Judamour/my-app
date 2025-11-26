@@ -4,6 +4,9 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import LogoutButton from '@/components/LogoutButton'
 import UnreadMessagesButton from '@/components/messages/UnreadMessagesButton'
+import { checkSubscriptionStatus } from '@/lib/subscription'
+import { PRICING_PLANS } from '@/lib/pricing'
+
 
 export default async function OwnerDashboardPage() {
   const session = await requireAuth()
@@ -19,6 +22,13 @@ export default async function OwnerDashboardPage() {
       isTenant: true,
     },
   })
+
+    if (!session?.user?.id) {
+    redirect('/login')
+  }
+
+   const subscriptionStatus = await checkSubscriptionStatus(session.user.id)
+  const planConfig = PRICING_PLANS[subscriptionStatus.plan]
 
   if (!user) {
     redirect('/login')
@@ -160,10 +170,12 @@ export default async function OwnerDashboardPage() {
         </div>
       </div>
 
+ 
+
       <div className="max-w-6xl mx-auto px-6 py-10">
         {/* Alerte profil incomplet */}
         {!user.profileComplete && (
-          <div className="mb-10 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
+          <div className="mb-10 bg-linear-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-sm">
                 <span className="text-2xl">✨</span>
@@ -215,7 +227,7 @@ export default async function OwnerDashboardPage() {
         {/* Carte Revenus du mois */}
         <Link
           href="/owner/payments"
-          className="block mb-10 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl p-6 text-white hover:from-emerald-600 hover:to-teal-600 transition-all shadow-lg"
+          className="block mb-10 bg-linear-to-r from-emerald-500 to-teal-500 rounded-2xl p-6 text-white hover:from-emerald-600 hover:to-teal-600 transition-all shadow-lg"
         >
           <div className="flex items-center justify-between">
             <div>
@@ -314,6 +326,52 @@ export default async function OwnerDashboardPage() {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                  {/* ✅ NOUVEAU : Bandeau statut abonnement */}
+        <div className="mb-8 bg-white rounded-xl shadow-lg p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                Plan actuel : {planConfig.name}
+              </h3>
+              <p className="text-gray-600">
+                {subscriptionStatus.currentCount}/{subscriptionStatus.maxProperties} propriétés utilisées
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              {/* Barre de progression */}
+              <div className="w-48">
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className={`h-2 rounded-full transition-all ${
+                      subscriptionStatus.currentCount >= subscriptionStatus.maxProperties
+                        ? 'bg-red-500'
+                        : subscriptionStatus.currentCount >= subscriptionStatus.maxProperties - 1
+                        ? 'bg-yellow-500'
+                        : 'bg-green-500'
+                    }`}
+                    style={{
+                      width: `${(subscriptionStatus.currentCount / subscriptionStatus.maxProperties) * 100}%`,
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Bouton upgrade si nécessaire */}
+              {subscriptionStatus.plan !== 'enterprise' && (
+                <Link
+                  href="/pricing"
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    subscriptionStatus.requiresUpgrade
+                      ? 'bg-red-600 text-white hover:bg-red-700'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}
+                >
+                  {subscriptionStatus.requiresUpgrade ? 'Upgrader maintenant' : 'Voir les plans'}
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
             {/* Ajouter un bien */}
             <Link
               href="/owner/properties/new"
@@ -371,7 +429,7 @@ export default async function OwnerDashboardPage() {
               href="/profile/edit"
               className="group flex items-center gap-5 p-6 border-2 border-purple-200 rounded-2xl hover:border-purple-500 hover:shadow-lg transition-all"
             >
-              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-white text-2xl group-hover:scale-105 transition-transform">
+              <div className="w-14 h-14 bg-linear-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-white text-2xl group-hover:scale-105 transition-transform">
                 ✏️
               </div>
               <div>
@@ -389,7 +447,7 @@ export default async function OwnerDashboardPage() {
             href={`/profile/${session.user.id}`}
             className="group flex items-center gap-5 p-6 border-2 border-blue-200 rounded-2xl hover:border-blue-500 hover:shadow-lg transition-all"
           >
-            <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center text-white text-2xl group-hover:scale-105 transition-transform">
+            <div className="w-14 h-14 bg-linear-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center text-white text-2xl group-hover:scale-105 transition-transform">
               👁️
             </div>
             <div>
@@ -404,7 +462,7 @@ export default async function OwnerDashboardPage() {
           {/* NOUVELLE CARTE Achievements */}
           <Link
             href="/achievements"
-            className="flex flex-col items-center justify-center p-8 bg-gradient-to-br from-yellow-500 to-orange-500 text-white rounded-xl shadow-lg hover:shadow-xl transition-shadow"
+            className="flex flex-col items-center justify-center p-8 bg-linear-to-br from-yellow-500 to-orange-500 text-white rounded-xl shadow-lg hover:shadow-xl transition-shadow"
           >
             <div className="text-5xl mb-4">🏆</div>
             <h3 className="text-xl font-bold">Mes achievements</h3>
