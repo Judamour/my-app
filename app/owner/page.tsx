@@ -6,7 +6,7 @@ import LogoutButton from '@/components/LogoutButton'
 import UnreadMessagesButton from '@/components/messages/UnreadMessagesButton'
 import { checkSubscriptionStatus } from '@/lib/subscription'
 import { PRICING_PLANS } from '@/lib/pricing'
-
+import AnalyticsSection from '@/components/analytics/AnalyticsSection'
 
 export default async function OwnerDashboardPage() {
   const session = await requireAuth()
@@ -23,11 +23,11 @@ export default async function OwnerDashboardPage() {
     },
   })
 
-    if (!session?.user?.id) {
+  if (!session?.user?.id) {
     redirect('/login')
   }
 
-   const subscriptionStatus = await checkSubscriptionStatus(session.user.id)
+  const subscriptionStatus = await checkSubscriptionStatus(session.user.id)
   const planConfig = PRICING_PLANS[subscriptionStatus.plan]
 
   if (!user) {
@@ -170,8 +170,6 @@ export default async function OwnerDashboardPage() {
         </div>
       </div>
 
- 
-
       <div className="max-w-6xl mx-auto px-6 py-10">
         {/* Alerte profil incomplet */}
         {!user.profileComplete && (
@@ -262,6 +260,11 @@ export default async function OwnerDashboardPage() {
             </svg>
           </div>
         </Link>
+        {/* ✅ NOUVELLE SECTION ANALYTICS */}
+        <AnalyticsSection />
+
+        {/* Stats existantes */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12"></div>
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
@@ -326,52 +329,57 @@ export default async function OwnerDashboardPage() {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                  {/* ✅ NOUVEAU : Bandeau statut abonnement */}
-        <div className="mb-8 bg-white rounded-xl shadow-lg p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                Plan actuel : {planConfig.name}
-              </h3>
-              <p className="text-gray-600">
-                {subscriptionStatus.currentCount}/{subscriptionStatus.maxProperties} propriétés utilisées
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              {/* Barre de progression */}
-              <div className="w-48">
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className={`h-2 rounded-full transition-all ${
-                      subscriptionStatus.currentCount >= subscriptionStatus.maxProperties
-                        ? 'bg-red-500'
-                        : subscriptionStatus.currentCount >= subscriptionStatus.maxProperties - 1
-                        ? 'bg-yellow-500'
-                        : 'bg-green-500'
-                    }`}
-                    style={{
-                      width: `${(subscriptionStatus.currentCount / subscriptionStatus.maxProperties) * 100}%`,
-                    }}
-                  />
+            {/* ✅ NOUVEAU : Bandeau statut abonnement */}
+            <div className="mb-8 bg-white rounded-xl shadow-lg p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                    Plan actuel : {planConfig.name}
+                  </h3>
+                  <p className="text-gray-600">
+                    {subscriptionStatus.currentCount}/
+                    {subscriptionStatus.maxProperties} propriétés utilisées
+                  </p>
+                </div>
+                <div className="flex items-center gap-4">
+                  {/* Barre de progression */}
+                  <div className="w-48">
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className={`h-2 rounded-full transition-all ${
+                          subscriptionStatus.currentCount >=
+                          subscriptionStatus.maxProperties
+                            ? 'bg-red-500'
+                            : subscriptionStatus.currentCount >=
+                                subscriptionStatus.maxProperties - 1
+                              ? 'bg-yellow-500'
+                              : 'bg-green-500'
+                        }`}
+                        style={{
+                          width: `${(subscriptionStatus.currentCount / subscriptionStatus.maxProperties) * 100}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Bouton upgrade si nécessaire */}
+                  {subscriptionStatus.plan !== 'enterprise' && (
+                    <Link
+                      href="/pricing"
+                      className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                        subscriptionStatus.requiresUpgrade
+                          ? 'bg-red-600 text-white hover:bg-red-700'
+                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                      }`}
+                    >
+                      {subscriptionStatus.requiresUpgrade
+                        ? 'Upgrader maintenant'
+                        : 'Voir les plans'}
+                    </Link>
+                  )}
                 </div>
               </div>
-
-              {/* Bouton upgrade si nécessaire */}
-              {subscriptionStatus.plan !== 'enterprise' && (
-                <Link
-                  href="/pricing"
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                    subscriptionStatus.requiresUpgrade
-                      ? 'bg-red-600 text-white hover:bg-red-700'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
-                  }`}
-                >
-                  {subscriptionStatus.requiresUpgrade ? 'Upgrader maintenant' : 'Voir les plans'}
-                </Link>
-              )}
             </div>
-          </div>
-        </div>
             {/* Ajouter un bien */}
             <Link
               href="/owner/properties/new"
