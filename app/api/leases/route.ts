@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { sendEmail } from '@/lib/email/send-email'
+import LeaseSignedEmail from '@/emails/templates/LeaseSignedEmail'
 
 // POST - Créer un bail
 export async function POST(request: Request) {
@@ -79,7 +81,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // Créer le bail
+// Créer le bail avec les relations
 const lease = await prisma.lease.create({
   data: {
     propertyId: application.propertyId,
@@ -89,7 +91,15 @@ const lease = await prisma.lease.create({
     monthlyRent: rentAmount,
     deposit: depositAmount || rentAmount,
     status: 'PENDING',
-  }
+  },
+ include: {
+    property: {
+      include: {
+        owner: true,  // ✅ owner est dans property
+      },
+    },
+    tenant: true,
+  },
 })
 
     // Mettre à jour la propriété comme non disponible
@@ -101,10 +111,51 @@ const lease = await prisma.lease.create({
       }
     })
 
-    return NextResponse.json(
-      { data: lease },
-      { status: 201 }
-    )
+    // ✅ NOUVEAU : Envoyer les emails (owner + tenant)
+try {
+  // Email au propriétaire
+  await sendEmail({
+    to: lease.property.owner.email,
+    subject: `📝 Bail signé pour ${lease.property.title}`,
+    react: LeaseSignedEmail({
+      recipientName: `${lease.property.owner.firstName} ${lease.property.owner.lastName}`,
+      recipientRole: 'owner',
+      propertyTitle: lease.property.title,
+      propertyAddress: `${lease.property.address}, ${lease.property.postalCode} ${lease.property.city}`,
+      startDate: lease.startDate.toLocaleDateString('fr-FR'),
+      endDate: lease.endDate ? lease.endDate.toLocaleDateString('fr-FR') : 'Indéterminée',
+      monthlyRent: lease.monthlyRent,
+      leaseUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/owner/leases`,
+    }),
+  })
+
+  // Email au locataire
+  await sendEmail({
+    to: lease.tenant.email,
+    subject: `📝 Votre bail a été signé !`,
+    react: LeaseSignedEmail({
+      recipientName: `${lease.tenant.firstName} ${lease.tenant.lastName}`,
+      recipientRole: 'tenant',
+      propertyTitle: lease.property.title,
+      propertyAddress: `${lease.property.address}, ${lease.property.postalCode} ${lease.property.city}`,
+      startDate: lease.startDate.toLocaleDateString('fr-FR'),
+      endDate: lease.endDate ? lease.endDate.toLocaleDateString('fr-FR') : 'Indéterminée',
+      monthlyRent: lease.monthlyRent,
+      leaseUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/tenant/leases`,
+    }),
+  })
+
+  console.log('✅ Lease notifications sent to both parties')
+} catch (emailError) {
+  console.error('⚠️ Email sending failed:', emailError)
+}
+
+return NextResponse.json(
+  { data: lease },
+  { status: 201 }
+)
+
+  
 
   } catch (error) {
     console.error('Create lease error:', error)

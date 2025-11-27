@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { sendEmail } from '@/lib/email/send-email'
+import ReceiptGeneratedEmail from '@/emails/templates/ReceiptGeneratedEmail'
 
 // POST - Propriétaire confirme directement un paiement
 export async function POST(request: Request) {
@@ -96,6 +98,37 @@ export async function POST(request: Request) {
         link: '/tenant/receipts'
       }
     })
+
+
+    // ✅ NOUVEAU : Envoyer l'email au locataire
+try {
+  // Récupérer l'email du locataire
+  const tenant = await prisma.user.findUnique({
+    where: { id: lease.tenant.id },
+    select: {
+      email: true,
+      firstName: true,
+      lastName: true,
+    },
+  })
+
+  if (tenant) {
+    await sendEmail({
+      to: tenant.email,
+      subject: `🧾 Quittance de loyer - ${getMonthName(month)} ${year}`,
+      react: ReceiptGeneratedEmail({
+        tenantName: `${tenant.firstName} ${tenant.lastName}`,
+        propertyTitle: lease.property.title,
+        amount: totalAmount,
+        paymentMonth: `${getMonthName(month)} ${year}`,
+        receiptUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/tenant/receipts`,
+      }),
+    })
+    console.log(`✅ Receipt notification sent to tenant: ${tenant.email}`)
+  }
+} catch (emailError) {
+  console.error('⚠️ Email sending failed:', emailError)
+}
 
     return NextResponse.json(
       { data: receipt, message: 'Quittance générée' },

@@ -152,7 +152,7 @@ export default function NewPropertyForm({
 
             {/* Titre */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="text-gray-900 block text-sm font-medium mb-2">
                 Titre de l&apos;annonce *
               </label>
               <input
@@ -160,7 +160,7 @@ export default function NewPropertyForm({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="text-gray-900 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Ex: Appartement T2 centre-ville"
               />
             </div>
@@ -191,7 +191,7 @@ export default function NewPropertyForm({
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="text-gray-900  w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Paris"
                 />
               </div>
@@ -204,7 +204,7 @@ export default function NewPropertyForm({
                   value={postalCode}
                   onChange={(e) => setPostalCode(e.target.value)}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="text-gray-900  w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="75001"
                 />
               </div>
@@ -218,7 +218,7 @@ export default function NewPropertyForm({
               <select
                 value={type}
                 onChange={(e) => setType(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="text-gray-900  w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="APARTMENT">Appartement</option>
                 <option value="HOUSE">Maison</option>
@@ -238,7 +238,7 @@ export default function NewPropertyForm({
                   onChange={(e) => setSurface(e.target.value)}
                   required
                   min="1"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="text-gray-900  w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
               <div>
@@ -251,7 +251,7 @@ export default function NewPropertyForm({
                   onChange={(e) => setRooms(e.target.value)}
                   required
                   min="1"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="text-gray-900  w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
               <div>
@@ -264,7 +264,7 @@ export default function NewPropertyForm({
                   onChange={(e) => setBedrooms(e.target.value)}
                   required
                   min="0"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="text-gray-900  w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
             </div>
@@ -281,7 +281,7 @@ export default function NewPropertyForm({
                 required
                 min="1"
                 step="0.01"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="text-gray-900  w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="850.00"
               />
             </div>
@@ -295,7 +295,7 @@ export default function NewPropertyForm({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={4}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="text-gray-900  w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Décrivez votre bien..."
               />
             </div>

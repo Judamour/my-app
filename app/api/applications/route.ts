@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { awardApplicationSubmissionXP } from '@/lib/xp'
+import { sendEmail } from '@/lib/email/send-email'
+import NewApplicationEmail from '@/emails/templates/NewApplicationEmail'
+
 
 // POST - Créer une candidature
 export async function POST(request: Request) {
@@ -98,20 +101,46 @@ export async function POST(request: Request) {
       })
     }
     // Créer la candidature
-    const application = await prisma.application.create({
-      data: {
-        propertyId,
-        tenantId: session.user.id,
-        message: message || null,
-        status: 'PENDING',
+ // Créer la candidature
+const application = await prisma.application.create({
+  data: {
+    propertyId,
+    tenantId: session.user.id,
+    message: message || null,
+    status: 'PENDING',
+  },
+  include: {
+    property: {
+      include: {
+        owner: true,
       },
-    })
+    },
+    tenant: true,
+  },
+})
 
     // Attribution XP pour candidature soumise
     try {
       await awardApplicationSubmissionXP(session.user.id)
     } catch (error) {
       console.error('Erreur attribution XP:', error)
+    }
+
+      try {
+      await sendEmail({
+        to: application.property.owner.email,
+        subject: `📩 Nouvelle candidature pour ${application.property.title}`,
+        react: NewApplicationEmail({
+          ownerName: `${application.property.owner.firstName} ${application.property.owner.lastName}`,
+          tenantName: `${application.tenant.firstName} ${application.tenant.lastName}`,
+          propertyTitle: application.property.title,
+          propertyAddress: `${application.property.address}, ${application.property.postalCode} ${application.property.city}`,
+          applicationUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/owner/applications`,
+        }),
+      })
+      console.log('✅ Application notification sent to owner:', application.property.owner.email)
+    } catch (emailError) {
+      console.error('⚠️ Email sending failed:', emailError)
     }
 
     return NextResponse.json({ data: application }, { status: 201 })
@@ -122,6 +151,8 @@ export async function POST(request: Request) {
       { status: 500 }
     )
   }
+
+  
 }
 
 // GET - Récupérer les candidatures
@@ -203,3 +234,5 @@ export async function GET(request: Request) {
     )
   }
 }
+
+

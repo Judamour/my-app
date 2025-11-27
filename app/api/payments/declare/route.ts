@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { sendEmail } from '@/lib/email/send-email'
+import PaymentReceivedEmail from '@/emails/templates/PaymentReceivedEmail'
 
 // POST - Locataire déclare avoir payé
 export async function POST(request: Request) {
@@ -111,6 +113,39 @@ export async function POST(request: Request) {
         link: '/owner/receipts?pending=true'
       }
     })
+
+// ✅ NOUVEAU : Envoyer l'email au propriétaire
+try {
+  // Récupérer l'email du propriétaire
+  const owner = await prisma.user.findUnique({
+    where: { id: lease.property.ownerId },
+    select: {
+      email: true,
+      firstName: true,
+      lastName: true,
+    },
+  })
+
+  if (owner) {
+    await sendEmail({
+      to: owner.email,
+      subject: `💰 Paiement reçu - ${lease.property.title}`,
+      react: PaymentReceivedEmail({
+        ownerName: `${owner.firstName} ${owner.lastName}`,
+        tenantName: `${lease.tenant.firstName} ${lease.tenant.lastName}`,
+        propertyTitle: lease.property.title,
+        amount: totalAmount,
+        paymentDate: new Date().toLocaleDateString('fr-FR'),
+        paymentMonth: `${getMonthName(month)} ${year}`,
+        paymentsUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/owner/receipts?pending=true`,
+      }),
+    })
+    console.log(`✅ Payment notification sent to owner: ${owner.email}`)
+  }
+} catch (emailError) {
+  console.error('⚠️ Email sending failed:', emailError)
+}
+
 
     return NextResponse.json(
       { data: receipt, message: 'Paiement déclaré' },

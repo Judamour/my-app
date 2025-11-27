@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcrypt'
+import { sendEmail } from '@/lib/email/send-email'
+import WelcomeEmail from '@/emails/templates/WelcomeEmail'
 
 export async function POST(request: Request) {
   try {
@@ -43,6 +45,23 @@ export async function POST(request: Request) {
         profileComplete: false, // Profil pas encore complété
       },
     })
+
+    // ✅ NOUVEAU : Envoyer l'email de bienvenue
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: '🏠 Bienvenue sur RentEasy !',
+        react: WelcomeEmail({
+          userName: `${user.firstName} ${user.lastName}`,
+          userEmail: user.email,
+          loginUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/login`,
+        }),
+      })
+      console.log('✅ Welcome email sent to:', user.email)
+    } catch (emailError) {
+      // Ne pas bloquer l'inscription si l'email échoue
+      console.error('⚠️ Email sending failed:', emailError)
+    }
 
     // Ne pas retourner le password
     const { password: _, ...userWithoutPassword } = user

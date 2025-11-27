@@ -2,10 +2,14 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { awardApplicationAcceptedXP } from '@/lib/xp'
+import { sendEmail } from '@/lib/email/send-email'
+import ApplicationAcceptedEmail from '@/emails/templates/ApplicationAcceptedEmail'
+
 
 interface RouteParams {
   params: Promise<{ id: string }>
 }
+
 
 // PATCH - Accepter ou refuser une candidature
 export async function PATCH(request: Request, { params }: RouteParams) {
@@ -39,6 +43,9 @@ export async function PATCH(request: Request, { params }: RouteParams) {
             id: true,
             ownerId: true,
             title: true,
+            address: true,
+            city: true,
+            postalCode: true,
           }
         }
       }
@@ -67,19 +74,44 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       )
     }
 
-    // Mettre à jour le statut
+    // ✅ Mettre à jour le statut AVEC les relations nécessaires
     const updatedApplication = await prisma.application.update({
       where: { id },
-      data: { status }
+      data: { status },
+      include: {
+        property: {
+          include: {
+            owner: true,
+          },
+        },
+        tenant: true,
+      },
     })
 
-    // ✅ ATTRIBUTION XP - AVANT LE RETURN !
-    if (status === 'ACCEPTED' && application.tenantId) {
+    // ✅ Envoyer l'email SI acceptée
+    if (status === 'ACCEPTED') {
+      try {
+        await sendEmail({
+          to: updatedApplication.tenant.email,
+          subject: `🎉 Votre candidature a été acceptée !`,
+          react: ApplicationAcceptedEmail({
+            tenantName: `${updatedApplication.tenant.firstName} ${updatedApplication.tenant.lastName}`,
+            ownerName: `${updatedApplication.property.owner.firstName} ${updatedApplication.property.owner.lastName}`,
+            propertyTitle: updatedApplication.property.title,
+            propertyAddress: `${updatedApplication.property.address}, ${updatedApplication.property.postalCode} ${updatedApplication.property.city}`,
+            dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/tenant`,
+          }),
+        })
+        console.log('✅ Acceptance notification sent to tenant:', updatedApplication.tenant.email)
+      } catch (emailError) {
+        console.error('⚠️ Email sending failed:', emailError)
+      }
+
+      // ✅ Attribution XP
       try {
         await awardApplicationAcceptedXP(application.tenantId)
       } catch (error) {
         console.error('Erreur attribution XP:', error)
-        // Ne pas bloquer la réponse même si XP échoue
       }
     }
 

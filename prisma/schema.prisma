@@ -140,6 +140,10 @@ model User {
   conversationsAsUser1 Conversation[] @relation("User1Conversations")
   conversationsAsUser2 Conversation[] @relation("User2Conversations")
   messages             Message[]
+
+    // Emails
+  lastMessageEmailSent DateTime?  // Dernière fois qu'un email de nouveau message a été envoyé
+  
   
   // Relations documents
   documents         Document[]
