@@ -232,6 +232,12 @@ export default async function LeaseDetailPage({ params }: PageProps) {
 
           {/* Sidebar - Actions */}
           <div className="lg:col-span-1">
+            <Link
+              href={`/owner/leases/${lease.id}/documents`}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              📄 Voir les documents
+            </Link>
             <div className="sticky top-8 border border-gray-200 rounded-2xl p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Actions

@@ -4,17 +4,18 @@ import { prisma } from '@/lib/prisma'
 import { sendEmail } from '@/lib/email/send-email'
 import PaymentReminderEmail from '@/emails/templates/PaymentReminderEmail'
 
-// POST - Envoyer des rappels pour loyers impayés (manuel pour MVP)
-export async function POST() {
+// POST - Envoyer des rappels pour loyers impayés
+export async function POST(request: Request) {
   try {
     const session = await auth()
 
-    // Seulement les admins peuvent déclencher
-    if (!session?.user || session.user.role !== 'ADMIN') {
-      return NextResponse.json(
-        { error: 'Non autorisé' },
-        { status: 403 }
-      )
+    // Vérifier que c'est un appel Vercel Cron OU un admin
+    const authHeader = request.headers.get('authorization')
+    const isVercelCron = authHeader === `Bearer ${process.env.CRON_SECRET}`
+    const isAdmin = session?.user?.role === 'ADMIN'
+
+    if (!isVercelCron && !isAdmin) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
     }
 
     const now = new Date()
@@ -83,7 +84,7 @@ export async function POST() {
     }
 
     return NextResponse.json({
-      message: `${remindersSent} rappels envoyés`,
+      message: `${remindersSent} rappel(s) envoyé(s)`,
       remindersSent,
     })
   } catch (error) {
