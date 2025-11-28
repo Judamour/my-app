@@ -23,6 +23,9 @@ export default async function PropertiesListPage() {
     }
   })
 
+  const availableCount = properties.filter(p => p.available).length
+  const rentedCount = properties.filter(p => !p.available).length
+
   const formatPrice = (amount: number) => {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
@@ -32,44 +35,42 @@ export default async function PropertiesListPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-6 py-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-6">
+          <Link
+            href="/owner"
+            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors text-sm font-medium mb-4"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Retour au dashboard
+          </Link>
+
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <Link
-                href="/owner"
-                className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors text-sm mb-2"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                Dashboard
-              </Link>
-              <h1 className="text-3xl font-semibold text-gray-900">
+              <h1 className="text-3xl font-bold text-gray-900">
                 Mes propriétés
               </h1>
-              <p className="text-gray-500 mt-1">
+              <p className="text-gray-600 mt-1">
                 {properties.length} bien{properties.length > 1 ? 's' : ''} enregistré{properties.length > 1 ? 's' : ''}
               </p>
             </div>
             <Link
               href="/owner/properties/new"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-colors"
             >
               <span className="text-xl">➕</span>
               Ajouter un bien
             </Link>
           </div>
         </div>
-      </div>
 
-      {/* Content */}
-      <div className="max-w-6xl mx-auto px-6 py-10">
         {properties.length === 0 ? (
           /* État vide */
-          <div className="text-center py-20">
+          <div className="text-center py-20 bg-white rounded-xl border border-gray-200">
             <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
               <span className="text-5xl">🏠</span>
             </div>
@@ -88,106 +89,128 @@ export default async function PropertiesListPage() {
             </Link>
           </div>
         ) : (
-          /* Grille de propriétés */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {properties.map((property) => (
-              <Link
-                key={property.id}
-                href={`/owner/properties/${property.id}`}
-                className="group bg-white border border-gray-100 rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-200"
-              >
-                {/* Image */}
-                <div className="relative aspect-[4/3] bg-gray-100">
-                  {property.images && property.images.length > 0 ? (
-                    <Image
-                      src={property.images[0]}
-                      alt={property.title}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      sizes="(max-width: 768px) 100vw, 33vw"
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-full">
-                      <span className="text-5xl text-gray-300">🏠</span>
-                    </div>
-                  )}
-                  
-                  {/* Badge statut */}
-                  <div className="absolute top-3 left-3">
-                    {property.available ? (
-                      <span className="inline-flex items-center gap-1 px-3 py-1 bg-white/90 backdrop-blur-sm text-emerald-700 rounded-full text-sm font-medium">
-                        <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
-                        Disponible
-                      </span>
+          <>
+            {/* Stats rapides */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="bg-white rounded-xl border border-gray-200 p-4">
+                <p className="text-sm text-gray-600 mb-1">Total</p>
+                <p className="text-2xl font-bold text-gray-900">{properties.length}</p>
+              </div>
+              <div className="bg-emerald-50 rounded-xl border border-emerald-200 p-4">
+                <p className="text-sm text-emerald-700 mb-1">Disponibles</p>
+                <p className="text-2xl font-bold text-emerald-600">{availableCount}</p>
+              </div>
+              <div className="bg-orange-50 rounded-xl border border-orange-200 p-4">
+                <p className="text-sm text-orange-700 mb-1">Loués</p>
+                <p className="text-2xl font-bold text-orange-600">{rentedCount}</p>
+              </div>
+            </div>
+
+            {/* Grille de propriétés */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {properties.map((property) => (
+                <Link
+                  key={property.id}
+                  href={`/owner/properties/${property.id}`}
+                  className="group bg-white rounded-xl overflow-hidden hover:shadow-lg transition-all duration-200 border border-gray-200"
+                >
+                  {/* Image */}
+                  <div className="relative aspect-4/3 bg-gray-100">
+                    {property.images && property.images.length > 0 ? (
+                      <Image
+                        src={property.images[0]}
+                        alt={property.title}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      />
                     ) : (
-                      <span className="inline-flex items-center gap-1 px-3 py-1 bg-white/90 backdrop-blur-sm text-orange-700 rounded-full text-sm font-medium">
-                        <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
-                        Loué
-                      </span>
+                      <div className="flex items-center justify-center h-full">
+                        <span className="text-5xl text-gray-300">🏠</span>
+                      </div>
+                    )}
+                    
+                    {/* Badge statut */}
+                    <div className="absolute top-3 left-3">
+                      {property.available ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white shadow-sm text-emerald-700 rounded-lg text-xs font-semibold">
+                          <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                          Disponible
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white shadow-sm text-orange-700 rounded-lg text-xs font-semibold">
+                          <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                          Loué
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Nombre de photos */}
+                    {property.images && property.images.length > 1 && (
+                      <div className="absolute bottom-3 right-3 px-2.5 py-1 bg-gray-900/80 text-white text-xs rounded-lg font-medium backdrop-blur-sm">
+                        📷 {property.images.length}
+                      </div>
                     )}
                   </div>
 
-                  {/* Nombre de photos */}
-                  {property.images && property.images.length > 1 && (
-                    <div className="absolute bottom-3 right-3 px-2 py-1 bg-black/60 text-white text-xs rounded-lg">
-                      📷 {property.images.length}
+                  {/* Infos */}
+                  <div className="p-5">
+                    {/* Prix */}
+                    <div className="mb-3">
+                      <p className="text-2xl font-bold text-gray-900">
+                        {formatPrice(property.rent)}
+                        <span className="text-sm text-gray-500 font-normal">/mois</span>
+                      </p>
                     </div>
-                  )}
-                </div>
 
-                {/* Infos */}
-                <div className="p-5">
-                  {/* Prix */}
-                  <div className="flex items-baseline justify-between mb-2">
-                    <p className="text-xl font-semibold text-gray-900">
-                      {formatPrice(property.rent)}
-                      <span className="text-sm text-gray-400 font-normal">/mois</span>
+                    {/* Titre */}
+                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-1 group-hover:text-blue-600 transition-colors">
+                      {property.title}
+                    </h3>
+
+                    {/* Adresse */}
+                    <p className="text-sm text-gray-500 mb-4 flex items-center gap-1">
+                      <span>📍</span>
+                      <span className="truncate">{property.city} ({property.postalCode})</span>
                     </p>
-                  </div>
 
-                  {/* Titre */}
-                  <h3 className="font-medium text-gray-900 mb-1 truncate group-hover:text-gray-700">
-                    {property.title}
-                  </h3>
+                    {/* Caractéristiques */}
+                    <div className="flex items-center gap-3 text-sm text-gray-600 pb-4 border-b border-gray-100">
+                      <span className="flex items-center gap-1">
+                        <span>📐</span> {property.surface}m²
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span>🚪</span> {property.rooms}p
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span>🛏️</span> {property.bedrooms}ch
+                      </span>
+                    </div>
 
-                  {/* Adresse */}
-                  <p className="text-sm text-gray-500 truncate mb-4">
-                    📍  {property.city} ({property.postalCode})
-                  </p>
-
-                  {/* Caractéristiques */}
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
-                    <span className="flex items-center gap-1">
-                      <span>📐</span> {property.surface} m²
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span>🚪</span> {property.rooms} p.
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span>🛏️</span> {property.bedrooms} ch.
-                    </span>
-                  </div>
-
-                  {/* Locataire */}
-                  {property.tenant && (
-                    <div className="mt-4 pt-4 border-t border-gray-100">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center text-white text-xs font-medium">
+                    {/* Locataire */}
+                    {property.tenant ? (
+                      <div className="mt-4 flex items-center gap-3">
+                        <div className="w-9 h-9 bg-linear-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-semibold shrink-0">
                           {property.tenant.firstName[0]}{property.tenant.lastName[0]}
                         </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">
                             {property.tenant.firstName} {property.tenant.lastName}
                           </p>
                           <p className="text-xs text-gray-500">Locataire actuel</p>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              </Link>
-            ))}
-          </div>
+                    ) : (
+                      <div className="mt-4 flex items-center gap-2 text-sm text-gray-500">
+                        <span>🔍</span>
+                        <span>En recherche de locataire</span>
+                      </div>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>

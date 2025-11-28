@@ -13,7 +13,7 @@ export const MIN_PASSWORD_LENGTH = 8
 export const MAX_FILE_SIZE_MB = 10
 
 // Rentals
-export const MIN_RENT = 100
+export const MIN_RENT = 30
 export const MAX_RENT = 50000
 export const MIN_SURFACE = 1
 export const MAX_SURFACE = 10000

@@ -32,6 +32,10 @@ enum PropertyType {
   ROOM
   PARKING
   OFFICE
+  SHOP        // Commerce
+  LAND        // Terrain
+  WAREHOUSE   // Entrepôt
+  GARAGE      // Garage
 }
 
 enum LeaseStatus {
@@ -54,6 +58,7 @@ enum ReviewStatus {
 }
 
 enum DocumentType {
+  // Existants
   ID_CARD           // Carte identité
   PAYSLIP           // Fiche de paie
   CONTRACT          // Contrat de location
@@ -62,6 +67,13 @@ enum DocumentType {
   PROOF_ADDRESS     // Justificatif domicile
   TAX_NOTICE        // Avis imposition
   INSURANCE         // Attestation assurance
+  
+  // 🆕 À AJOUTER
+  WORK_CONTRACT     // Contrat de travail
+  BANK_STATEMENT    // RIB / Relevé bancaire
+  GUARANTOR_ID      // Pièce d'identité garant
+  GUARANTOR_INCOME  // Justificatif revenus garant
+  
   OTHER
 }
 
@@ -99,6 +111,15 @@ model User {
   isTenant        Boolean  @default(false)
   profileComplete Boolean  @default(false)
 
+  // 🆕 PROFIL LOCATAIRE - Infos pro
+  salary            Int?       // Salaire mensuel net
+  profession        String?    // Métier
+  companyName       String?    // Entreprise
+  contractType      String?    // CDI, CDD, etc.
+  
+  // 🆕 PROFIL LOCATAIRE - Adresse actuelle
+  currentCity       String?
+  currentPostalCode String?
    
   // 🆕 GAMIFICATION & XP
   xp              Int      @default(0)
@@ -397,6 +418,9 @@ model Document {
   verifiedBy  String?
   
   uploadedAt  DateTime     @default(now())
+    
+  createdAt   DateTime     @default(now())  // 🆕 AJOUTER CETTE LIGNE
+  updatedAt   DateTime     @updatedAt       // 🆕 AJOUTER CETTE LIGNE
   
   @@index([ownerId])
   @@index([propertyId])

@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import Image from 'next/image'
 
 interface Session {
   user: {
@@ -12,6 +12,16 @@ interface Session {
   }
 }
 
+const CONTRACT_TYPES = [
+  { value: 'CDI', label: 'CDI' },
+  { value: 'CDD', label: 'CDD' },
+  { value: 'INTERIM', label: 'Intérim' },
+  { value: 'INDEPENDANT', label: 'Indépendant' },
+  { value: 'ETUDIANT', label: 'Étudiant' },
+  { value: 'RETRAITE', label: 'Retraité' },
+  { value: 'AUTRE', label: 'Autre' },
+]
+
 export default function CompleteProfileForm({
   session: initialSession,
   required,
@@ -19,31 +29,39 @@ export default function CompleteProfileForm({
   session: Session
   required?: string
 }) {
-  const router = useRouter()
 
   // Étape actuelle (1, 2, 3)
   const [step, setStep] = useState(1)
 
-  // Données du formulaire
-  const [isOwner, setIsOwner] = useState(false)
-  const [isTenant, setIsTenant] = useState(false)
+  // Données du formulaire - Rôles
+   const [isOwner, setIsOwner] = useState(required === 'owner')
+   const [isTenant, setIsTenant] = useState(required === 'tenant')
+
+  // Données du formulaire - Infos générales
   const [gender, setGender] = useState('')
   const [birthDate, setBirthDate] = useState('')
   const [phone, setPhone] = useState('')
   const [address, setAddress] = useState('')
+  
+  // 🆕 Données du formulaire - Infos pro (locataire)
+  const [salary, setSalary] = useState('')
+  const [profession, setProfession] = useState('')
+  const [companyName, setCompanyName] = useState('')
+  const [contractType, setContractType] = useState('')
+  const [currentCity, setCurrentCity] = useState('')
+  const [currentPostalCode, setCurrentPostalCode] = useState('')
+  
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
 
   // États de validation
   const [phoneValid, setPhoneValid] = useState<boolean | null>(null)
+  const [postalCodeValid, setPostalCodeValid] = useState<boolean | null>(null)
   const [loading, setLoading] = useState(false)
 
-  // Pré-sélection si required
-  useEffect(() => {
-    if (required === 'owner') setIsOwner(true)
-    if (required === 'tenant') setIsTenant(true)
-  }, [required])
+
 
   // Validation téléphone en temps réel
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!phone) {
       setPhoneValid(null)
@@ -52,6 +70,15 @@ export default function CompleteProfileForm({
     const phoneRegex = /^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/
     setPhoneValid(phoneRegex.test(phone))
   }, [phone])
+
+  // Validation code postal en temps réel
+  useEffect(() => {
+    if (!currentPostalCode) {
+      setPostalCodeValid(null)
+      return
+    }
+    setPostalCodeValid(/^\d{5}$/.test(currentPostalCode))
+  }, [currentPostalCode])
 
   // Gestion photo
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -83,19 +110,31 @@ export default function CompleteProfileForm({
     setLoading(true)
 
     try {
-const hasOptionalInfo = !!(gender || birthDate || phone || address || photoPreview)
+      const hasOptionalInfo = !!(gender || birthDate || phone || address || photoPreview)
+      const hasTenantInfo = !!(salary || profession || companyName || contractType || currentCity)
 
       const response = await fetch('/api/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          // Infos générales
           gender: gender || null,
           birthDate: birthDate || null,
           phone: phone || null,
           address: address || null,
+          
+          // 🆕 Infos professionnelles (locataire)
+          salary: salary ? parseInt(salary) : null,
+          profession: profession || null,
+          companyName: companyName || null,
+          contractType: contractType || null,
+          currentCity: currentCity || null,
+          currentPostalCode: currentPostalCode || null,
+          
+          // Rôles
           isOwner,
           isTenant,
-          profileComplete: hasOptionalInfo,
+          profileComplete: hasOptionalInfo || hasTenantInfo,
         }),
       })
 
@@ -126,7 +165,7 @@ const hasOptionalInfo = !!(gender || birthDate || phone || address || photoPrevi
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg">
+      <div className="w-full max-w-2xl">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-semibold text-gray-900">
@@ -257,116 +296,241 @@ const hasOptionalInfo = !!(gender || birthDate || phone || address || photoPrevi
 
           {/* ÉTAPE 2 : Informations */}
           {step === 2 && (
-            <div className="space-y-6">
+            <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2">
               <div className="text-center mb-6">
                 <span className="text-4xl">📝</span>
                 <h2 className="text-xl font-semibold text-gray-900 mt-3">
                   Vos informations
                 </h2>
                 <p className="text-gray-500 text-sm mt-1">
-                  Ces informations sont optionnelles
+                  {isTenant ? 'Complétez votre profil locataire' : 'Ces informations sont optionnelles'}
                 </p>
               </div>
 
-              <div className="space-y-4">
-                {/* Civilité */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Civilité
-                  </label>
-                  <div className="text-gray-700 mb-2 grid grid-cols-4 gap-2">
-                    {[
-                      { value: 'MALE', label: 'M.' },
-                      { value: 'FEMALE', label: 'Mme' },
-                      { value: 'OTHER', label: 'Autre' },
-                      { value: 'PREFER_NOT_TO_SAY', label: '—' },
-                    ].map(option => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() =>
-                          setGender(gender === option.value ? '' : option.value)
-                        }
-                        className={`py-3 rounded-xl border-2 text-sm font-medium transition-all ${
-                          gender === option.value
-                            ? 'border-gray-900 bg-gray-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
+              <div className="space-y-6">
+                {/* Section Infos générales */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-gray-900 text-sm flex items-center gap-2">
+                    <span>👤</span> Informations générales
+                  </h3>
+
+                  {/* Civilité */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Civilité
+                    </label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {[
+                        { value: 'MALE', label: 'M.' },
+                        { value: 'FEMALE', label: 'Mme' },
+                        { value: 'OTHER', label: 'Autre' },
+                        { value: 'PREFER_NOT_TO_SAY', label: '—' },
+                      ].map(option => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() =>
+                            setGender(gender === option.value ? '' : option.value)
+                          }
+                          className={`py-3 rounded-xl border-2 text-sm font-medium transition-all ${
+                            gender === option.value
+                              ? 'border-gray-900 bg-gray-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-                {/* Date de naissance */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Date de naissance
-                  </label>
-                  <input
-                    type="date"
-                    value={birthDate}
-                    onChange={e => setBirthDate(e.target.value)}
-                    max={
-                      new Date(
-                        new Date().setFullYear(new Date().getFullYear() - 18)
-                      )
-                        .toISOString()
-                        .split('T')[0]
-                    }
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:outline-none transition-all text-gray-900"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">
-                    🔒 Information privée, non visible par les autres
-                    utilisateurs
-                  </p>
-                </div>
-                {/* Téléphone */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Téléphone
-                  </label>
-                  <div className="relative">
+
+                  {/* Date de naissance */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Date de naissance
+                    </label>
                     <input
-                      type="tel"
-                      value={phone}
-                      onChange={e => setPhone(e.target.value)}
-                      placeholder="06 12 34 56 78"
-                      className={`w-full px-4 py-3 border-2 rounded-xl transition-all focus:outline-none text-gray-900 ${
-                        phoneValid === null
-                          ? 'border-gray-200 focus:border-gray-900'
-                          : phoneValid
-                          ? 'border-emerald-500 bg-emerald-50'
-                          : 'border-red-300 bg-red-50'
-                      }`}
+                      type="date"
+                      value={birthDate}
+                      onChange={e => setBirthDate(e.target.value)}
+                      max={
+                        new Date(
+                          new Date().setFullYear(new Date().getFullYear() - 18)
+                        )
+                          .toISOString()
+                          .split('T')[0]
+                      }
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:outline-none transition-all text-gray-900"
                     />
-                    {phoneValid !== null && (
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2">
-                        {phoneValid ? '✅' : '❌'}
-                      </span>
+                    <p className="text-xs text-gray-400 mt-1">
+                      🔒 Information privée
+                    </p>
+                  </div>
+
+                  {/* Téléphone */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Téléphone
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="tel"
+                        value={phone}
+                        onChange={e => setPhone(e.target.value)}
+                        placeholder="06 12 34 56 78"
+                        className={`w-full px-4 py-3 border-2 rounded-xl transition-all focus:outline-none text-gray-900 ${
+                          phoneValid === null
+                            ? 'border-gray-200 focus:border-gray-900'
+                            : phoneValid
+                            ? 'border-emerald-500 bg-emerald-50'
+                            : 'border-red-300 bg-red-50'
+                        }`}
+                      />
+                      {phoneValid !== null && (
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2">
+                          {phoneValid ? '✅' : '❌'}
+                        </span>
+                      )}
+                    </div>
+                    {phoneValid === false && (
+                      <p className="text-red-500 text-xs mt-1">Format invalide</p>
                     )}
                   </div>
-                  {phoneValid === false && (
-                    <p className="text-red-500 text-xs mt-1">Format invalide</p>
-                  )}
+
+                  {/* Adresse */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Adresse
+                    </label>
+                    <textarea
+                      value={address}
+                      onChange={e => setAddress(e.target.value)}
+                      placeholder="12 rue de la Paix, 75000 Paris"
+                      rows={2}
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:outline-none transition-all resize-none text-gray-900"
+                    />
+                  </div>
                 </div>
 
-                {/* Adresse */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Adresse
-                  </label>
-                  <textarea
-                    value={address}
-                    onChange={e => setAddress(e.target.value)}
-                    placeholder="12 rue de la Paix, 75000 Paris"
-                    rows={2}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:outline-none transition-all resize-none text-gray-900"
-                  />
-                </div>
+                {/* 🆕 Section Infos professionnelles (si locataire) */}
+                {isTenant && (
+                  <div className="space-y-4 pt-6 border-t border-gray-200">
+                    <h3 className="font-semibold text-gray-900 text-sm flex items-center gap-2">
+                      <span>💼</span> Informations professionnelles
+                      <span className="text-xs font-normal text-orange-600 bg-orange-50 px-2 py-1 rounded">
+                        Recommandé pour locataires
+                      </span>
+                    </h3>
+
+                    {/* Salaire */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Salaire mensuel net (€)
+                      </label>
+                      <input
+                        type="number"
+                        value={salary}
+                        onChange={e => setSalary(e.target.value)}
+                        onWheel={e => e.currentTarget.blur()}
+                        placeholder="2500"
+                        min="0"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:outline-none transition-all text-gray-900"
+                      />
+                    </div>
+
+                    {/* Profession */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Profession / Métier
+                      </label>
+                      <input
+                        type="text"
+                        value={profession}
+                        onChange={e => setProfession(e.target.value)}
+                        placeholder="Développeur web"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:outline-none transition-all text-gray-900"
+                      />
+                    </div>
+
+                    {/* Entreprise */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Nom de l&apos;entreprise
+                      </label>
+                      <input
+                        type="text"
+                        value={companyName}
+                        onChange={e => setCompanyName(e.target.value)}
+                        placeholder="TechCorp"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:outline-none transition-all text-gray-900"
+                      />
+                    </div>
+
+                    {/* Type de contrat */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Type de contrat
+                      </label>
+                      <select
+                        value={contractType}
+                        onChange={e => setContractType(e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:outline-none transition-all text-gray-900 bg-white"
+                      >
+                        <option value="">Sélectionnez</option>
+                        {CONTRACT_TYPES.map(type => (
+                          <option key={type.value} value={type.value}>
+                            {type.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Adresse actuelle */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Ville actuelle
+                        </label>
+                        <input
+                          type="text"
+                          value={currentCity}
+                          onChange={e => setCurrentCity(e.target.value)}
+                          placeholder="Paris"
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:outline-none transition-all text-gray-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Code postal
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={currentPostalCode}
+                            onChange={e => setCurrentPostalCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                            placeholder="75001"
+                            maxLength={5}
+                            className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-all text-gray-900 ${
+                              postalCodeValid === null
+                                ? 'border-gray-200 focus:border-gray-900'
+                                : postalCodeValid
+                                ? 'border-emerald-500 bg-emerald-50'
+                                : 'border-red-300 bg-red-50'
+                            }`}
+                          />
+                          {postalCodeValid !== null && (
+                            <span className="absolute right-4 top-1/2 -translate-y-1/2">
+                              {postalCodeValid ? '✅' : '❌'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <div className="flex gap-3 mt-6">
+              <div className="flex gap-3 mt-6 pt-6 border-t border-gray-100 sticky bottom-0 bg-white">
                 <button
                   onClick={() => setStep(1)}
                   className="flex-1 py-4 border-2 border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
@@ -401,7 +565,9 @@ const hasOptionalInfo = !!(gender || birthDate || phone || address || photoPrevi
                 <div className="relative">
                   {photoPreview ? (
                     <div className="relative">
+                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
+                      
                         src={photoPreview}
                         alt="Preview"
                         className="w-32 h-32 rounded-full object-cover border-4 border-gray-100"

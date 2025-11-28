@@ -13,16 +13,33 @@ export async function PATCH(request: Request) {
 
     const body = await request.json()
     const {
+      // Infos générales
       gender,
       birthDate,
       phone,
       address,
+      // 🆕 Infos professionnelles
+      salary,
+      profession,
+      companyName,
+      contractType,
+      currentCity,
+      currentPostalCode,
+      // Rôles
       isOwner,
       isTenant,
       profileComplete,
+      // 🆕 Préférences confidentialité
+      showBadges,
+      showLevel,
+      showRankBorder,
+      showReviewStats,
+      showPhone,
+      showAddress,
     } = body
-    // Validation : au moins un rôle doit être true
-    if (profileComplete && !isOwner && !isTenant) {
+
+    // Validation : au moins un rôle doit être true (seulement si profileComplete est présent)
+    if (profileComplete !== undefined && !isOwner && !isTenant) {
       return NextResponse.json(
         {
           error:
@@ -32,18 +49,40 @@ export async function PATCH(request: Request) {
       )
     }
 
+    // Construire l'objet de mise à jour (seulement les champs fournis)
+    const updateData: Record<string, any> = {}
+
+    // Infos générales
+    if (gender !== undefined) updateData.gender = gender || null
+    if (birthDate !== undefined) updateData.birthDate = birthDate ? new Date(birthDate) : null
+    if (phone !== undefined) updateData.phone = phone || null
+    if (address !== undefined) updateData.address = address || null
+
+    // 🆕 Infos professionnelles
+    if (salary !== undefined) updateData.salary = salary
+    if (profession !== undefined) updateData.profession = profession || null
+    if (companyName !== undefined) updateData.companyName = companyName || null
+    if (contractType !== undefined) updateData.contractType = contractType || null
+    if (currentCity !== undefined) updateData.currentCity = currentCity || null
+    if (currentPostalCode !== undefined) updateData.currentPostalCode = currentPostalCode || null
+
+    // Rôles
+    if (isOwner !== undefined) updateData.isOwner = isOwner || false
+    if (isTenant !== undefined) updateData.isTenant = isTenant || false
+    if (profileComplete !== undefined) updateData.profileComplete = profileComplete || false
+
+    // 🆕 Préférences confidentialité
+    if (showBadges !== undefined) updateData.showBadges = showBadges
+    if (showLevel !== undefined) updateData.showLevel = showLevel
+    if (showRankBorder !== undefined) updateData.showRankBorder = showRankBorder
+    if (showReviewStats !== undefined) updateData.showReviewStats = showReviewStats
+    if (showPhone !== undefined) updateData.showPhone = showPhone
+    if (showAddress !== undefined) updateData.showAddress = showAddress
+
     // Mettre à jour l'utilisateur
     const updatedUser = await prisma.user.update({
       where: { id: session.user.id },
-      data: {
-        gender: gender || null,
-        birthDate: birthDate ? new Date(birthDate) : null,
-        phone: phone || null,
-        address: address || null,
-        isOwner: isOwner || false,
-        isTenant: isTenant || false,
-        profileComplete: profileComplete || false,
-      },
+      data: updateData,
     })
 
     // Ne pas retourner le password

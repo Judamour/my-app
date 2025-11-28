@@ -10,7 +10,18 @@ export const createPropertySchema = z.object({
   address: z.string().min(5, 'Adresse trop courte (min 5 caractères)'),
   city: z.string().min(2, 'Ville requise'),
   postalCode: z.string().regex(/^\d{5}$/, 'Code postal invalide (5 chiffres)'),
-  type: z.enum(['APARTMENT', 'HOUSE', 'STUDIO', 'ROOM', 'PARKING', 'OFFICE']),
+  type: z.enum([
+    'APARTMENT',
+    'HOUSE', 
+    'STUDIO',
+    'ROOM',
+    'PARKING',
+    'OFFICE',
+    'SHOP',      // ✅ Ajouté
+    'LAND',      // ✅ Ajouté
+    'WAREHOUSE', // ✅ Ajouté
+    'GARAGE',    // ✅ Ajouté
+  ]),
   surface: z
     .number()
     .positive('La surface doit être positive')
@@ -19,7 +30,7 @@ export const createPropertySchema = z.object({
   rooms: z
     .number()
     .int()
-    .min(1, 'Minimum 1 pièce')
+    .min(0, 'Minimum 0 pièce') // ✅ Changé de 1 à 0 pour parking/garage/etc
     .max(20, 'Maximum 20 pièces'),
   bedrooms: z
     .number()

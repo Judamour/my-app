@@ -16,7 +16,6 @@ interface PageProps {
 }
 
 export default async function ProfilePage({ params }: PageProps) {
-  // ⚠️ IMPORTANT : await params dans Next.js 15
   const { id } = await params
   
   const session = await auth()
@@ -26,7 +25,7 @@ export default async function ProfilePage({ params }: PageProps) {
   }
 
   const user = await prisma.user.findUnique({
-    where: { id }, // ✅ Maintenant id est défini
+    where: { id },
     select: {
       id: true,
       firstName: true,
@@ -41,6 +40,13 @@ export default async function ProfilePage({ params }: PageProps) {
       isOwner: true,
       isTenant: true,
       createdAt: true,
+      // 🆕 Infos professionnelles
+      salary: true,
+      profession: true,
+      companyName: true,
+      contractType: true,
+      currentCity: true,
+      currentPostalCode: true,
       // Gamification
       xp: true,
       level: true,
@@ -74,7 +80,7 @@ export default async function ProfilePage({ params }: PageProps) {
 
   const isOwnProfile = session.user.id === user.id
 
-  // Stats pour avis (si activé) - targetId au lieu de reviewedUserId
+  // Stats pour avis
   const reviewStats = user.showReviewStats
     ? await prisma.review.aggregate({
         where: { targetId: user.id },
@@ -85,10 +91,45 @@ export default async function ProfilePage({ params }: PageProps) {
 
   const hasReviews = reviewStats?._count?.id && reviewStats._count.id > 0
 
+  // 🆕 Récupérer les documents du profil (si propriétaire ou profil personnel)
+  const canViewDocuments = isOwnProfile || session.user.isOwner
+  
+  const documents = canViewDocuments
+    ? await prisma.document.findMany({
+        where: {
+          ownerId: user.id,
+          leaseId: null, // Documents de profil uniquement (pas liés à un bail)
+        },
+        orderBy: { id: 'desc' },
+        take: 20,
+      })
+    : []
+
+  const hasDocuments = documents.length > 0
+
+  // 🆕 Formater le type de contrat
+  const getContractTypeLabel = (type: string | null) => {
+    const labels: Record<string, string> = {
+      'CDI': 'CDI',
+      'CDD': 'CDD',
+      'INTERIM': 'Intérim',
+      'INDEPENDANT': 'Indépendant',
+      'ETUDIANT': 'Étudiant',
+      'RETRAITE': 'Retraité',
+      'AUTRE': 'Autre',
+    }
+    return type ? labels[type] || type : null
+  }
+
+  const formatSalary = (amount: number) => {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+      maximumFractionDigits: 0,
+    }).format(amount)
+  }
+
   return (
-    // ... reste du JSX inchangé
-
-
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
         {/* Header avec boutons */}
@@ -205,6 +246,131 @@ export default async function ProfilePage({ params }: PageProps) {
                   )
                 })}
               </div>
+            </div>
+          )}
+
+          {/* 🆕 Informations professionnelles (locataire) */}
+          {user.isTenant && (user.salary || user.profession || user.companyName || user.contractType) && (
+            <div className="border-t pt-6 mb-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">
+                💼 Informations professionnelles
+              </h2>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {user.profession && (
+                    <div>
+                      <span className="text-sm text-gray-600 block mb-1">Profession</span>
+                      <span className="text-gray-900 font-medium">{user.profession}</span>
+                    </div>
+                  )}
+                  {user.companyName && (
+                    <div>
+                      <span className="text-sm text-gray-600 block mb-1">Entreprise</span>
+                      <span className="text-gray-900 font-medium">{user.companyName}</span>
+                    </div>
+                  )}
+                  {user.contractType && (
+                    <div>
+                      <span className="text-sm text-gray-600 block mb-1">Type de contrat</span>
+                      <span className="text-gray-900 font-medium">
+                        {getContractTypeLabel(user.contractType)}
+                      </span>
+                    </div>
+                  )}
+                  {user.salary && (
+                    <div>
+                      <span className="text-sm text-gray-600 block mb-1">Salaire mensuel</span>
+                      <span className="text-gray-900 font-medium">{formatSalary(user.salary)}</span>
+                    </div>
+                  )}
+                  {(user.currentCity || user.currentPostalCode) && (
+                    <div>
+                      <span className="text-sm text-gray-600 block mb-1">Adresse actuelle</span>
+                      <span className="text-gray-900 font-medium">
+                        {user.currentCity} {user.currentPostalCode && `(${user.currentPostalCode})`}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 🆕 Documents du profil */}
+          {canViewDocuments && (
+            <div className="border-t pt-6 mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900">
+                  📄 Documents {isOwnProfile ? '' : 'du profil'}
+                </h2>
+                {isOwnProfile && (
+                  <Link
+                    href="/profile/edit?tab=documents"
+                    className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                  >
+                    Gérer mes documents →
+                  </Link>
+                )}
+              </div>
+              
+              {hasDocuments ? (
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                      <span className="text-xl">✅</span>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">
+                        {documents.length} document{documents.length > 1 ? 's' : ''} disponible{documents.length > 1 ? 's' : ''}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {isOwnProfile ? 'Vos documents sont sécurisés' : 'Documents vérifiables'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Liste des types de documents */}
+                  <div className="flex flex-wrap gap-2">
+                    {Array.from(new Set(documents.map(d => d.type))).map(type => {
+                      const labels: Record<string, string> = {
+                        'ID_CARD': '🆔 Pièce d\'identité',
+                        'PAYSLIP': '💰 Fiche de paie',
+                        'WORK_CONTRACT': '📑 Contrat de travail',
+                        'PROOF_ADDRESS': '🏠 Justificatif domicile',
+                        'TAX_NOTICE': '📊 Avis d\'imposition',
+                        'BANK_STATEMENT': '🏦 RIB',
+                        'GUARANTOR_ID': '👤 ID Garant',
+                        'GUARANTOR_INCOME': '💼 Revenus garant',
+                        'INSURANCE': '🛡️ Assurance',
+                        'OTHER': '📎 Autre',
+                      }
+                      return (
+                        <span
+                          key={type}
+                          className="px-3 py-1 bg-white text-gray-700 rounded-lg text-xs font-medium border border-gray-200"
+                        >
+                          {labels[type] || type}
+                        </span>
+                      )
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+                  <span className="text-4xl block mb-2">📭</span>
+                  <p className="text-gray-600">
+                    {isOwnProfile ? 'Aucun document uploadé' : 'Aucun document disponible'}
+                  </p>
+                  {isOwnProfile && (
+                    <Link
+                      href="/profile/edit?tab=documents"
+                      className="inline-block mt-3 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                    >
+                      Ajouter des documents
+                    </Link>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
