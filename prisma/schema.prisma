@@ -306,6 +306,10 @@ model Application {
   
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
+
+   
+  // 🆕 Documents partagés
+  sharedDocuments SharedDocument[]
   
   @@unique([propertyId, tenantId])
   @@index([propertyId])
@@ -416,6 +420,9 @@ model Document {
   verified    Boolean      @default(false)
   verifiedAt  DateTime?
   verifiedBy  String?
+
+    // 🆕 Partages
+  sharedWith SharedDocument[]
   
   uploadedAt  DateTime     @default(now())
     
@@ -505,4 +512,27 @@ enum ShareType {
 enum PaymentStatus {
   DECLARED    // Locataire a déclaré avoir payé
   CONFIRMED   // Propriétaire a confirmé la réception
+}
+
+// Documents partagés lors d'une candidature
+model SharedDocument {
+  id            String      @id @default(cuid())
+  
+  // Liaison candidature
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  
+  // Liaison document
+  documentId    String
+  document      Document    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  
+  // Tracking consultation
+  viewedAt      DateTime?   // Première consultation
+  viewedCount   Int         @default(0)
+  
+  createdAt     DateTime    @default(now())
+  
+  @@unique([applicationId, documentId])
+  @@index([applicationId])
+  @@index([documentId])
 }

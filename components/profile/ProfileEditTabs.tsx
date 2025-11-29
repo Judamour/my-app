@@ -174,7 +174,7 @@ export default function ProfileEditTabs({
     <div>
       {/* Tabs navigation */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2 mb-6">
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 justify-center">
           {TABS.map((tab) => (
             <button
               key={tab.id}

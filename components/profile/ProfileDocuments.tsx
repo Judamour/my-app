@@ -16,16 +16,66 @@ interface Document {
 }
 
 const DOCUMENT_TYPES = [
-  { value: 'ID_CARD', label: 'Pièce d\'identité', icon: '🆔', description: 'Carte d\'identité ou passeport' },
-  { value: 'PAYSLIP', label: 'Fiche de paie', icon: '💰', description: '3 dernières fiches de paie' },
-  { value: 'WORK_CONTRACT', label: 'Contrat de travail', icon: '📑', description: 'Contrat en cours' },
-  { value: 'PROOF_ADDRESS', label: 'Justificatif de domicile', icon: '🏠', description: 'Moins de 3 mois' },
-  { value: 'TAX_NOTICE', label: 'Avis d\'imposition', icon: '📊', description: 'Dernier avis' },
-  { value: 'BANK_STATEMENT', label: 'RIB', icon: '🏦', description: 'Relevé d\'identité bancaire' },
-  { value: 'GUARANTOR_ID', label: 'Pièce d\'identité garant', icon: '👤', description: 'Si garant' },
-  { value: 'GUARANTOR_INCOME', label: 'Revenus garant', icon: '💼', description: 'Justificatifs garant' },
-  { value: 'INSURANCE', label: 'Assurance habitation', icon: '🛡️', description: 'Attestation' },
-  { value: 'OTHER', label: 'Autre document', icon: '📎', description: 'Autre justificatif' },
+  {
+    value: 'ID_CARD',
+    label: "Pièce d'identité",
+    icon: '🆔',
+    description: "Carte d'identité ou passeport",
+  },
+  {
+    value: 'PAYSLIP',
+    label: 'Fiche de paie',
+    icon: '💰',
+    description: '3 dernières fiches de paie',
+  },
+  {
+    value: 'WORK_CONTRACT',
+    label: 'Contrat de travail',
+    icon: '📑',
+    description: 'Contrat en cours',
+  },
+  {
+    value: 'PROOF_ADDRESS',
+    label: 'Justificatif de domicile',
+    icon: '🏠',
+    description: 'Moins de 3 mois',
+  },
+  {
+    value: 'TAX_NOTICE',
+    label: "Avis d'imposition",
+    icon: '📊',
+    description: 'Dernier avis',
+  },
+  {
+    value: 'BANK_STATEMENT',
+    label: 'RIB',
+    icon: '🏦',
+    description: "Relevé d'identité bancaire",
+  },
+  {
+    value: 'GUARANTOR_ID',
+    label: "Pièce d'identité garant",
+    icon: '👤',
+    description: 'Si garant',
+  },
+  {
+    value: 'GUARANTOR_INCOME',
+    label: 'Revenus garant',
+    icon: '💼',
+    description: 'Justificatifs garant',
+  },
+  {
+    value: 'INSURANCE',
+    label: 'Assurance habitation',
+    icon: '🛡️',
+    description: 'Attestation',
+  },
+  {
+    value: 'OTHER',
+    label: 'Autre document',
+    icon: '📎',
+    description: 'Autre justificatif',
+  },
 ]
 
 export default function ProfileDocuments({ userId }: { userId: string }) {
@@ -63,7 +113,12 @@ export default function ProfileDocuments({ userId }: { userId: string }) {
     }
 
     // Validation type
-    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png']
+    const allowedTypes = [
+      'application/pdf',
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+    ]
     if (!allowedTypes.includes(file.type)) {
       toast.error('Format non supporté. Utilisez PDF, JPG ou PNG')
       return
@@ -85,7 +140,7 @@ export default function ProfileDocuments({ userId }: { userId: string }) {
 
       if (!uploadResponse.ok) {
         const error = await uploadResponse.json()
-        throw new Error(error.error || 'Erreur d\'upload')
+        throw new Error(error.error || "Erreur d'upload")
       }
 
       const { url } = await uploadResponse.json()
@@ -114,7 +169,7 @@ export default function ProfileDocuments({ userId }: { userId: string }) {
       fetchDocuments()
       router.refresh()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Erreur d\'upload')
+      toast.error(error instanceof Error ? error.message : "Erreur d'upload")
     } finally {
       setUploading(null)
     }
@@ -137,7 +192,9 @@ export default function ProfileDocuments({ userId }: { userId: string }) {
       fetchDocuments()
       router.refresh()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Erreur de suppression')
+      toast.error(
+        error instanceof Error ? error.message : 'Erreur de suppression'
+      )
     }
   }
 
@@ -149,7 +206,7 @@ export default function ProfileDocuments({ userId }: { userId: string }) {
   }
 
   const getDocumentsByType = (type: string) => {
-    return documents.filter((d) => d.type === type)
+    return documents.filter(d => d.type === type)
   }
 
   if (loading) {
@@ -163,15 +220,80 @@ export default function ProfileDocuments({ userId }: { userId: string }) {
   return (
     <div className="space-y-4">
       {/* Info box */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
         <div className="flex items-start gap-3">
           <span className="text-2xl">ℹ️</span>
           <div>
-            <p className="font-medium text-blue-900">À propos de vos documents</p>
-            <p className="text-sm text-blue-700 mt-1">
-              Ces documents sont visibles uniquement par vous et les propriétaires auxquels vous candidatez. 
-              Formats acceptés : PDF, JPG, PNG (max 10MB).
+            <p className="font-medium text-blue-900">
+              À propos de vos documents
             </p>
+            <p className="text-sm text-blue-700 mt-1">
+              Ces documents sont visibles uniquement par vous et les
+              propriétaires auxquels vous candidatez. Formats acceptés : PDF,
+              JPG, PNG (max 10MB).
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* 🆕 Conseil protection documents */}
+      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+        <div className="flex items-start gap-3">
+          <span className="text-2xl">🛡️</span>
+          <div>
+            <p className="font-medium text-amber-900">Protégez vos documents</p>
+            <p className="text-sm text-amber-700 mt-2">
+              Avant d&apos;envoyer vos documents, nous vous conseillons de les
+              protéger avec un filigrane pour éviter les usurpations
+              d&apos;identité.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 mt-3">
+              <a
+                href="https://filigrane.beta.gouv.fr/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-amber-300 rounded-lg text-sm font-medium text-amber-800 hover:bg-amber-100 transition-colors"
+              >
+                <span>🏛️</span>
+                <span>Filigrane (gouv.fr)</span>
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                  />
+                </svg>
+              </a>
+
+              <a
+                href="https://www.dossierfacile.logement.gouv.fr/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-amber-300 rounded-lg text-sm font-medium text-amber-800 hover:bg-amber-100 transition-colors"
+              >
+                <span>📁</span>
+                <span>DossierFacile (gouv.fr)</span>
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                  />
+                </svg>
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -179,32 +301,34 @@ export default function ProfileDocuments({ userId }: { userId: string }) {
       {/* Stats rapides */}
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-purple-600">{documents.length}</p>
+          <p className="text-2xl font-bold text-purple-600">
+            {documents.length}
+          </p>
           <p className="text-sm text-gray-600 mt-1">
             Document{documents.length > 1 ? 's' : ''}
           </p>
         </div>
         <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
           <p className="text-2xl font-bold text-green-600">
-            {documents.filter((d) => d.verified).length}
+            {documents.filter(d => d.verified).length}
           </p>
           <p className="text-sm text-gray-600 mt-1">
-            Vérifié{documents.filter((d) => d.verified).length > 1 ? 's' : ''}
+            Vérifié{documents.filter(d => d.verified).length > 1 ? 's' : ''}
           </p>
         </div>
         <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
           <p className="text-2xl font-bold text-orange-600">
-            {new Set(documents.map((d) => d.type)).size}
+            {new Set(documents.map(d => d.type)).size}
           </p>
           <p className="text-sm text-gray-600 mt-1">
-            Type{new Set(documents.map((d) => d.type)).size > 1 ? 's' : ''}
+            Type{new Set(documents.map(d => d.type)).size > 1 ? 's' : ''}
           </p>
         </div>
       </div>
 
       {/* Liste des types de documents */}
       <div className="space-y-3">
-        {DOCUMENT_TYPES.map((docType) => {
+        {DOCUMENT_TYPES.map(docType => {
           const docsOfType = getDocumentsByType(docType.value)
           const isExpanded = expandedType === docType.value
           const hasDocuments = docsOfType.length > 0
@@ -216,14 +340,20 @@ export default function ProfileDocuments({ userId }: { userId: string }) {
             >
               {/* Header */}
               <button
-                onClick={() => setExpandedType(isExpanded ? null : docType.value)}
+                onClick={() =>
+                  setExpandedType(isExpanded ? null : docType.value)
+                }
                 className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
               >
                 <div className="flex items-center gap-3 flex-1 text-left">
                   <span className="text-2xl">{docType.icon}</span>
                   <div>
-                    <p className="font-semibold text-gray-900">{docType.label}</p>
-                    <p className="text-xs text-gray-500">{docType.description}</p>
+                    <p className="font-semibold text-gray-900">
+                      {docType.label}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {docType.description}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -256,7 +386,7 @@ export default function ProfileDocuments({ userId }: { userId: string }) {
                   {/* Documents existants */}
                   {docsOfType.length > 0 && (
                     <div className="space-y-2 mb-4">
-                      {docsOfType.map((doc) => (
+                      {docsOfType.map(doc => (
                         <div
                           key={doc.id}
                           className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
@@ -273,7 +403,9 @@ export default function ProfileDocuments({ userId }: { userId: string }) {
                                 <span>{formatFileSize(doc.size)}</span>
                                 <span>•</span>
                                 <span>
-                                  {new Date(doc.createdAt).toLocaleDateString('fr-FR')}
+                                  {new Date(doc.createdAt).toLocaleDateString(
+                                    'fr-FR'
+                                  )}
                                 </span>
                                 {doc.verified && (
                                   <>
@@ -287,8 +419,8 @@ export default function ProfileDocuments({ userId }: { userId: string }) {
                             </div>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
-                            
-                          <a    href={doc.url}
+                            <a
+                              href={doc.url}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -342,13 +474,17 @@ export default function ProfileDocuments({ userId }: { userId: string }) {
                   {/* Upload nouveau document */}
                   <label
                     className={`block border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all ${
-                      uploading === docType.value ? 'opacity-50 cursor-not-allowed' : ''
+                      uploading === docType.value
+                        ? 'opacity-50 cursor-not-allowed'
+                        : ''
                     }`}
                   >
                     {uploading === docType.value ? (
                       <div className="flex flex-col items-center gap-2">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                        <span className="text-sm text-gray-600">Upload en cours...</span>
+                        <span className="text-sm text-gray-600">
+                          Upload en cours...
+                        </span>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center gap-2">
@@ -364,7 +500,7 @@ export default function ProfileDocuments({ userId }: { userId: string }) {
                     <input
                       type="file"
                       accept=".pdf,.jpg,.jpeg,.png"
-                      onChange={(e) => {
+                      onChange={e => {
                         const file = e.target.files?.[0]
                         if (file) handleUpload(docType.value, file)
                         e.target.value = ''

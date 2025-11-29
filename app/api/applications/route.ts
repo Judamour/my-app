@@ -5,7 +5,6 @@ import { awardApplicationSubmissionXP } from '@/lib/xp'
 import { sendEmail } from '@/lib/email/send-email'
 import NewApplicationEmail from '@/emails/templates/NewApplicationEmail'
 
-
 // POST - Créer une candidature
 export async function POST(request: Request) {
   try {
@@ -29,7 +28,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { propertyId, message } = body
+    const { propertyId, message, sharedDocumentIds } = body // 🆕 Ajout sharedDocumentIds
 
     if (!propertyId) {
       return NextResponse.json({ error: 'propertyId requis' }, { status: 400 })
@@ -84,7 +83,7 @@ export async function POST(request: Request) {
     if (existingApplication) {
       // Vérifier si tous les baux sont terminés (permet de repostuler)
       const hasActiveLease = existingApplication.property.leases.some(
-        lease => lease.status !== 'ENDED'
+        (lease) => lease.status !== 'ENDED'
       )
 
       // Si un bail actif/pending existe, ou si pas de bail du tout (candidature en cours)
@@ -100,24 +99,65 @@ export async function POST(request: Request) {
         where: { id: existingApplication.id },
       })
     }
-    // Créer la candidature
- // Créer la candidature
-const application = await prisma.application.create({
-  data: {
-    propertyId,
-    tenantId: session.user.id,
-    message: message || null,
-    status: 'PENDING',
-  },
-  include: {
-    property: {
-      include: {
-        owner: true,
+
+    // 🆕 Vérifier que les documents appartiennent bien à l'utilisateur
+    if (sharedDocumentIds && sharedDocumentIds.length > 0) {
+      const validDocuments = await prisma.document.findMany({
+        where: {
+          id: { in: sharedDocumentIds },
+          ownerId: session.user.id,
+        },
+        select: { id: true },
+      })
+
+      const validIds = validDocuments.map((d) => d.id)
+      const invalidIds = sharedDocumentIds.filter(
+        (id: string) => !validIds.includes(id)
+      )
+
+      if (invalidIds.length > 0) {
+        return NextResponse.json(
+          { error: 'Certains documents ne vous appartiennent pas' },
+          { status: 400 }
+        )
+      }
+    }
+
+    // Créer la candidature avec les documents partagés
+    const application = await prisma.application.create({
+      data: {
+        propertyId,
+        tenantId: session.user.id,
+        message: message || null,
+        status: 'PENDING',
+        // 🆕 Créer les liens vers les documents partagés
+        sharedDocuments: {
+          create: (sharedDocumentIds || []).map((documentId: string) => ({
+            documentId,
+          })),
+        },
       },
-    },
-    tenant: true,
-  },
-})
+      include: {
+        property: {
+          include: {
+            owner: true,
+          },
+        },
+        tenant: true,
+        // 🆕 Inclure les documents partagés dans la réponse
+        sharedDocuments: {
+          include: {
+            document: {
+              select: {
+                id: true,
+                type: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    })
 
     // Attribution XP pour candidature soumise
     try {
@@ -126,7 +166,8 @@ const application = await prisma.application.create({
       console.error('Erreur attribution XP:', error)
     }
 
-      try {
+    // Envoi email notification
+    try {
       await sendEmail({
         to: application.property.owner.email,
         subject: `📩 Nouvelle candidature pour ${application.property.title}`,
@@ -138,12 +179,21 @@ const application = await prisma.application.create({
           applicationUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/owner/applications`,
         }),
       })
-      console.log('✅ Application notification sent to owner:', application.property.owner.email)
+      console.log(
+        '✅ Application notification sent to owner:',
+        application.property.owner.email
+      )
     } catch (emailError) {
       console.error('⚠️ Email sending failed:', emailError)
     }
 
-    return NextResponse.json({ data: application }, { status: 201 })
+    return NextResponse.json(
+      {
+        data: application,
+        sharedDocumentsCount: application.sharedDocuments.length, // 🆕 Compteur
+      },
+      { status: 201 }
+    )
   } catch (error) {
     console.error('Application error:', error)
     return NextResponse.json(
@@ -151,8 +201,6 @@ const application = await prisma.application.create({
       { status: 500 }
     )
   }
-
-  
 }
 
 // GET - Récupérer les candidatures
@@ -193,6 +241,13 @@ export async function GET(request: Request) {
               profileComplete: true,
             },
           },
+          // 🆕 Inclure le compteur de documents partagés
+          sharedDocuments: {
+            select: {
+              id: true,
+              viewedAt: true,
+            },
+          },
         },
         orderBy: { createdAt: 'desc' },
       })
@@ -220,6 +275,18 @@ export async function GET(request: Request) {
               },
             },
           },
+          // 🆕 Inclure les documents partagés pour le locataire aussi
+          sharedDocuments: {
+            include: {
+              document: {
+                select: {
+                  id: true,
+                  type: true,
+                  name: true,
+                },
+              },
+            },
+          },
         },
         orderBy: { createdAt: 'desc' },
       })
@@ -234,5 +301,3 @@ export async function GET(request: Request) {
     )
   }
 }
-
-
