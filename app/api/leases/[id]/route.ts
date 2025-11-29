@@ -122,25 +122,41 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       )
     }
 
-    // Activer le bail
-    if (action === 'activate') {
-      if (lease.status !== 'PENDING') {
-        return NextResponse.json(
-          { error: 'Ce bail ne peut pas être activé' },
-          { status: 400 }
-        )
-      }
+ // Activer le bail
+if (action === 'activate') {
+  if (lease.status !== 'PENDING') {
+    return NextResponse.json(
+      { error: 'Ce bail ne peut pas être activé' },
+      { status: 400 }
+    )
+  }
 
-      const updatedLease = await prisma.lease.update({
-        where: { id },
-        data: { status: 'ACTIVE' }
-      })
+  const updatedLease = await prisma.lease.update({
+    where: { id },
+    data: { status: 'ACTIVE' },
+    include: {
+      property: {
+        select: { title: true },
+      },
+    },
+  })
 
-      return NextResponse.json({
-        data: updatedLease,
-        message: 'Bail activé'
-      })
-    }
+  // 🆕 Créer notification services pour le locataire
+  await prisma.notification.create({
+    data: {
+      userId: lease.tenantId,
+      type: 'SYSTEM',
+      title: '🏠 Bienvenue dans votre nouveau logement !',
+      message: `Votre bail pour "${updatedLease.property.title}" est maintenant actif. N'oubliez pas de souscrire à une assurance habitation (obligatoire) et de configurer vos services essentiels.`,
+      link: '/tenant/services',
+    },
+  })
+
+  return NextResponse.json({
+    data: updatedLease,
+    message: 'Bail activé'
+  })
+}
 
     // Terminer le bail
     if (action === 'end') {

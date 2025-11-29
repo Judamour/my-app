@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import ShareButton from '@/components/ShareButton'
+import ServicesWidget from '@/components/affiliates/ServicesWidget'
 
 export default async function TenantDashboardPage() {
   const session = await requireAuth()
@@ -80,17 +81,27 @@ export default async function TenantDashboardPage() {
     },
   })
 
+  // 🆕 Récupérer le bail actif pour le widget services
+  const activeLease = await prisma.lease.findFirst({
+    where: {
+      tenantId: user.id,
+      status: 'ACTIVE',
+    },
+    select: {
+      id: true,
+      property: {
+        select: { title: true },
+      },
+    },
+  })
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header Page */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Tableau de bord
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Bienvenue {user.firstName} 👋
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900">Tableau de bord</h1>
+          <p className="text-gray-600 mt-1">Bienvenue {user.firstName} 👋</p>
         </div>
 
         {/* Alertes */}
@@ -129,8 +140,8 @@ export default async function TenantDashboardPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-gray-900">
-                    {pendingPayments} paiement{pendingPayments > 1 ? 's' : ''} en
-                    attente
+                    {pendingPayments} paiement{pendingPayments > 1 ? 's' : ''}{' '}
+                    en attente
                   </h3>
                   <p className="text-sm text-gray-600 mt-1">
                     Votre propriétaire doit confirmer la réception
@@ -184,8 +195,14 @@ export default async function TenantDashboardPage() {
                 {activeLeases}
               </span>
             </div>
-            <p className="font-medium text-gray-900">Bail{activeLeases > 1 ? 'x' : ''} actif{activeLeases > 1 ? 's' : ''}</p>
-            <p className="text-xs text-gray-500 mt-1">Logement{activeLeases > 1 ? 's' : ''} actuel{activeLeases > 1 ? 's' : ''}</p>
+            <p className="font-medium text-gray-900">
+              Bail{activeLeases > 1 ? 'x' : ''} actif
+              {activeLeases > 1 ? 's' : ''}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              Logement{activeLeases > 1 ? 's' : ''} actuel
+              {activeLeases > 1 ? 's' : ''}
+            </p>
           </Link>
 
           <Link
@@ -201,6 +218,14 @@ export default async function TenantDashboardPage() {
             <p className="font-medium text-gray-900">Quittances</p>
             <p className="text-xs text-gray-500 mt-1">Disponibles</p>
           </Link>
+        </div>
+
+        {/* Widget Services  */}
+        <div className="mb-8">
+          <ServicesWidget
+            hasActiveLease={!!activeLease}
+            propertyTitle={activeLease?.property.title}
+          />
         </div>
 
         {/* Mon Passport */}
@@ -277,7 +302,9 @@ export default async function TenantDashboardPage() {
               </div>
               <div className="min-w-0">
                 <p className="font-semibold text-gray-900">Mes paiements</p>
-                <p className="text-sm text-gray-500 truncate">Déclarer & télécharger</p>
+                <p className="text-sm text-gray-500 truncate">
+                  Déclarer & télécharger
+                </p>
               </div>
             </Link>
 
@@ -291,7 +318,9 @@ export default async function TenantDashboardPage() {
               </div>
               <div className="min-w-0">
                 <p className="font-semibold text-gray-900">Mes baux</p>
-                <p className="text-sm text-gray-500 truncate">Voir mes contrats</p>
+                <p className="text-sm text-gray-500 truncate">
+                  Voir mes contrats
+                </p>
               </div>
             </Link>
 
@@ -305,7 +334,9 @@ export default async function TenantDashboardPage() {
               </div>
               <div className="min-w-0">
                 <p className="font-semibold text-gray-900">Mes candidatures</p>
-                <p className="text-sm text-gray-500 truncate">Suivre mes demandes</p>
+                <p className="text-sm text-gray-500 truncate">
+                  Suivre mes demandes
+                </p>
               </div>
             </Link>
 

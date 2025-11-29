@@ -188,9 +188,14 @@ export default async function ProfilePage({ params }: PageProps) {
 
     // ACCÈS VIA CANDIDATURE (documents partagés uniquement)
     if (applicationAccess && applicationAccess.sharedDocuments.length > 0) {
-      // Marquer comme consultés
       const sharedDocIds = applicationAccess.sharedDocuments.map(sd => sd.id)
 
+      // Vérifier si c'est la première consultation
+      const isFirstView = applicationAccess.sharedDocuments.some(
+        sd => sd.viewedAt === null
+      )
+
+      // Marquer comme consultés
       await prisma.sharedDocument.updateMany({
         where: {
           id: { in: sharedDocIds },
@@ -203,6 +208,27 @@ export default async function ProfilePage({ params }: PageProps) {
         where: { id: { in: sharedDocIds } },
         data: { viewedCount: { increment: 1 } },
       })
+
+      // 🆕 Envoyer notification au locataire (première consultation uniquement)
+      if (isFirstView) {
+        // Récupérer le nom du propriétaire
+        const owner = await prisma.user.findUnique({
+          where: { id: currentUserId },
+          select: { firstName: true, lastName: true },
+        })
+
+        if (owner) {
+          await prisma.notification.create({
+            data: {
+              userId: id, // Le locataire
+              type: 'DOCUMENTS_VIEWED',
+              title: '📄 Documents consultés',
+              message: `${owner.firstName} ${owner.lastName} a consulté vos documents pour "${applicationAccess.property.title}"`,
+              link: `/profile/${id}`,
+            },
+          })
+        }
+      }
 
       return {
         documents: applicationAccess.sharedDocuments.map(sd => sd.document),

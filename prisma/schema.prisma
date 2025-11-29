@@ -87,6 +87,7 @@ enum NotificationType {
   LEASE_STARTED
   LEASE_ENDING_SOON
   LEASE_ENDED
+  DOCUMENTS_VIEWED 
   SYSTEM
 }
 
@@ -141,6 +142,9 @@ model User {
   stripePriceId          String?
   stripeCurrentPeriodEnd DateTime?
   subscriptionPlan       String    @default("free") // free, starter, pro, business, enterprise
+
+  // Dans model User, ajoute :
+  affiliateClicks AffiliateClick[]
   
   
   // Relations propriétés
@@ -242,6 +246,15 @@ model Lease {
   charges       Float?
   
   status        LeaseStatus @default(ACTIVE)
+
+
+   // 🆕 Services souscrits par le locataire
+  hasInsurance         Boolean   @default(false)
+  hasEnergy            Boolean   @default(false)
+  hasInternet          Boolean   @default(false)
+  insuranceConfirmedAt DateTime?
+  energyConfirmedAt    DateTime?
+  internetConfirmedAt  DateTime?
   
   // Relations
   reviews       Review[]
@@ -535,4 +548,72 @@ model SharedDocument {
   @@unique([applicationId, documentId])
   @@index([applicationId])
   @@index([documentId])
+}
+
+// ============================================
+// AFFILIATION
+// ============================================
+
+enum AffiliateCategory {
+  INSURANCE
+  ENERGY
+  INTERNET
+  MOVING
+  OTHER
+}
+
+model AffiliatePartner {
+  id          String            @id @default(cuid())
+  
+  name        String            // "Luko", "TotalEnergies"
+  slug        String            @unique // "luko", "totalenergies"
+  logo        String?           // URL logo
+  category    AffiliateCategory
+  
+  headline    String            // "Assurance habitation dès 3,50€/mois"
+  description String?           @db.Text // Description longue
+  features    String[]          // ["Sans engagement", "100% en ligne"]
+  
+  url         String            // Lien affilié
+  ctaText     String            @default("Découvrir") // Texte du bouton
+  
+  // Affichage
+  isActive    Boolean           @default(true)
+  isFeatured  Boolean           @default(false) // Mis en avant
+  priority    Int               @default(0) // Ordre (plus haut = premier)
+  
+  // Stats (calculées)
+  clickCount  Int               @default(0)
+  
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  
+  clicks      AffiliateClick[]
+  
+  @@index([category])
+  @@index([isActive])
+}
+
+model AffiliateClick {
+  id         String   @id @default(cuid())
+  
+  partnerId  String
+  partner    AffiliatePartner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  // Contexte
+  source     String   // DASHBOARD, SERVICES_PAGE, NOTIFICATION, EMAIL
+  leaseId    String?  // Bail concerné (optionnel)
+  
+  // Tracking
+  ipAddress  String?
+  userAgent  String?
+  
+  clickedAt  DateTime @default(now())
+  
+  @@index([partnerId])
+  @@index([userId])
+  @@index([clickedAt])
 }

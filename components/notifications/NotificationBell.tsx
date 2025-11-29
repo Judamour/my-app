@@ -43,25 +43,7 @@ useEffect(() => {
   loadNotifications()
   
   // Rafraîchir quand l'utilisateur revient sur la page
-  const handleVisibilityChange = () => {
-    if (!document.hidden) {
-      loadNotifications()
-    }
-  }
   
-  document.addEventListener('visibilitychange', handleVisibilityChange)
-  
-  // Backup : rafraîchir toutes les 2 minutes (seulement si page visible)
-  const interval = setInterval(() => {
-    if (!document.hidden) {
-      loadNotifications()
-    }
-  }, 120000) // 2 minutes au lieu de 30 secondes
-  
-  return () => {
-    document.removeEventListener('visibilitychange', handleVisibilityChange)
-    clearInterval(interval)
-  }
 }, [])
 
   // Marquer comme lu

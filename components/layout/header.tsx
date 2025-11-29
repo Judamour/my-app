@@ -38,16 +38,14 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link 
-            href={user.isOwner ? '/owner' : '/tenant'} 
+          <Link
+            href={user.isOwner ? '/owner' : '/tenant'}
             className="flex items-center gap-2 flex-shrink-0"
           >
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
               <span className="text-2xl">🏠</span>
             </div>
-            <span className="font-bold text-xl text-gray-900">
-              Renty
-            </span>
+            <span className="font-bold text-xl text-gray-900">Renty</span>
           </Link>
 
           {/* Navigation Desktop */}
@@ -57,41 +55,67 @@ export default function Header() {
                 <NavLink href="/owner" active={pathname === '/owner'}>
                   Dashboard
                 </NavLink>
-                <NavLink href="/owner/properties" active={pathname.startsWith('/owner/properties')}>
+                <NavLink
+                  href="/owner/properties"
+                  active={pathname.startsWith('/owner/properties')}
+                >
                   Propriétés
                 </NavLink>
-                <NavLink href="/owner/applications" active={pathname.startsWith('/owner/applications')}>
+                <NavLink
+                  href="/owner/applications"
+                  active={pathname.startsWith('/owner/applications')}
+                >
                   Candidatures
                 </NavLink>
-                <NavLink href="/owner/leases" active={pathname.startsWith('/owner/leases')}>
+                <NavLink
+                  href="/owner/leases"
+                  active={pathname.startsWith('/owner/leases')}
+                >
                   Baux
                 </NavLink>
-                <NavLink href="/owner/receipts" active={pathname.startsWith('/owner/receipts')}>
+                <NavLink
+                  href="/owner/receipts"
+                  active={pathname.startsWith('/owner/receipts')}
+                >
                   Paiements
                 </NavLink>
               </>
-            ) : isTenant && (
-              <>
-                <NavLink href="/tenant" active={pathname === '/tenant'}>
-                  Dashboard
-                </NavLink>
-                <NavLink href="/tenant/applications" active={pathname.startsWith('/tenant/applications')}>
-                  Candidatures
-                </NavLink>
-                <NavLink href="/tenant/leases" active={pathname.startsWith('/tenant/leases')}>
-                  Baux
-                </NavLink>
-                <NavLink href="/tenant/receipts" active={pathname.startsWith('/tenant/receipts')}>
-                  Quittances
-                </NavLink>
-              </>
+            ) : (
+              isTenant && (
+                <>
+                  <NavLink href="/tenant" active={pathname === '/tenant'}>
+                    Dashboard
+                  </NavLink>
+                  <NavLink
+                    href="/tenant/applications"
+                    active={pathname.startsWith('/tenant/applications')}
+                  >
+                    Candidatures
+                  </NavLink>
+                  <NavLink
+                    href="/tenant/leases"
+                    active={pathname.startsWith('/tenant/leases')}
+                  >
+                    Baux
+                  </NavLink>
+                  <NavLink
+                    href="/tenant/receipts"
+                    active={pathname.startsWith('/tenant/receipts')}
+                  >
+                    Quittances
+                  </NavLink>
+                </>
+              )
             )}
 
             <NavLink href="/messages" active={pathname.startsWith('/messages')}>
               Messages
             </NavLink>
-            
-            <NavLink href="/achievements" active={pathname.startsWith('/achievements')}>
+
+            <NavLink
+              href="/achievements"
+              active={pathname.startsWith('/achievements')}
+            >
               Succès
             </NavLink>
           </nav>
@@ -103,11 +127,13 @@ export default function Header() {
               <button
                 onClick={handleRoleSwitch}
                 className="hidden sm:flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all text-sm font-medium"
-                title={isOwner ? 'Passer en mode locataire' : 'Passer en mode propriétaire'}
+                title={
+                  isOwner
+                    ? 'Passer en mode locataire'
+                    : 'Passer en mode propriétaire'
+                }
               >
-                <span className="text-lg">
-                  {isOwner ? '🔑' : '🏠'}
-                </span>
+                <span className="text-lg">{isOwner ? '🔑' : '🏠'}</span>
                 <span className="hidden xl:inline">
                   {isOwner ? 'Mode locataire' : 'Mode propriétaire'}
                 </span>
@@ -116,7 +142,7 @@ export default function Header() {
 
             {/* Messages - masqué sur très petit écran */}
             <div className="hidden xs:block">
-              <UnreadMessagesButton />
+              <UnreadMessagesButton userId={user.id} />
             </div>
 
             {/* Notifications */}
@@ -129,7 +155,8 @@ export default function Header() {
                 className="flex items-center gap-2 hover:bg-gray-100 rounded-lg px-2 sm:px-3 py-2 transition-colors"
               >
                 <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                  {user.firstName[0]}{user.lastName[0]}
+                  {user.firstName[0]}
+                  {user.lastName[0]}
                 </div>
                 <span className="text-sm font-medium text-gray-700 hidden xl:block">
                   {user.firstName}
@@ -140,7 +167,12 @@ export default function Header() {
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               </button>
 
@@ -159,7 +191,8 @@ export default function Header() {
                       onClick={() => setShowMobileMenu(false)}
                     >
                       <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-semibold">
-                        {user.firstName[0]}{user.lastName[0]}
+                        {user.firstName[0]}
+                        {user.lastName[0]}
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">
@@ -187,7 +220,9 @@ export default function Header() {
                             <p className="text-sm font-medium text-gray-900">
                               {isOwner ? 'Mode locataire' : 'Mode propriétaire'}
                             </p>
-                            <p className="text-xs text-gray-500">Changer de rôle</p>
+                            <p className="text-xs text-gray-500">
+                              Changer de rôle
+                            </p>
                           </div>
                         </button>
                       </>
@@ -202,7 +237,9 @@ export default function Header() {
                       onClick={() => setShowMobileMenu(false)}
                     >
                       <span className="text-xl">💬</span>
-                      <span className="text-sm font-medium text-gray-700">Messages</span>
+                      <span className="text-sm font-medium text-gray-700">
+                        Messages
+                      </span>
                     </Link>
 
                     {/* Succès mobile */}
@@ -212,7 +249,9 @@ export default function Header() {
                       onClick={() => setShowMobileMenu(false)}
                     >
                       <span className="text-xl">🏆</span>
-                      <span className="text-sm font-medium text-gray-700">Mes succès</span>
+                      <span className="text-sm font-medium text-gray-700">
+                        Mes succès
+                      </span>
                     </Link>
 
                     <div className="border-t border-gray-200" />
@@ -237,28 +276,45 @@ export default function Header() {
               <MobileNavLink href="/owner" active={pathname === '/owner'}>
                 📊 Dashboard
               </MobileNavLink>
-              <MobileNavLink href="/owner/properties" active={pathname.startsWith('/owner/properties')}>
+              <MobileNavLink
+                href="/owner/properties"
+                active={pathname.startsWith('/owner/properties')}
+              >
                 🏠 Propriétés
               </MobileNavLink>
-              <MobileNavLink href="/owner/applications" active={pathname.startsWith('/owner/applications')}>
+              <MobileNavLink
+                href="/owner/applications"
+                active={pathname.startsWith('/owner/applications')}
+              >
                 📝 Candidatures
               </MobileNavLink>
-              <MobileNavLink href="/owner/leases" active={pathname.startsWith('/owner/leases')}>
+              <MobileNavLink
+                href="/owner/leases"
+                active={pathname.startsWith('/owner/leases')}
+              >
                 📄 Baux
               </MobileNavLink>
             </>
-          ) : isTenant && (
-            <>
-              <MobileNavLink href="/tenant" active={pathname === '/tenant'}>
-                📊 Dashboard
-              </MobileNavLink>
-              <MobileNavLink href="/tenant/applications" active={pathname.startsWith('/tenant/applications')}>
-                📝 Candidatures
-              </MobileNavLink>
-              <MobileNavLink href="/tenant/leases" active={pathname.startsWith('/tenant/leases')}>
-                📄 Baux
-              </MobileNavLink>
-            </>
+          ) : (
+            isTenant && (
+              <>
+                <MobileNavLink href="/tenant" active={pathname === '/tenant'}>
+                  📊 Dashboard
+                </MobileNavLink>
+                <MobileNavLink
+                  href="/tenant/applications"
+                  active={pathname.startsWith('/tenant/applications')}
+                >
+                  📝 Candidatures
+                </MobileNavLink>
+                <MobileNavLink
+                  href="/tenant/leases"
+                  active={pathname.startsWith('/tenant/leases')}
+                >
+                  📄 Baux
+                </MobileNavLink>
+              </>
+            )
           )}
         </div>
       </div>
@@ -303,9 +359,7 @@ function MobileNavLink({
     <Link
       href={href}
       className={`whitespace-nowrap px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-        active
-          ? 'bg-blue-50 text-blue-600'
-          : 'text-gray-600 hover:bg-gray-100'
+        active ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-100'
       }`}
     >
       {children}
