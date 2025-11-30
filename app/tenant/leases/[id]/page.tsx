@@ -268,6 +268,14 @@ export default async function TenantLeaseDetailPage({ params }: PageProps) {
 
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-4">
+            {/* 🆕 Bouton Documents */}
+            <Link
+              href={`/tenant/leases/${lease.id}/documents`}
+              className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors font-medium"
+            >
+              📄 Documents du bail
+            </Link>
+
             {/* Actions Card */}
             <div className="border border-gray-200 rounded-2xl p-5 sm:p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">

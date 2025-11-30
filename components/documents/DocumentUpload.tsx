@@ -10,15 +10,19 @@ interface DocumentUploadProps {
 }
 
 const DOCUMENT_TYPES = [
-  { value: 'ID_CARD', label: '🪪 Pièce d\'identité' },
-  { value: 'PAYSLIP', label: '💰 Fiche de paie' },
+  { value: '', label: '── Documents du bail ──', disabled: true },
+  { value: 'INVENTORY_IN', label: '📋 État des lieux entrée' },
+  { value: 'INVENTORY_OUT', label: '📋 État des lieux sortie' },
   { value: 'CONTRACT', label: '📄 Contrat de location' },
-  { value: 'INVENTORY', label: '📋 État des lieux' },
-  { value: 'RECEIPT', label: '🧾 Quittance' },
-  { value: 'PROOF_ADDRESS', label: '🏠 Justificatif de domicile' },
-  { value: 'TAX_NOTICE', label: '💼 Avis d\'imposition' },
   { value: 'INSURANCE', label: '🛡️ Assurance habitation' },
-  { value: 'OTHER', label: '📎 Autre' },
+  { value: 'PHOTO_ENTRY', label: '📸 Photos entrée' },
+  { value: 'PHOTO_EXIT', label: '📸 Photos sortie' },
+  { value: '', label: '── Documents personnels ──', disabled: true },
+  { value: 'ID_CARD', label: "🪪 Pièce d'identité" },
+  { value: 'PAYSLIP', label: '💰 Fiche de paie' },
+  { value: 'TAX_NOTICE', label: "💼 Avis d'imposition" },
+  { value: 'PROOF_ADDRESS', label: '🏠 Justificatif de domicile' },
+  { value: 'OTHER', label: '📎 Autre document' },
 ]
 
 export default function DocumentUpload({
@@ -78,11 +82,11 @@ export default function DocumentUpload({
         // Trigger refresh
         onUploadComplete()
       } else {
-        toast.error(result.error || 'Erreur lors de l\'upload')
+        toast.error(result.error || "Erreur lors de l'upload")
       }
     } catch (error) {
       console.error('Upload error:', error)
-      toast.error('Erreur lors de l\'upload')
+      toast.error("Erreur lors de l'upload")
     } finally {
       setUploading(false)
     }
@@ -102,13 +106,20 @@ export default function DocumentUpload({
           </label>
           <select
             value={type}
-            onChange={(e) => setType(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            onChange={e => setType(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             disabled={uploading}
           >
             <option value="">Sélectionner un type</option>
-            {DOCUMENT_TYPES.map((docType) => (
-              <option key={docType.value} value={docType.value}>
+            {DOCUMENT_TYPES.map((docType, index) => (
+              <option
+                key={docType.value || `separator-${index}`}
+                value={docType.value}
+                disabled={docType.disabled}
+                className={
+                  docType.disabled ? 'font-semibold text-gray-800' : ''
+                }
+              >
                 {docType.label}
               </option>
             ))}
@@ -123,9 +134,9 @@ export default function DocumentUpload({
           <input
             type="text"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={e => setName(e.target.value)}
             placeholder="Ex: CNI recto-verso"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="text-gray-700  w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             disabled={uploading}
           />
         </div>

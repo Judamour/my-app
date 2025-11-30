@@ -58,21 +58,31 @@ enum ReviewStatus {
 }
 
 enum DocumentType {
-  // Existants
+  // Documents personnels
   ID_CARD           // Carte identité
   PAYSLIP           // Fiche de paie
-  CONTRACT          // Contrat de location
-  INVENTORY         // État des lieux
-  RECEIPT           // Quittance
-  PROOF_ADDRESS     // Justificatif domicile
   TAX_NOTICE        // Avis imposition
-  INSURANCE         // Attestation assurance
-  
-  // 🆕 À AJOUTER
+  PROOF_ADDRESS     // Justificatif domicile
   WORK_CONTRACT     // Contrat de travail
   BANK_STATEMENT    // RIB / Relevé bancaire
+  
+  // Documents garant
   GUARANTOR_ID      // Pièce d'identité garant
   GUARANTOR_INCOME  // Justificatif revenus garant
+  
+  // Documents bail
+  CONTRACT          // Contrat de location
+  INVENTORY_IN      // État des lieux entrée
+  INVENTORY_OUT     // État des lieux sortie
+  INSURANCE         // Attestation assurance
+  RECEIPT           // Quittance
+  
+  // Photos
+  PHOTO_ENTRY       // Photos entrée dans les lieux
+  PHOTO_EXIT        // Photos sortie des lieux
+  
+  // Ancien type (garder compatibilité)
+  INVENTORY
   
   OTHER
 }

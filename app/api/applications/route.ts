@@ -183,6 +183,17 @@ export async function POST(request: Request) {
         '✅ Application notification sent to owner:',
         application.property.owner.email
       )
+
+           // 🆕 Notification in-app pour le propriétaire
+      await prisma.notification.create({
+        data: {
+          userId: application.property.owner.id,
+          type: 'SYSTEM',
+          title: '📝 Nouvelle candidature',
+          message: `${application.tenant.firstName} ${application.tenant.lastName} a postulé pour "${application.property.title}".`,
+          link: '/owner/applications',
+        },
+      })
     } catch (emailError) {
       console.error('⚠️ Email sending failed:', emailError)
     }

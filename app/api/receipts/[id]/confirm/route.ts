@@ -19,7 +19,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       )
     }
 
-    // Récupérer la déclaration
+    // Récupérer la déclaration avec les colocataires
     const receipt = await prisma.receipt.findUnique({
       where: { id },
       include: {
@@ -36,6 +36,14 @@ export async function PATCH(request: Request, { params }: RouteParams) {
             },
             tenant: {
               select: { id: true, firstName: true }
+            },
+            // 🆕 Récupérer tous les colocataires actifs
+            tenants: {
+              where: { leftAt: null },
+              select: {
+                tenantId: true,
+                joinedAt: true,
+              }
             }
           }
         }
@@ -74,20 +82,38 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       }
     })
 
-    // Créer notification pour le locataire
-    await prisma.notification.create({
-      data: {
-        userId: receipt.lease.tenant.id,
-        type: 'SYSTEM',
-        title: '✅ Paiement confirmé',
-        message: `${receipt.lease.property.owner.firstName} ${receipt.lease.property.owner.lastName} a confirmé la réception de votre paiement pour ${getMonthName(receipt.month)} ${receipt.year}. Votre quittance est disponible.`,
-        link: '/tenant/receipts'
-      }
+    // 🆕 Déterminer qui doit recevoir la notification
+    const ownerName = `${receipt.lease.property.owner.firstName} ${receipt.lease.property.owner.lastName}`
+    const monthName = getMonthName(receipt.month)
+    
+    // Filtrer les colocataires qui étaient présents ce mois-là
+    const eligibleTenants = receipt.lease.tenants.filter(t => {
+      const joinedYear = t.joinedAt.getFullYear()
+      const joinedMonth = t.joinedAt.getMonth() + 1
+      
+      if (receipt.year > joinedYear) return true
+      if (receipt.year === joinedYear && receipt.month >= joinedMonth) return true
+      return false
     })
+
+    // 🆕 Créer une notification pour chaque colocataire éligible
+    const notificationPromises = eligibleTenants.map(tenant =>
+      prisma.notification.create({
+        data: {
+          userId: tenant.tenantId,
+          type: 'SYSTEM',
+          title: '✅ Quittance disponible',
+          message: `${ownerName} a confirmé la réception du paiement pour ${monthName} ${receipt.year}. Votre quittance est disponible au téléchargement.`,
+          link: '/tenant/receipts'
+        }
+      })
+    )
+
+    await Promise.all(notificationPromises)
 
     return NextResponse.json({
       data: updatedReceipt,
-      message: 'Paiement confirmé, quittance générée'
+      message: `Paiement confirmé, ${eligibleTenants.length} locataire(s) notifié(s)`
     })
 
   } catch (error) {

@@ -25,14 +25,18 @@ interface DocumentListProps {
 }
 
 const DOCUMENT_TYPE_LABELS: Record<string, string> = {
+  INVENTORY_IN: '📋 État des lieux entrée',
+  INVENTORY_OUT: '📋 État des lieux sortie',
+  CONTRACT: '📄 Contrat de location',
+  INSURANCE: '🛡️ Assurance habitation',
+  PHOTO_ENTRY: '📸 Photos entrée',
+  PHOTO_EXIT: '📸 Photos sortie',
   ID_CARD: '🪪 Pièce d\'identité',
   PAYSLIP: '💰 Fiche de paie',
-  CONTRACT: '📄 Contrat',
+  TAX_NOTICE: '💼 Avis d\'imposition',
+  PROOF_ADDRESS: '🏠 Justificatif domicile',
   INVENTORY: '📋 État des lieux',
   RECEIPT: '🧾 Quittance',
-  PROOF_ADDRESS: '🏠 Justificatif domicile',
-  TAX_NOTICE: '💼 Avis imposition',
-  INSURANCE: '🛡️ Assurance',
   OTHER: '📎 Autre',
 }
 
@@ -48,15 +52,21 @@ export default function DocumentList({
     loadDocuments()
   }, [leaseId, refreshTrigger])
 
-  const loadDocuments = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch(`/api/documents?leaseId=${leaseId}`)
-      const result = await response.json()
 
-      if (response.ok) {
-        setDocuments(result.data)
-      }
+
+const loadDocuments = async () => {
+  try {
+    setLoading(true)
+    const response = await fetch(`/api/documents?leaseId=${leaseId}`)
+    const result = await response.json()
+
+    if (response.ok && result.data) {
+      setDocuments(result.data)
+    } else {
+      setDocuments([])
+    }
+
+
     } catch (error) {
       console.error('Load documents error:', error)
       toast.error('Erreur lors du chargement')

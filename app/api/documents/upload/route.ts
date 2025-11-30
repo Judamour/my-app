@@ -18,22 +18,29 @@ export async function POST(request: Request) {
     const name = formData.get('name') as string
 
     if (!file || !leaseId || !type || !name) {
-      return NextResponse.json(
-        { error: 'Données manquantes' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Données manquantes' }, { status: 400 })
     }
 
-    // Valider le type de document
     const validTypes = [
+      // Documents bail
+      'INVENTORY_IN',
+      'INVENTORY_OUT',
+      'CONTRACT',
+      'INSURANCE',
+      'RECEIPT',
+      'PHOTO_ENTRY',
+      'PHOTO_EXIT',
+      // Documents personnels
       'ID_CARD',
       'PAYSLIP',
-      'CONTRACT',
-      'INVENTORY',
-      'RECEIPT',
-      'PROOF_ADDRESS',
       'TAX_NOTICE',
-      'INSURANCE',
+      'PROOF_ADDRESS',
+      'WORK_CONTRACT',
+      'BANK_STATEMENT',
+      'GUARANTOR_ID',
+      'GUARANTOR_INCOME',
+      // Compatibilité
+      'INVENTORY',
       'OTHER',
     ]
 
@@ -54,17 +61,23 @@ export async function POST(request: Request) {
     })
 
     if (!lease) {
-      return NextResponse.json(
-        { error: 'Bail introuvable' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Bail introuvable' }, { status: 404 })
     }
 
-    // Vérifier que l'utilisateur est propriétaire ou locataire
+    // Vérifier que l'utilisateur est propriétaire, locataire principal, ou colocataire
     const isOwner = lease.property.ownerId === session.user.id
     const isTenant = lease.tenantId === session.user.id
 
-    if (!isOwner && !isTenant) {
+    // Vérifier si colocataire
+    const isCoTenant = await prisma.leaseTenant.findFirst({
+      where: {
+        leaseId,
+        tenantId: session.user.id,
+        leftAt: null,
+      },
+    })
+
+    if (!isOwner && !isTenant && !isCoTenant) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
     }
 
@@ -95,7 +108,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Document upload error:', error)
     return NextResponse.json(
-      { error: 'Erreur lors de l\'upload' },
+      { error: "Erreur lors de l'upload" },
       { status: 500 }
     )
   }
