@@ -37,6 +37,9 @@ export async function POST(request: Request) {
             ownerId: true,
             title: true,
             rent: true,
+            address: true,
+            postalCode: true,
+            city: true,
           }
         }
       }
@@ -81,26 +84,47 @@ export async function POST(request: Request) {
       )
     }
 
-// Créer le bail avec les relations
-const lease = await prisma.lease.create({
-  data: {
-    propertyId: application.propertyId,
-    tenantId: application.tenantId,
-    startDate: new Date(startDate),
-    endDate: endDate ? new Date(endDate) : null,
-    monthlyRent: rentAmount,
-    deposit: depositAmount || rentAmount,
-    status: 'PENDING',
-  },
- include: {
-    property: {
-      include: {
-        owner: true,  // ✅ owner est dans property
+    // 🆕 Vérifier si le bail est rétroactif (date passée)
+    const leaseStartDate = new Date(startDate)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    const isRetroactive = leaseStartDate < today
+    const leaseStatus = isRetroactive ? 'ACTIVE' : 'PENDING'
+
+    // Créer le bail
+    const lease = await prisma.lease.create({
+      data: {
+        propertyId: application.propertyId,
+        tenantId: application.tenantId,
+        startDate: leaseStartDate,
+        endDate: endDate ? new Date(endDate) : null,
+        monthlyRent: rentAmount,
+        deposit: depositAmount || rentAmount,
+        status: leaseStatus,
       },
-    },
-    tenant: true,
+      include: {
+        property: {
+          include: {
+            owner: true,
+          },
+        },
+        tenant: true,
+      },
+    })
+
+    // 🆕 Créer l'entrée LeaseTenant pour le tenant principal
+await prisma.leaseTenant.create({
+  data: {
+    leaseId: lease.id,
+    tenantId: application.tenantId,
+    isPrimary: true,
+    share: 100,
+    joinedAt: leaseStartDate,
   },
 })
+
+
 
     // Mettre à jour la propriété comme non disponible
     await prisma.property.update({
@@ -111,51 +135,71 @@ const lease = await prisma.lease.create({
       }
     })
 
-    // ✅ NOUVEAU : Envoyer les emails (owner + tenant)
-try {
-  // Email au propriétaire
-  await sendEmail({
-    to: lease.property.owner.email,
-    subject: `📝 Bail signé pour ${lease.property.title}`,
-    react: LeaseSignedEmail({
-      recipientName: `${lease.property.owner.firstName} ${lease.property.owner.lastName}`,
-      recipientRole: 'owner',
-      propertyTitle: lease.property.title,
-      propertyAddress: `${lease.property.address}, ${lease.property.postalCode} ${lease.property.city}`,
-      startDate: lease.startDate.toLocaleDateString('fr-FR'),
-      endDate: lease.endDate ? lease.endDate.toLocaleDateString('fr-FR') : 'Indéterminée',
-      monthlyRent: lease.monthlyRent,
-      leaseUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/owner/leases`,
-    }),
-  })
+    // 🆕 Générer les quittances passées si bail rétroactif
+    let receiptsGenerated = 0
+    
+    if (isRetroactive) {
+      receiptsGenerated = await generatePastReceipts(lease.id, leaseStartDate, rentAmount)
+      
+      // Notification services pour le locataire (bail rétroactif = déjà installé)
+      await prisma.notification.create({
+        data: {
+          userId: lease.tenantId,
+          type: 'SYSTEM',
+          title: '🏠 Bienvenue sur la plateforme !',
+          message: `Votre bail pour "${lease.property.title}" a été enregistré. Vos ${receiptsGenerated} quittances passées sont disponibles. N'oubliez pas de configurer vos services essentiels.`,
+          link: '/tenant/services',
+        },
+      })
+    }
 
-  // Email au locataire
-  await sendEmail({
-    to: lease.tenant.email,
-    subject: `📝 Votre bail a été signé !`,
-    react: LeaseSignedEmail({
-      recipientName: `${lease.tenant.firstName} ${lease.tenant.lastName}`,
-      recipientRole: 'tenant',
-      propertyTitle: lease.property.title,
-      propertyAddress: `${lease.property.address}, ${lease.property.postalCode} ${lease.property.city}`,
-      startDate: lease.startDate.toLocaleDateString('fr-FR'),
-      endDate: lease.endDate ? lease.endDate.toLocaleDateString('fr-FR') : 'Indéterminée',
-      monthlyRent: lease.monthlyRent,
-      leaseUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/tenant/leases`,
-    }),
-  })
+    // Envoyer les emails
+    try {
+      // Email au propriétaire
+      await sendEmail({
+        to: lease.property.owner.email,
+        subject: `📝 Bail ${isRetroactive ? 'enregistré' : 'créé'} pour ${lease.property.title}`,
+        react: LeaseSignedEmail({
+          recipientName: `${lease.property.owner.firstName} ${lease.property.owner.lastName}`,
+          recipientRole: 'owner',
+          propertyTitle: lease.property.title,
+          propertyAddress: `${lease.property.address}, ${lease.property.postalCode} ${lease.property.city}`,
+          startDate: lease.startDate.toLocaleDateString('fr-FR'),
+          endDate: lease.endDate ? lease.endDate.toLocaleDateString('fr-FR') : 'Indéterminée',
+          monthlyRent: lease.monthlyRent,
+          leaseUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/owner/leases`,
+        }),
+      })
 
-  console.log('✅ Lease notifications sent to both parties')
-} catch (emailError) {
-  console.error('⚠️ Email sending failed:', emailError)
-}
+      // Email au locataire
+      await sendEmail({
+        to: lease.tenant.email,
+        subject: `📝 Votre bail a été ${isRetroactive ? 'enregistré' : 'créé'} !`,
+        react: LeaseSignedEmail({
+          recipientName: `${lease.tenant.firstName} ${lease.tenant.lastName}`,
+          recipientRole: 'tenant',
+          propertyTitle: lease.property.title,
+          propertyAddress: `${lease.property.address}, ${lease.property.postalCode} ${lease.property.city}`,
+          startDate: lease.startDate.toLocaleDateString('fr-FR'),
+          endDate: lease.endDate ? lease.endDate.toLocaleDateString('fr-FR') : 'Indéterminée',
+          monthlyRent: lease.monthlyRent,
+          leaseUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/tenant/leases`,
+        }),
+      })
 
-return NextResponse.json(
-  { data: lease },
-  { status: 201 }
-)
+      console.log('✅ Lease notifications sent to both parties')
+    } catch (emailError) {
+      console.error('⚠️ Email sending failed:', emailError)
+    }
 
-  
+    return NextResponse.json(
+      { 
+        data: lease,
+        receiptsGenerated,
+        isRetroactive,
+      },
+      { status: 201 }
+    )
 
   } catch (error) {
     console.error('Create lease error:', error)
@@ -164,6 +208,47 @@ return NextResponse.json(
       { status: 500 }
     )
   }
+}
+
+// 🆕 Fonction pour générer les quittances passées
+async function generatePastReceipts(leaseId: string, startDate: Date, monthlyRent: number): Promise<number> {
+  const receipts = []
+  const now = new Date()
+  
+  // Commencer au premier jour du mois de début
+  const currentDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1)
+  
+  while (currentDate <= now) {
+    const year = currentDate.getFullYear()
+    const month = currentDate.getMonth() + 1 // 1-12
+    
+    // Date de paiement (5 du mois pour les quittances passées)
+    const paidAt = new Date(year, month - 1, 5)
+    
+    receipts.push({
+      leaseId,
+      month,
+      year,
+      rentAmount: monthlyRent,
+      charges: 0,
+      totalAmount: monthlyRent,
+      status: 'CONFIRMED' as const,
+      declaredAt: paidAt,
+      paidAt,
+    })
+    
+    // Passer au mois suivant
+    currentDate.setMonth(currentDate.getMonth() + 1)
+  }
+  
+  // Créer toutes les quittances en une seule requête
+  if (receipts.length > 0) {
+    await prisma.receipt.createMany({
+      data: receipts,
+    })
+  }
+  
+  return receipts.length
 }
 
 // GET - Récupérer les baux

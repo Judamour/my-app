@@ -3,6 +3,14 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 
+interface CoTenant {
+  tenant: {
+    id: string
+    firstName: string
+    lastName: string
+  }
+}
+
 interface Receipt {
   id: string
   month: number
@@ -30,6 +38,8 @@ interface Receipt {
       lastName: string
       address: string | null
     }
+    // 🆕 Colocataires
+    tenants?: CoTenant[]
   }
 }
 
@@ -64,8 +74,30 @@ export default function ReceiptPDF({ receipt }: ReceiptPDFProps) {
     })
   }
 
+  // 🆕 Construire la liste des noms des locataires
+  const getTenantNames = () => {
+    if (receipt.lease.tenants && receipt.lease.tenants.length > 0) {
+      return receipt.lease.tenants
+        .map(t => `${t.tenant.firstName} ${t.tenant.lastName}`)
+        .join(', ')
+    }
+    return `${receipt.lease.tenant.firstName} ${receipt.lease.tenant.lastName}`
+  }
+
+  // 🆕 Label singulier/pluriel
+  const getTenantLabel = () => {
+    if (receipt.lease.tenants && receipt.lease.tenants.length > 1) {
+      return 'Locataires'
+    }
+    return 'Locataire'
+  }
+
   const handleDownload = async () => {
     setLoading(true)
+
+    const tenantNames = getTenantNames()
+    const tenantLabel = getTenantLabel()
+    const ownerFullName = `${receipt.lease.property.owner.firstName} ${receipt.lease.property.owner.lastName}`
 
     try {
       // Générer le HTML de la quittance
@@ -89,11 +121,13 @@ export default function ReceiptPDF({ receipt }: ReceiptPDFProps) {
             .details { border-top: 1px solid #ddd; padding-top: 30px; margin-bottom: 30px; }
             .details h3 { margin-bottom: 20px; }
             .detail-row { display: flex; justify-content: space-between; padding: 8px 0; }
-            .detail-total { border-top: 1px solid #ddd; padding-top: 12px; margin-top: 12px; font-weight: bold; font-size: 18px; }
+            .detail-total { border-top: 2px solid #333; padding-top: 12px; margin-top: 12px; font-weight: bold; font-size: 18px; }
             .attestation { background: #e8f5e9; padding: 20px; border-radius: 8px; margin-bottom: 30px; line-height: 1.6; }
-            .footer { display: flex; justify-content: space-between; font-size: 12px; color: #666; }
+            .footer { display: flex; justify-content: space-between; font-size: 12px; color: #666; margin-top: 40px; }
             .signature { text-align: right; }
-            .signature p:last-child { margin-top: 40px; font-weight: bold; color: #333; }
+            .signature-label { margin-top: 40px; padding-top: 10px; border-top: 1px solid #333; }
+            .signature-name { font-weight: bold; color: #333; font-size: 14px; margin-top: 8px; }
+            .document-info { text-align: center; margin-top: 40px; font-size: 11px; color: #999; border-top: 1px solid #eee; padding-top: 20px; }
           </style>
         </head>
         <body>
@@ -105,12 +139,12 @@ export default function ReceiptPDF({ receipt }: ReceiptPDFProps) {
           <div class="parties">
             <div class="party">
               <p class="party-label">Bailleur</p>
-              <p class="party-name">${receipt.lease.property.owner.firstName} ${receipt.lease.property.owner.lastName}</p>
+              <p class="party-name">${ownerFullName}</p>
               ${receipt.lease.property.owner.address ? `<p class="party-address">${receipt.lease.property.owner.address}</p>` : ''}
             </div>
             <div class="party">
-              <p class="party-label">Locataire</p>
-              <p class="party-name">${receipt.lease.tenant.firstName} ${receipt.lease.tenant.lastName}</p>
+              <p class="party-label">${tenantLabel}</p>
+              <p class="party-name">${tenantNames}</p>
               <p class="party-address">${receipt.lease.property.address}</p>
               <p class="party-address">${receipt.lease.property.postalCode} ${receipt.lease.property.city}</p>
             </div>
@@ -136,9 +170,9 @@ export default function ReceiptPDF({ receipt }: ReceiptPDFProps) {
 
           <div class="attestation">
             <p>
-              Je soussigné(e) <strong>${receipt.lease.property.owner.firstName} ${receipt.lease.property.owner.lastName}</strong>,
+              Je soussigné(e) <strong>${ownerFullName}</strong>,
               propriétaire du logement situé au <strong>${receipt.lease.property.address}, ${receipt.lease.property.postalCode} ${receipt.lease.property.city}</strong>,
-              atteste avoir reçu de <strong>${receipt.lease.tenant.firstName} ${receipt.lease.tenant.lastName}</strong> la somme
+              atteste avoir reçu de <strong>${tenantNames}</strong> la somme
               de <strong>${formatPrice(receipt.totalAmount)}</strong> au titre du loyer et des charges pour la période
               du <strong>1er ${getMonthName(receipt.month).toLowerCase()} ${receipt.year}</strong> au
               <strong>${new Date(receipt.year, receipt.month, 0).getDate()} ${getMonthName(receipt.month).toLowerCase()} ${receipt.year}</strong>.
@@ -152,8 +186,15 @@ export default function ReceiptPDF({ receipt }: ReceiptPDFProps) {
             </div>
             <div class="signature">
               <p>Fait le ${formatDate(receipt.createdAt)}</p>
-              <p>Signature du bailleur</p>
+              <div class="signature-label">
+                <p>Signature du bailleur</p>
+                <p class="signature-name">${ownerFullName}</p>
+              </div>
             </div>
+          </div>
+
+          <div class="document-info">
+            <p>Document généré électroniquement • Quittance de loyer conforme à l'article 21 de la loi n°89-462 du 6 juillet 1989</p>
           </div>
         </body>
         </html>

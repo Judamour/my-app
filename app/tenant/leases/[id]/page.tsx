@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import LeaseActions from '@/components/leases/LeaseActions'
 import ReviewButton from '@/components/leases/ReviewButton'
+import ColocationManager from '@/components/leases/ColocationManager'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -42,7 +43,19 @@ export default async function TenantLeaseDetailPage({ params }: PageProps) {
     notFound()
   }
 
-  if (lease.tenantId !== session.user.id) {
+  // 🆕 Vérifier si l'utilisateur est le tenant principal OU un colocataire
+  const isMainTenant = lease.tenantId === session.user.id
+  const isCoTenant = await prisma.leaseTenant.findUnique({
+    where: {
+      leaseId_tenantId: {
+        leaseId: lease.id,
+        tenantId: session.user.id,
+      },
+      leftAt: null,
+    },
+  })
+
+  if (!isMainTenant && !isCoTenant) {
     redirect('/tenant/leases')
   }
 
@@ -94,7 +107,7 @@ export default async function TenantLeaseDetailPage({ params }: PageProps) {
     <div className="min-h-screen bg-white">
       {/* Header */}
       <div className="border-b border-gray-100">
-        <div className="max-w-4xl mx-auto px-6 py-4">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4">
           <Link
             href="/tenant/leases"
             className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors"
@@ -117,11 +130,23 @@ export default async function TenantLeaseDetailPage({ params }: PageProps) {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-6 py-10">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+        {/* 🆕 BANNIÈRE AVIS - Très visible pour baux terminés */}
+        {lease.status === 'ENDED' && (
+          <div className="mb-8">
+            <ReviewButton
+              leaseId={lease.id}
+              userId={session.user.id}
+              leaseStatus={lease.status}
+              variant="banner"
+            />
+          </div>
+        )}
+
         {/* Titre & Statut */}
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-10">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-8 sm:mb-10">
           <div>
-            <h1 className="text-3xl font-semibold text-gray-900 mb-2">
+            <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-2">
               Mon bail
             </h1>
             <p className="text-gray-500">{lease.property.title}</p>
@@ -129,16 +154,16 @@ export default async function TenantLeaseDetailPage({ params }: PageProps) {
           {getStatusBadge(lease.status)}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Colonne principale */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 space-y-6">
             {/* Propriété */}
-            <div className="bg-gray-50 rounded-2xl p-6">
+            <div className="bg-gray-50 rounded-2xl p-5 sm:p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Logement
               </h2>
               <div className="flex items-start gap-4">
-                <div className="w-20 h-20 bg-gray-200 rounded-xl flex items-center justify-center overflow-hidden">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-200 rounded-xl flex items-center justify-center overflow-hidden shrink-0">
                   {lease.property.images && lease.property.images.length > 0 ? (
                     <img
                       src={lease.property.images[0]}
@@ -149,7 +174,7 @@ export default async function TenantLeaseDetailPage({ params }: PageProps) {
                     <span className="text-3xl">🏠</span>
                   )}
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="font-semibold text-gray-900">
                     {lease.property.title}
                   </p>
@@ -166,21 +191,21 @@ export default async function TenantLeaseDetailPage({ params }: PageProps) {
             </div>
 
             {/* Propriétaire */}
-            <div className="bg-gray-50 rounded-2xl p-6">
+            <div className="bg-gray-50 rounded-2xl p-5 sm:p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Propriétaire
               </h2>
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center text-white text-xl font-semibold">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center text-white text-lg sm:text-xl font-semibold shrink-0">
                   {lease.property.owner.firstName[0]}
                   {lease.property.owner.lastName[0]}
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-900">
                     {lease.property.owner.firstName}{' '}
                     {lease.property.owner.lastName}
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 truncate">
                     {lease.property.owner.email}
                   </p>
                   {lease.property.owner.phone && (
@@ -198,12 +223,19 @@ export default async function TenantLeaseDetailPage({ params }: PageProps) {
               </Link>
             </div>
 
+            {/* Colocataires */}
+            <ColocationManager
+              leaseId={lease.id}
+              isOwner={false}
+              monthlyRent={lease.monthlyRent}
+            />
+
             {/* Détails du bail */}
-            <div className="bg-gray-50 rounded-2xl p-6">
+            <div className="bg-gray-50 rounded-2xl p-5 sm:p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Détails du bail
               </h2>
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-4 sm:gap-6">
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Date de début</p>
                   <p className="font-medium text-gray-900">
@@ -235,8 +267,9 @@ export default async function TenantLeaseDetailPage({ params }: PageProps) {
           </div>
 
           {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-8 border border-gray-200 rounded-2xl p-6">
+          <div className="lg:col-span-1 space-y-4">
+            {/* Actions Card */}
+            <div className="border border-gray-200 rounded-2xl p-5 sm:p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Statut
               </h2>
@@ -246,14 +279,19 @@ export default async function TenantLeaseDetailPage({ params }: PageProps) {
                 role="tenant"
               />
             </div>
+
+            {/* 🆕 Card Avis - Pour baux terminés */}
+            {lease.status === 'ENDED' && (
+              <ReviewButton
+                leaseId={lease.id}
+                userId={session.user.id}
+                leaseStatus={lease.status}
+                variant="card"
+              />
+            )}
           </div>
         </div>
       </div>
-      <ReviewButton
-        leaseId={lease.id}
-        userId={session.user.id}
-        leaseStatus={lease.status}
-      />
     </div>
   )
 }

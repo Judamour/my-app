@@ -143,15 +143,25 @@ export async function GET(request: Request) {
       }
 
       // Vérifier accès
-      const isOwner = lease.property.ownerId === session.user.id
-      const isTenant = lease.tenantId === session.user.id
+   // Vérifier accès (propriétaire, tenant principal, ou colocataire)
+const isOwner = lease.property.ownerId === session.user.id
+const isTenant = lease.tenantId === session.user.id
 
-      if (!isOwner && !isTenant) {
-        return NextResponse.json(
-          { error: 'Non autorisé' },
-          { status: 403 }
-        )
-      }
+// 🆕 Vérifier si colocataire
+const isCoTenant = await prisma.leaseTenant.findFirst({
+  where: {
+    leaseId,
+    tenantId: session.user.id,
+    leftAt: null,
+  },
+})
+
+if (!isOwner && !isTenant && !isCoTenant) {
+  return NextResponse.json(
+    { error: 'Non autorisé' },
+    { status: 403 }
+  )
+}
 
       const receipts = await prisma.receipt.findMany({
         where: { leaseId },

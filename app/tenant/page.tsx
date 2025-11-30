@@ -60,12 +60,29 @@ export default async function TenantDashboardPage() {
     },
   })
 
-  const activeLeases = await prisma.lease.count({
+  // 🆕 Compter les baux où je suis tenant principal OU colocataire
+const [directLeasesCount, coTenantLeasesCount] = await Promise.all([
+  // Baux où je suis le tenant principal
+  prisma.lease.count({
     where: {
       tenantId: user.id,
       status: { in: ['ACTIVE', 'PENDING'] },
     },
-  })
+  }),
+  // Baux où je suis colocataire (via LeaseTenant)
+  prisma.leaseTenant.count({
+    where: {
+      tenantId: user.id,
+      leftAt: null,
+      lease: {
+        tenantId: { not: user.id }, // Pas déjà compté
+        status: { in: ['ACTIVE', 'PENDING'] },
+      },
+    },
+  }),
+])
+
+const activeLeases = directLeasesCount + coTenantLeasesCount
 
   const receiptsCount = await prisma.receipt.count({
     where: {
@@ -81,19 +98,46 @@ export default async function TenantDashboardPage() {
     },
   })
 
-  // 🆕 Récupérer le bail actif pour le widget services
-  const activeLease = await prisma.lease.findFirst({
+ // 🆕 Récupérer le bail actif pour le widget services (incluant colocations)
+let activeLease = await prisma.lease.findFirst({
+  where: {
+    tenantId: user.id,
+    status: 'ACTIVE',
+  },
+  select: {
+    id: true,
+    property: {
+      select: { title: true },
+    },
+  },
+})
+
+// Si pas de bail direct, chercher via colocation
+if (!activeLease) {
+  const coTenantLease = await prisma.leaseTenant.findFirst({
     where: {
       tenantId: user.id,
-      status: 'ACTIVE',
+      leftAt: null,
+      lease: {
+        status: 'ACTIVE',
+      },
     },
     select: {
-      id: true,
-      property: {
-        select: { title: true },
+      lease: {
+        select: {
+          id: true,
+          property: {
+            select: { title: true },
+          },
+        },
       },
     },
   })
+  
+  if (coTenantLease) {
+    activeLease = coTenantLease.lease
+  }
+}
 
   return (
     <div className="min-h-screen bg-gray-50">

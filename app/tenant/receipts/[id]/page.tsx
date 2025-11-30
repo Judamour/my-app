@@ -28,9 +28,9 @@ export default async function TenantReceiptDetailPage({ params }: PageProps) {
                   firstName: true,
                   lastName: true,
                   address: true,
-                }
-              }
-            }
+                },
+              },
+            },
           },
           tenant: {
             select: {
@@ -38,26 +38,73 @@ export default async function TenantReceiptDetailPage({ params }: PageProps) {
               firstName: true,
               lastName: true,
               address: true,
-            }
-          }
-        }
-      }
-    }
+            },
+          },
+          // 🆕 Inclure les colocataires pour la quittance
+          tenants: {
+            where: { leftAt: null },
+            include: {
+              tenant: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   })
 
   if (!receipt) {
     notFound()
   }
 
-  // Vérifier que c'est le locataire
-  if (receipt.lease.tenant.id !== session.user.id) {
+  // 🆕 Vérifier que c'est le locataire principal OU un colocataire
+  const isMainTenant = receipt.lease.tenant.id === session.user.id
+  const isCoTenant = receipt.lease.tenants.some(
+    t => t.tenant.id === session.user.id
+  )
+
+  if (!isMainTenant && !isCoTenant) {
     redirect('/tenant/receipts')
+  }
+
+  // 🆕 Vérifier que le colocataire a le droit de voir cette quittance (selon sa date d'arrivée)
+  if (isCoTenant && !isMainTenant) {
+    const coTenantEntry = receipt.lease.tenants.find(
+      t => t.tenant.id === session.user.id
+    )
+    if (coTenantEntry) {
+      const joinedYear = coTenantEntry.joinedAt.getFullYear()
+      const joinedMonth = coTenantEntry.joinedAt.getMonth() + 1
+
+      // Si la quittance est avant le mois d'arrivée, pas d'accès
+      if (
+        receipt.year < joinedYear ||
+        (receipt.year === joinedYear && receipt.month < joinedMonth)
+      ) {
+        redirect('/tenant/receipts')
+      }
+    }
   }
 
   const getMonthName = (month: number) => {
     const months = [
-      'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-      'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+      'Janvier',
+      'Février',
+      'Mars',
+      'Avril',
+      'Mai',
+      'Juin',
+      'Juillet',
+      'Août',
+      'Septembre',
+      'Octobre',
+      'Novembre',
+      'Décembre',
     ]
     return months[month - 1]
   }
@@ -78,6 +125,11 @@ export default async function TenantReceiptDetailPage({ params }: PageProps) {
     })
   }
 
+  // 🆕 Construire la liste des noms pour la quittance
+  const tenantNames = receipt.lease.tenants
+    .map(t => `${t.tenant.firstName} ${t.tenant.lastName}`)
+    .join(', ')
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -87,8 +139,18 @@ export default async function TenantReceiptDetailPage({ params }: PageProps) {
             href="/tenant/receipts"
             className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
             Mes quittances
           </Link>
@@ -122,7 +184,8 @@ export default async function TenantReceiptDetailPage({ params }: PageProps) {
             <div className="p-5 bg-gray-50 rounded-xl">
               <p className="text-sm text-gray-500 mb-2">BAILLEUR</p>
               <p className="font-semibold text-gray-900">
-                {receipt.lease.property.owner.firstName} {receipt.lease.property.owner.lastName}
+                {receipt.lease.property.owner.firstName}{' '}
+                {receipt.lease.property.owner.lastName}
               </p>
               {receipt.lease.property.owner.address && (
                 <p className="text-sm text-gray-600 mt-1">
@@ -131,58 +194,89 @@ export default async function TenantReceiptDetailPage({ params }: PageProps) {
               )}
             </div>
 
-            {/* Locataire */}
+            {/* Locataire(s) */}
             <div className="p-5 bg-gray-50 rounded-xl">
-              <p className="text-sm text-gray-500 mb-2">LOCATAIRE</p>
-              <p className="font-semibold text-gray-900">
-                {receipt.lease.tenant.firstName} {receipt.lease.tenant.lastName}
+              <p className="text-sm text-gray-500 mb-2">
+                {receipt.lease.tenants.length > 1 ? 'LOCATAIRES' : 'LOCATAIRE'}
               </p>
+              <p className="font-semibold text-gray-900">{tenantNames}</p>
               <p className="text-sm text-gray-600 mt-1">
                 {receipt.lease.property.address}
               </p>
               <p className="text-sm text-gray-600">
-                {receipt.lease.property.postalCode} {receipt.lease.property.city}
+                {receipt.lease.property.postalCode}{' '}
+                {receipt.lease.property.city}
               </p>
             </div>
           </div>
-
           {/* Détails du paiement */}
           <div className="border-t border-gray-200 pt-8 mb-8">
-            <h3 className="font-semibold text-gray-900 mb-4">Détail du paiement</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Loyer</span>
-                <span className="font-medium">{formatPrice(receipt.rentAmount)}</span>
+            <h3 className="font-semibold text-gray-900 mb-4">
+              Détail du paiement
+            </h3>
+            <div className="space-y-4 bg-gray-50 rounded-xl p-5">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-700 font-medium">Loyer</span>
+                <span className="font-semibold text-gray-900">
+                  {formatPrice(receipt.rentAmount)}
+                </span>
               </div>
               {receipt.charges && receipt.charges > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Charges</span>
-                  <span className="font-medium">{formatPrice(receipt.charges)}</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-700 font-medium">Charges</span>
+                  <span className="font-semibold text-gray-900">
+                    {formatPrice(receipt.charges)}
+                  </span>
                 </div>
               )}
-              <div className="flex justify-between pt-3 border-t border-gray-200">
-                <span className="font-semibold text-gray-900">Total</span>
-                <span className="font-bold text-xl text-gray-900">{formatPrice(receipt.totalAmount)}</span>
+              <div className="flex justify-between items-center pt-4 border-t-2 border-gray-300">
+                <span className="font-bold text-gray-900">Total</span>
+                <span className="font-bold text-2xl text-emerald-600">
+                  {formatPrice(receipt.totalAmount)}
+                </span>
               </div>
             </div>
           </div>
-
           {/* Attestation */}
           <div className="bg-emerald-50 rounded-xl p-6 mb-8">
             <p className="text-gray-700 leading-relaxed">
-              Je soussigné(e) <strong>{receipt.lease.property.owner.firstName} {receipt.lease.property.owner.lastName}</strong>, 
-              propriétaire du logement situé au <strong>{receipt.lease.property.address}, {receipt.lease.property.postalCode} {receipt.lease.property.city}</strong>, 
-              atteste avoir reçu de <strong>{receipt.lease.tenant.firstName} {receipt.lease.tenant.lastName}</strong> la somme 
-              de <strong>{formatPrice(receipt.totalAmount)}</strong> au titre du loyer et des charges pour la période 
-              du <strong>1er {getMonthName(receipt.month).toLowerCase()} {receipt.year}</strong> au{' '}
-              <strong>{new Date(receipt.year, receipt.month, 0).getDate()} {getMonthName(receipt.month).toLowerCase()} {receipt.year}</strong>.
+              Je soussigné(e){' '}
+              <strong>
+                {receipt.lease.property.owner.firstName}{' '}
+                {receipt.lease.property.owner.lastName}
+              </strong>
+              , propriétaire du logement situé au{' '}
+              <strong>
+                {receipt.lease.property.address},{' '}
+                {receipt.lease.property.postalCode}{' '}
+                {receipt.lease.property.city}
+              </strong>
+              , atteste avoir reçu de <strong>{tenantNames}</strong> la somme de{' '}
+              <strong>{formatPrice(receipt.totalAmount)}</strong> au titre du
+              loyer et des charges pour la période du{' '}
+              <strong>
+                1er {getMonthName(receipt.month).toLowerCase()} {receipt.year}
+              </strong>{' '}
+              au{' '}
+              <strong>
+                {new Date(receipt.year, receipt.month, 0).getDate()}{' '}
+                {getMonthName(receipt.month).toLowerCase()} {receipt.year}
+              </strong>
+              .
             </p>
           </div>
 
           {/* Pied de page */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 text-sm text-gray-500">
             <div>
-              <p>Mode de paiement : {receipt.paymentMethod === 'virement' ? 'Virement bancaire' : receipt.paymentMethod === 'cheque' ? 'Chèque' : 'Espèces'}</p>
+              <p>
+                Mode de paiement :{' '}
+                {receipt.paymentMethod === 'virement'
+                  ? 'Virement bancaire'
+                  : receipt.paymentMethod === 'cheque'
+                    ? 'Chèque'
+                    : 'Espèces'}
+              </p>
               {receipt.paidAt && (
                 <p>Date de paiement : {formatDate(receipt.paidAt)}</p>
               )}
@@ -195,7 +289,8 @@ export default async function TenantReceiptDetailPage({ params }: PageProps) {
 
         {/* Info */}
         <p className="text-center text-sm text-gray-400 mt-6">
-          🔒 Document officiel • Conservez cette quittance pour vos démarches administratives
+          🔒 Document officiel • Conservez cette quittance pour vos démarches
+          administratives
         </p>
       </div>
     </div>

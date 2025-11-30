@@ -17,25 +17,78 @@ export default async function TenantReceiptsPage() {
     redirect('/profile/complete?required=tenant')
   }
 
-  // Baux actifs pour déclarer un paiement
-  const activeLeases = await prisma.lease.findMany({
+  // 🆕 Récupérer les infos de colocation pour filtrer les quittances
+  const myCoTenantEntries = await prisma.leaseTenant.findMany({
     where: {
       tenantId: session.user.id,
-      status: 'ACTIVE'
+      leftAt: null,
     },
     select: {
-      id: true,
-      monthlyRent: true,
-      charges: true,
-      startDate: true,
-      property: { select: { title: true } }
-    }
+      leaseId: true,
+      joinedAt: true,
+      isPrimary: true,
+    },
   })
 
-  // Paiements déclarés en attente de confirmation
-  const pendingPayments = await prisma.receipt.findMany({
+  // Map leaseId -> { joinedAt, isPrimary } pour filtrer les quittances
+  const leaseJoinDates = new Map(
+    myCoTenantEntries.map(entry => [entry.leaseId, { joinedAt: entry.joinedAt, isPrimary: entry.isPrimary }])
+  )
+
+  // 🆕 Baux actifs (directs + colocations) pour déclarer un paiement
+  const [directActiveLeases, coTenantActiveLeases] = await Promise.all([
+    // Baux où je suis tenant principal
+    prisma.lease.findMany({
+      where: {
+        tenantId: session.user.id,
+        status: 'ACTIVE'
+      },
+      select: {
+        id: true,
+        monthlyRent: true,
+        charges: true,
+        startDate: true,
+        property: { select: { title: true } }
+      }
+    }),
+    // Baux où je suis colocataire
+    prisma.leaseTenant.findMany({
+      where: {
+        tenantId: session.user.id,
+        leftAt: null,
+        lease: {
+          tenantId: { not: session.user.id },
+          status: 'ACTIVE',
+        },
+      },
+      select: {
+        lease: {
+          select: {
+            id: true,
+            monthlyRent: true,
+            charges: true,
+            startDate: true,
+            property: { select: { title: true } }
+          }
+        }
+      }
+    }),
+  ])
+
+  const activeLeases = [
+    ...directActiveLeases,
+    ...coTenantActiveLeases.map(ct => ct.lease),
+  ]
+
+  // 🆕 Paiements déclarés en attente (directs + colocations)
+  const allPendingPayments = await prisma.receipt.findMany({
     where: {
-      lease: { tenantId: session.user.id },
+      OR: [
+        // Baux directs
+        { lease: { tenantId: session.user.id } },
+        // Colocations
+        { leaseId: { in: Array.from(leaseJoinDates.keys()) } },
+      ],
       status: 'DECLARED'
     },
     include: {
@@ -48,10 +101,34 @@ export default async function TenantReceiptsPage() {
     orderBy: [{ year: 'desc' }, { month: 'desc' }]
   })
 
-  // Quittances confirmées
-  const confirmedReceipts = await prisma.receipt.findMany({
+  // Filtrer les paiements selon la date d'arrivée du colocataire
+  const pendingPayments = allPendingPayments.filter(payment => {
+    const entry = leaseJoinDates.get(payment.leaseId)
+    
+    // Si pas d'entrée, c'est un bail direct sans LeaseTenant → tout voir
+    if (!entry) return true
+    
+    // Si tenant principal → tout voir
+    if (entry.isPrimary) return true
+    
+    // 🆕 Si colocataire, vérifier que le mois/année >= mois d'arrivée
+    const joinedYear = entry.joinedAt.getFullYear()
+    const joinedMonth = entry.joinedAt.getMonth() + 1 // 1-12
+    
+    if (payment.year > joinedYear) return true
+    if (payment.year === joinedYear && payment.month >= joinedMonth) return true
+    return false
+  })
+
+  // 🆕 Quittances confirmées (directs + colocations)
+  const allConfirmedReceipts = await prisma.receipt.findMany({
     where: {
-      lease: { tenantId: session.user.id },
+      OR: [
+        // Baux directs
+        { lease: { tenantId: session.user.id } },
+        // Colocations
+        { leaseId: { in: Array.from(leaseJoinDates.keys()) } },
+      ],
       status: 'CONFIRMED'
     },
     include: {
@@ -71,13 +148,28 @@ export default async function TenantReceiptsPage() {
     orderBy: [{ year: 'desc' }, { month: 'desc' }]
   })
 
+  // Filtrer les quittances selon la date d'arrivée du colocataire
+  const confirmedReceipts = allConfirmedReceipts.filter(receipt => {
+    const entry = leaseJoinDates.get(receipt.leaseId)
+    
+    // Si pas d'entrée, c'est un bail direct sans LeaseTenant → tout voir
+    if (!entry) return true
+    
+    // Si tenant principal → tout voir
+    if (entry.isPrimary) return true
+    
+    // 🆕 Si colocataire, vérifier que le mois/année >= mois d'arrivée
+    const joinedYear = entry.joinedAt.getFullYear()
+    const joinedMonth = entry.joinedAt.getMonth() + 1 // 1-12
+    
+    if (receipt.year > joinedYear) return true
+    if (receipt.year === joinedYear && receipt.month >= joinedMonth) return true
+    return false
+  })
+
   // Grouper les quittances confirmées par propriété
   const receiptsByProperty = confirmedReceipts.reduce((acc, receipt) => {
-
-
     const propertyId = receipt.lease.property.id
-
-
     const propertyTitle = receipt.lease.property.title
     const propertyCity = receipt.lease.property.city
     
@@ -92,16 +184,16 @@ export default async function TenantReceiptsPage() {
     return acc
   }, {} as Record<string, { title: string; city: string; receipts: typeof confirmedReceipts }>)
 
-// Trier les propriétés par la quittance la plus récente
-const propertyIds = Object.keys(receiptsByProperty).sort((a, b) => {
-  const latestA = receiptsByProperty[a].receipts[0]
-  const latestB = receiptsByProperty[b].receipts[0]
-  
-  if (latestA.year !== latestB.year) {
-    return latestB.year - latestA.year
-  }
-  return latestB.month - latestA.month
-})
+  // Trier les propriétés par la quittance la plus récente
+  const propertyIds = Object.keys(receiptsByProperty).sort((a, b) => {
+    const latestA = receiptsByProperty[a].receipts[0]
+    const latestB = receiptsByProperty[b].receipts[0]
+    
+    if (latestA.year !== latestB.year) {
+      return latestB.year - latestA.year
+    }
+    return latestB.month - latestA.month
+  })
 
   const getMonthName = (month: number) => {
     const months = [

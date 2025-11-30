@@ -16,29 +16,84 @@ export default async function TenantLeasesPage() {
     redirect('/profile/complete?required=tenant')
   }
 
-  const leases = await prisma.lease.findMany({
-    where: {
-      tenantId: session.user.id,
-    },
-    include: {
-      property: {
-        select: {
-          id: true,
-          title: true,
-          address: true,
-          city: true,
-          postalCode: true,
-          owner: {
-            select: {
-              firstName: true,
-              lastName: true,
+  // 🆕 Récupérer les baux où l'utilisateur est locataire principal OU colocataire
+  const [directLeases, coTenantLeases] = await Promise.all([
+    // Baux où je suis le locataire principal
+    prisma.lease.findMany({
+      where: {
+        tenantId: session.user.id,
+      },
+      include: {
+        property: {
+          select: {
+            id: true,
+            title: true,
+            address: true,
+            city: true,
+            postalCode: true,
+            owner: {
+              select: {
+                firstName: true,
+                lastName: true,
+              },
+            },
+          },
+        },
+        tenants: {
+          where: { leftAt: null },
+          select: { tenantId: true, isPrimary: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    }),
+    // Baux où je suis colocataire (via LeaseTenant)
+    prisma.leaseTenant.findMany({
+      where: {
+        tenantId: session.user.id,
+        leftAt: null,
+        // Exclure les baux où je suis déjà le tenant principal
+        lease: {
+          tenantId: { not: session.user.id },
+        },
+      },
+      include: {
+        lease: {
+          include: {
+            property: {
+              select: {
+                id: true,
+                title: true,
+                address: true,
+                city: true,
+                postalCode: true,
+                owner: {
+                  select: {
+                    firstName: true,
+                    lastName: true,
+                  },
+                },
+              },
+            },
+            tenants: {
+              where: { leftAt: null },
+              select: { tenantId: true, isPrimary: true },
             },
           },
         },
       },
-    },
-    orderBy: { createdAt: 'desc' },
-  })
+    }),
+  ])
+
+  // Fusionner et dédupliquer
+  const allLeases = [
+    ...directLeases.map(lease => ({ ...lease, isCoTenant: false })),
+    ...coTenantLeases.map(lt => ({ ...lt.lease, isCoTenant: true })),
+  ]
+
+  // Dédupliquer par ID (au cas où)
+  const leases = allLeases.filter(
+    (lease, index, self) => index === self.findIndex(l => l.id === lease.id)
+  )
 
   // Séparer les baux actifs/pending des baux terminés
   const activeLeases = leases.filter(
@@ -107,11 +162,23 @@ export default async function TenantLeasesPage() {
             <span className="text-2xl">🏠</span>
           </div>
           <div>
-            <div className="flex items-center gap-3 mb-1">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <h3 className="font-semibold text-gray-900">
                 {lease.property.title}
               </h3>
               {getStatusBadge(lease.status)}
+              {/* 🆕 Badge colocataire */}
+              {lease.isCoTenant && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">
+                  👥 Colocation
+                </span>
+              )}
+              {/* 🆕 Nombre de colocataires */}
+              {lease.tenants && lease.tenants.length > 1 && (
+                <span className="text-xs text-gray-500">
+                  ({lease.tenants.length} personnes)
+                </span>
+              )}
             </div>
             <p className="text-sm text-gray-500 mb-2">
               📍{' '}

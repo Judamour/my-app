@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 
@@ -26,6 +26,26 @@ export default function CreateLeaseModal({
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
+  // Calculer si la date est dans le passé
+  const today = new Date().toISOString().split('T')[0]
+  
+  const isRetroactiveLease = useMemo(() => {
+    if (!startDate) return false
+    return startDate < today
+  }, [startDate, today])
+
+  // Calculer le nombre de mois de quittances à générer
+  const monthsToGenerate = useMemo(() => {
+    if (!startDate || !isRetroactiveLease) return 0
+    
+    const start = new Date(startDate)
+    const now = new Date()
+    
+    // Calcul du nombre de mois
+    const months = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth())
+    return Math.max(0, months + 1) // +1 pour inclure le mois en cours
+  }, [startDate, isRetroactiveLease])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -49,7 +69,12 @@ export default function CreateLeaseModal({
         throw new Error(data.error || 'Erreur lors de la création')
       }
 
-      toast.success('Bail créé avec succès !')
+      if (isRetroactiveLease) {
+        toast.success(`Bail créé avec ${data.receiptsGenerated || 0} quittances générées !`)
+      } else {
+        toast.success('Bail créé avec succès !')
+      }
+      
       onClose()
       router.push(`/owner/leases/${data.data.id}`)
       router.refresh()
@@ -59,9 +84,6 @@ export default function CreateLeaseModal({
       setLoading(false)
     }
   }
-
-  // Date minimum = aujourd'hui
-  const today = new Date().toISOString().split('T')[0]
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -114,7 +136,6 @@ export default function CreateLeaseModal({
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                min={today}
                 required
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all"
               />
@@ -128,11 +149,24 @@ export default function CreateLeaseModal({
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                min={startDate || today}
+                min={startDate || undefined}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all"
               />
             </div>
           </div>
+
+          {/* Info bail rétroactif */}
+          {isRetroactiveLease && (
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
+              <p className="text-sm text-amber-800 flex items-start gap-2">
+                <span className="text-lg">📅</span>
+                <span>
+                  <strong>Bail rétroactif détecté</strong><br />
+                  Le bail sera directement <strong>actif</strong> et <strong>{monthsToGenerate} quittance{monthsToGenerate > 1 ? 's' : ''}</strong> seront générées automatiquement.
+                </span>
+              </p>
+            </div>
+          )}
 
           {/* Montants */}
           <div className="grid grid-cols-2 gap-4">
@@ -171,12 +205,14 @@ export default function CreateLeaseModal({
           </div>
 
           {/* Info */}
-          <div className="p-4 bg-blue-50 rounded-xl">
-            <p className="text-sm text-blue-700 flex items-start gap-2">
-              <span>💡</span>
-              <span>Le bail sera envoyé au locataire pour signature. La propriété sera marquée comme louée.</span>
-            </p>
-          </div>
+          {!isRetroactiveLease && (
+            <div className="p-4 bg-blue-50 rounded-xl">
+              <p className="text-sm text-blue-700 flex items-start gap-2">
+                <span>💡</span>
+                <span>Le bail sera envoyé au locataire pour signature. La propriété sera marquée comme louée.</span>
+              </p>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex gap-3 pt-2">
@@ -196,6 +232,8 @@ export default function CreateLeaseModal({
                 <span className="flex items-center justify-center gap-2">
                   <span className="animate-spin">⏳</span>
                 </span>
+              ) : isRetroactiveLease ? (
+                `Créer (${monthsToGenerate} quittances)`
               ) : (
                 'Créer le bail'
               )}

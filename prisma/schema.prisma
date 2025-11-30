@@ -153,6 +153,8 @@ model User {
   
   // Relations locations
   tenantLeases      Lease[]    @relation("TenantLeases")
+  // 🆕 Colocations (en tant que co-locataire)
+  coTenantLeases    LeaseTenant[] @relation("CoTenants")
   
   // Relations candidatures
   applications      Application[] @relation("TenantApplications")
@@ -261,6 +263,8 @@ model Lease {
   documents     Document[]
   receipts      Receipt[]
   affiliateConversions AffiliateConversion[]
+    // 🆕 Colocataires
+  tenants       LeaseTenant[]
 
 
   
@@ -271,6 +275,30 @@ model Lease {
   @@index([tenantId])
   @@index([status])
   @@map("leases")
+}
+
+// 🆕 COLOCATION - Plusieurs locataires par bail
+model LeaseTenant {
+  id        String   @id @default(cuid())
+  
+  leaseId   String
+  lease     Lease    @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  
+  tenantId  String
+  tenant    User     @relation("CoTenants", fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  isPrimary Boolean  @default(false)  // Locataire principal/responsable
+  share     Int      @default(100)    // Part du loyer en % (100 = 100%)
+  
+  joinedAt  DateTime @default(now())  // Date d'arrivée dans la colocation
+  leftAt    DateTime?                 // Date de départ (null = toujours actif)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([leaseId, tenantId])
+  @@index([leaseId])
+  @@index([tenantId])
+  @@map("lease_tenants")
 }
 
 model Receipt {
