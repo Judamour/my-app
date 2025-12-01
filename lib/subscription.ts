@@ -23,11 +23,6 @@ export async function checkSubscriptionStatus(
     select: {
       subscriptionPlan: true,
       stripeCurrentPeriodEnd: true,
-      _count: {
-        select: {
-          ownedProperties: true,
-        },
-      },
     },
   })
 
@@ -35,8 +30,16 @@ export async function checkSubscriptionStatus(
     throw new Error('User not found')
   }
 
+  // 🆕 Compter seulement les propriétés NON supprimées
+  const currentCount = await prisma.property.count({
+    where: {
+      ownerId: userId,
+      deletedAt: null,
+    },
+  })
+
   const plan = user.subscriptionPlan as PricingPlan
-  const currentCount = user._count.ownedProperties
+
   const planConfig = PRICING_PLANS[plan]
 
   // Vérifier si l'abonnement est actif (pour les plans payants)
@@ -81,15 +84,18 @@ export async function canPerformAction(
     select: {
       subscriptionPlan: true,
       stripeCurrentPeriodEnd: true,
-      _count: {
-        select: {
-          ownedProperties: true,
-        },
-      },
     },
   })
 
   if (!user) return false
+
+  // 🆕 Compter seulement les propriétés NON supprimées
+  const propertyCount = await prisma.property.count({
+    where: {
+      ownerId: userId,
+      deletedAt: null,
+    },
+  })
 
   const plan = user.subscriptionPlan as PricingPlan
   const planConfig = PRICING_PLANS[plan]
@@ -103,7 +109,7 @@ export async function canPerformAction(
 
   switch (action) {
     case 'add-property':
-      return user._count.ownedProperties < planConfig.maxProperties
+      return propertyCount < planConfig.maxProperties
 
     case 'access-analytics':
       // Analytics disponible à partir de Pro

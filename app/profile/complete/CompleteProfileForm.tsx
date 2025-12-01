@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
-import Image from 'next/image'
-
+import { useSession } from 'next-auth/react' 
 interface Session {
   user: {
     id: string
@@ -29,6 +28,7 @@ export default function CompleteProfileForm({
   session: Session
   required?: string
 }) {
+   const { update } = useSession() 
 
   // Étape actuelle (1, 2, 3)
   const [step, setStep] = useState(1)
@@ -146,17 +146,16 @@ export default function CompleteProfileForm({
         return
       }
 
-      toast.success('Profil complété avec succès !')
+    await update({
+        isOwner,
+        isTenant,
+      })
 
+
+      toast.success('Profil complété avec succès !')
       setTimeout(() => {
-        if (isOwner) {
-          window.location.href = '/owner'
-        } else if (isTenant) {
-          window.location.href = '/tenant'
-        } else {
-          window.location.href = '/'
-        }
-      }, 500)
+        window.location.href = isOwner ? '/owner' : '/tenant'
+      }, 300)
     } catch {
       toast.error('Erreur de connexion au serveur')
       setLoading(false)
@@ -319,7 +318,7 @@ export default function CompleteProfileForm({
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Civilité
                     </label>
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="text-gray-700 grid grid-cols-4 gap-2">
                       {[
                         { value: 'MALE', label: 'M.' },
                         { value: 'FEMALE', label: 'Mme' },

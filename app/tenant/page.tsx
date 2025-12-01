@@ -24,9 +24,6 @@ export default async function TenantDashboardPage() {
     redirect('/login')
   }
 
-  if (!user.isTenant) {
-    redirect('/profile/complete?required=tenant')
-  }
 
   const applicationsCount = await prisma.application.count({
     where: {

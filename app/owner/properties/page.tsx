@@ -6,10 +6,11 @@ import Image from 'next/image'
 export default async function PropertiesListPage() {
   const session = await requireOwner()
   
-  const properties = await prisma.property.findMany({
-    where: {
-      ownerId: session.user.id
-    },
+const properties = await prisma.property.findMany({
+  where: {
+    ownerId: session.user.id,
+    deletedAt: null,  // 🆕 Exclure les supprimées
+  },
     orderBy: {
       createdAt: 'desc'
     },

@@ -11,7 +11,8 @@ import {
 import { getBadgeById } from '@/lib/badges-config'
 import RankedAvatar from '@/components/profile/RankedAvatar'
 import RankBadge from '@/components/profile/RankBadge'
-import XPProgressBar from '@/components/profile/XPProgressBar'
+import ContactButton from '@/components/messages/ContactButton'
+
 
 interface PageProps {
   params: Promise<{
@@ -314,17 +315,24 @@ export default async function ProfilePage({ params }: PageProps) {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
-        {/* Header avec boutons */}
+{/* Header avec boutons */}
         <div className="mb-6 flex items-center justify-between">
           <BackButton />
-          {isOwnProfile && (
-            <Link
-              href="/profile/edit"
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
-            >
-              ✏️ Modifier mon profil
-            </Link>
-          )}
+          <div className="flex items-center gap-3">
+            {isOwnProfile ? (
+              <Link
+                href="/profile/edit"
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+              >
+                ✏️ Modifier mon profil
+              </Link>
+            ) : (
+              <ContactButton
+                recipientId={user.id}
+                recipientName={user.firstName}
+              />
+            )}
+          </div>
         </div>
 
         {/* Card principale */}
@@ -373,14 +381,7 @@ export default async function ProfilePage({ params }: PageProps) {
                 )}
               </div>
 
-              {user.showLevel && (
-                <div className="mb-4">
-                  <XPProgressBar
-                    currentXP={user.xp}
-                    currentLevel={currentLevel}
-                  />
-                </div>
-              )}
+              {user.showLevel && <div className="mb-4"></div>}
 
               {user.showReviewStats && hasReviews && reviewStats && (
                 <div className="flex items-center gap-4 justify-center md:justify-start text-sm text-gray-600">
@@ -397,36 +398,6 @@ export default async function ProfilePage({ params }: PageProps) {
             </div>
           </div>
 
-          {/* Badges débloqués */}
-          {user.showBadges && unlockedBadgesDetails.length > 0 && (
-            <div className="border-t pt-6 mb-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
-                🏆 Badges débloqués ({unlockedBadgesDetails.length})
-              </h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {unlockedBadgesDetails.map(badge => {
-                  if (!badge) return null
-                  return (
-                    <div
-                      key={badge.id}
-                      className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-400 rounded-lg p-4 text-center hover:shadow-md transition-shadow"
-                    >
-                      <div className="text-4xl mb-2">{badge.icon}</div>
-                      <div className="font-bold text-sm text-gray-900 mb-1">
-                        {badge.name}
-                      </div>
-                      <div className="text-xs text-gray-600 mb-2">
-                        {badge.description}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        +{badge.points} XP
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
 
           {/* Informations professionnelles */}
           {user.isTenant &&
@@ -700,6 +671,38 @@ export default async function ProfilePage({ params }: PageProps) {
                     </span>
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+
+          {/* Badges débloqués */}
+          {user.showBadges && unlockedBadgesDetails.length > 0 && (
+            <div className="border-t pt-6 mb-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">
+                🏆 Badges débloqués ({unlockedBadgesDetails.length})
+              </h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {unlockedBadgesDetails.map(badge => {
+                  if (!badge) return null
+                  return (
+                    <div
+                      key={badge.id}
+                      className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-400 rounded-lg p-4 text-center hover:shadow-md transition-shadow"
+                    >
+                      <div className="text-4xl mb-2">{badge.icon}</div>
+                      <div className="font-bold text-sm text-gray-900 mb-1">
+                        {badge.name}
+                      </div>
+                      <div className="text-xs text-gray-600 mb-2">
+                        {badge.description}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        +{badge.points} XP
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}

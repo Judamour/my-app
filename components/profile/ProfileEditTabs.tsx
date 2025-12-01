@@ -206,7 +206,7 @@ export default function ProfileEditTabs({
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Civilité
               </label>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="text-gray-700 grid grid-cols-4 gap-2">
                 {[
                   { value: 'MALE', label: 'M.' },
                   { value: 'FEMALE', label: 'Mme' },

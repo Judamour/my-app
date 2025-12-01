@@ -5,11 +5,9 @@ import { awardApplicationAcceptedXP } from '@/lib/xp'
 import { sendEmail } from '@/lib/email/send-email'
 import ApplicationAcceptedEmail from '@/emails/templates/ApplicationAcceptedEmail'
 
-
 interface RouteParams {
   params: Promise<{ id: string }>
 }
-
 
 // PATCH - Accepter ou refuser une candidature
 export async function PATCH(request: Request, { params }: RouteParams) {
@@ -18,20 +16,14 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     const { id } = await params
 
     if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Non authentifié' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
     const body = await request.json()
     const { status } = body
 
-    if (!status || !['ACCEPTED', 'REJECTED'].includes(status)) {
-      return NextResponse.json(
-        { error: 'Statut invalide (ACCEPTED ou REJECTED)' },
-        { status: 400 }
-      )
+    if (!status || !['ACCEPTED', 'REJECTED', 'CANCELLED'].includes(status)) {
+      return NextResponse.json({ error: 'Statut invalide' }, { status: 400 })
     }
 
     // Récupérer la candidature avec la propriété
@@ -46,9 +38,9 @@ export async function PATCH(request: Request, { params }: RouteParams) {
             address: true,
             city: true,
             postalCode: true,
-          }
-        }
-      }
+          },
+        },
+      },
     })
 
     if (!application) {
@@ -58,12 +50,23 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       )
     }
 
-    // Vérifier que c'est bien le propriétaire qui fait l'action
-    if (application.property.ownerId !== session.user.id) {
-      return NextResponse.json(
-        { error: 'Non autorisé' },
-        { status: 403 }
-      )
+    // 🆕 Vérifier les autorisations selon l'action
+    const isOwner = application.property.ownerId === session.user.id
+    const isTenant = application.tenantId === session.user.id
+
+    // CANCELLED = seulement le locataire
+    if (status === 'CANCELLED') {
+      if (!isTenant) {
+        return NextResponse.json(
+          { error: 'Seul le candidat peut annuler sa candidature' },
+          { status: 403 }
+        )
+      }
+    } else {
+      // ACCEPTED/REJECTED = seulement le propriétaire
+      if (!isOwner) {
+        return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
+      }
     }
 
     // Vérifier que la candidature est en attente
@@ -102,7 +105,10 @@ export async function PATCH(request: Request, { params }: RouteParams) {
             dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/tenant`,
           }),
         })
-        console.log('✅ Acceptance notification sent to tenant:', updatedApplication.tenant.email)
+        console.log(
+          '✅ Acceptance notification sent to tenant:',
+          updatedApplication.tenant.email
+        )
       } catch (emailError) {
         console.error('⚠️ Email sending failed:', emailError)
       }
@@ -118,9 +124,9 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     // Retourner la réponse
     return NextResponse.json({
       data: updatedApplication,
-      message: status === 'ACCEPTED' ? 'Candidature acceptée' : 'Candidature refusée'
+      message:
+        status === 'ACCEPTED' ? 'Candidature acceptée' : 'Candidature refusée',
     })
-
   } catch (error) {
     console.error('Update application error:', error)
     return NextResponse.json(
@@ -137,10 +143,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     const { id } = await params
 
     if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Non authentifié' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
     const application = await prisma.application.findUnique({
@@ -155,7 +158,7 @@ export async function GET(request: Request, { params }: RouteParams) {
             postalCode: true,
             rent: true,
             ownerId: true,
-          }
+          },
         },
         tenant: {
           select: {
@@ -165,9 +168,9 @@ export async function GET(request: Request, { params }: RouteParams) {
             email: true,
             phone: true,
             profileComplete: true,
-          }
-        }
-      }
+          },
+        },
+      },
     })
 
     if (!application) {
@@ -182,10 +185,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     const isTenant = application.tenantId === session.user.id
 
     if (!isOwner && !isTenant) {
-      return NextResponse.json(
-        { error: 'Non autorisé' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
     }
 
     // Si c'est le locataire et que la candidature n'est pas acceptée, masquer l'adresse
@@ -194,7 +194,6 @@ export async function GET(request: Request, { params }: RouteParams) {
     }
 
     return NextResponse.json({ data: application })
-
   } catch (error) {
     console.error('Get application error:', error)
     return NextResponse.json(

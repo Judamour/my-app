@@ -170,7 +170,15 @@ export async function DELETE(
     const { id } = await params
 
     const property = await prisma.property.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        leases: {
+          where: { 
+            status: { in: ['ACTIVE', 'PENDING'] },
+            deletedAt: null 
+          }
+        }
+      }
     })
 
     if (!property) {
@@ -187,12 +195,34 @@ export async function DELETE(
       )
     }
 
-    await prisma.property.delete({
-      where: { id }
+    // 🚨 Bloquer si baux actifs
+    if (property.leases.length > 0) {
+      return NextResponse.json(
+        { error: 'Impossible de supprimer : des baux actifs existent sur cette propriété' },
+        { status: 400 }
+      )
+    }
+
+    // ✅ SOFT DELETE - Ne pas supprimer réellement
+    await prisma.property.update({
+      where: { id },
+      data: { 
+        deletedAt: new Date(),
+        available: false  // Plus disponible
+      }
+    })
+
+    // Soft delete aussi les baux terminés liés
+    await prisma.lease.updateMany({
+      where: { 
+        propertyId: id,
+        deletedAt: null
+      },
+      data: { deletedAt: new Date() }
     })
 
     return NextResponse.json(
-      { message: 'Propriété supprimée avec succès' },
+      { message: 'Propriété archivée avec succès' },
       { status: 200 }
     )
   } catch (error) {

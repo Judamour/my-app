@@ -10,7 +10,9 @@ export default async function OwnerLeasesPage() {
     where: {
       property: {
         ownerId: session.user.id,
+        deletedAt: null, // 🆕
       },
+      deletedAt: null, // 🆕
     },
     include: {
       property: {
@@ -123,14 +125,18 @@ export default async function OwnerLeasesPage() {
         <div className="flex items-center gap-4 text-sm text-gray-600 bg-gray-50 rounded-lg p-3">
           <div className="flex items-center gap-2">
             <span>📅</span>
-            <span>Début : <strong>{formatDate(lease.startDate)}</strong></span>
+            <span>
+              Début : <strong>{formatDate(lease.startDate)}</strong>
+            </span>
           </div>
           {lease.endDate && (
             <>
               <span className="text-gray-300">→</span>
               <div className="flex items-center gap-2">
                 <span>🏁</span>
-                <span>Fin : <strong>{formatDate(lease.endDate)}</strong></span>
+                <span>
+                  Fin : <strong>{formatDate(lease.endDate)}</strong>
+                </span>
               </div>
             </>
           )}
@@ -144,14 +150,17 @@ export default async function OwnerLeasesPage() {
           >
             Voir les détails
           </Link>
-          
+
           {lease._count.documents > 0 && (
             <Link
               href={`/owner/leases/${lease.id}/documents`}
               className="flex items-center gap-2 px-4 py-2.5 bg-purple-50 text-purple-700 rounded-lg font-medium hover:bg-purple-100 transition-colors border border-purple-200 text-sm"
             >
               <span>📄</span>
-              <span>{lease._count.documents} doc{lease._count.documents > 1 ? 's' : ''}</span>
+              <span>
+                {lease._count.documents} doc
+                {lease._count.documents > 1 ? 's' : ''}
+              </span>
             </Link>
           )}
         </div>
@@ -183,10 +192,11 @@ export default async function OwnerLeasesPage() {
             </svg>
             Retour au dashboard
           </Link>
-          
+
           <h1 className="text-3xl font-bold text-gray-900">Mes baux</h1>
           <p className="text-gray-600 mt-1">
-            {activeLeases.length} en cours • {endedLeases.length} terminé{endedLeases.length > 1 ? 's' : ''}
+            {activeLeases.length} en cours • {endedLeases.length} terminé
+            {endedLeases.length > 1 ? 's' : ''}
           </p>
         </div>
 
@@ -201,7 +211,7 @@ export default async function OwnerLeasesPage() {
             </div>
             <p className="text-sm font-medium text-gray-700">Actifs</p>
           </div>
-          
+
           <div className="bg-orange-50 rounded-xl border border-orange-200 p-5 text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
               <span className="text-2xl">⏳</span>

@@ -32,39 +32,49 @@ export default async function OwnerDashboardPage() {
     redirect('/login')
   }
 
-  if (!user.isOwner) {
-    redirect('/profile/complete?required=owner')
-  }
+
 
   const propertiesCount = await prisma.property.count({
-    where: { ownerId: user.id },
+    where: {
+      ownerId: user.id,
+      deletedAt: null, // 🆕
+    },
   })
 
   const availableCount = await prisma.property.count({
     where: {
       ownerId: user.id,
       available: true,
+      deletedAt: null,
     },
   })
 
   const applicationsCount = await prisma.application.count({
     where: {
-      property: { ownerId: user.id },
+      property: {
+        ownerId: user.id,
+        deletedAt: null,
+      },
       status: 'PENDING',
     },
   })
 
   const activeLeasesCount = await prisma.lease.count({
     where: {
-      property: { ownerId: user.id },
+      property: { ownerId: user.id, deletedAt: null },
       status: 'ACTIVE',
+      deletedAt: null,
     },
   })
 
   const receiptsCount = await prisma.receipt.count({
     where: {
       lease: {
-        property: { ownerId: user.id },
+        property: {
+          ownerId: user.id,
+          deletedAt: null, // 🆕
+        },
+        deletedAt: null, // 🆕
       },
       status: 'CONFIRMED',
     },
@@ -73,7 +83,11 @@ export default async function OwnerDashboardPage() {
   const pendingPayments = await prisma.receipt.count({
     where: {
       lease: {
-        property: { ownerId: user.id },
+        property: {
+          ownerId: user.id,
+          deletedAt: null, // 🆕
+        },
+        deletedAt: null, // 🆕
       },
       status: 'DECLARED',
     },
@@ -94,7 +108,11 @@ export default async function OwnerDashboardPage() {
   const monthlyPayments = await prisma.receipt.findMany({
     where: {
       lease: {
-        property: { ownerId: user.id },
+        property: {
+          ownerId: user.id,
+          deletedAt: null, // 🆕
+        },
+        deletedAt: null, // 🆕
       },
       status: 'CONFIRMED',
       paidAt: {
@@ -116,7 +134,11 @@ export default async function OwnerDashboardPage() {
   const allTimePayments = await prisma.receipt.aggregate({
     where: {
       lease: {
-        property: { ownerId: user.id },
+        property: {
+          ownerId: user.id,
+          deletedAt: null, // 🆕
+        },
+        deletedAt: null, // 🆕
       },
       status: 'CONFIRMED',
     },
@@ -144,12 +166,8 @@ export default async function OwnerDashboardPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header Page */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Tableau de bord
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Bienvenue {user.firstName} 👋
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900">Tableau de bord</h1>
+          <p className="text-gray-600 mt-1">Bienvenue {user.firstName} 👋</p>
         </div>
 
         {/* Alertes */}
@@ -213,7 +231,8 @@ export default async function OwnerDashboardPage() {
                   Plan actuel : {planConfig.name}
                 </h3>
                 <p className="text-gray-600 text-sm">
-                  {subscriptionStatus.currentCount}/{subscriptionStatus.maxProperties} propriétés utilisées
+                  {subscriptionStatus.currentCount}/
+                  {subscriptionStatus.maxProperties} propriétés utilisées
                 </p>
               </div>
 
@@ -223,11 +242,13 @@ export default async function OwnerDashboardPage() {
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
                       className={`h-2 rounded-full transition-all ${
-                        subscriptionStatus.currentCount >= subscriptionStatus.maxProperties
+                        subscriptionStatus.currentCount >=
+                        subscriptionStatus.maxProperties
                           ? 'bg-red-500'
-                          : subscriptionStatus.currentCount >= subscriptionStatus.maxProperties - 1
-                          ? 'bg-yellow-500'
-                          : 'bg-green-500'
+                          : subscriptionStatus.currentCount >=
+                              subscriptionStatus.maxProperties - 1
+                            ? 'bg-yellow-500'
+                            : 'bg-green-500'
                       }`}
                       style={{
                         width: `${Math.min((subscriptionStatus.currentCount / subscriptionStatus.maxProperties) * 100, 100)}%`,
@@ -246,7 +267,9 @@ export default async function OwnerDashboardPage() {
                         : 'bg-blue-600 text-white hover:bg-blue-700'
                     }`}
                   >
-                    {subscriptionStatus.requiresUpgrade ? 'Upgrader' : 'Voir les plans'}
+                    {subscriptionStatus.requiresUpgrade
+                      ? 'Upgrader'
+                      : 'Voir les plans'}
                   </Link>
                 )}
               </div>
@@ -365,7 +388,9 @@ export default async function OwnerDashboardPage() {
               </div>
               <div className="min-w-0">
                 <p className="font-semibold text-gray-900">Mes propriétés</p>
-                <p className="text-sm text-gray-500 truncate">Gérer mes biens</p>
+                <p className="text-sm text-gray-500 truncate">
+                  Gérer mes biens
+                </p>
               </div>
             </Link>
 

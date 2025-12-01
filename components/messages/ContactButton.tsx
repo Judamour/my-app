@@ -45,7 +45,7 @@ export default function ContactButton({ recipientId, recipientName, propertyId }
     <button
       onClick={handleContact}
       disabled={loading}
-      className="w-full py-3 px-4 bg-blue-500 text-white font-medium rounded-xl hover:bg-blue-600 disabled:bg-gray-300 transition-colors flex items-center justify-center gap-2"
+                className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-blue-500 text-white font-medium rounded-xl hover:bg-blue-600 transition-colors text-sm"
     >
       {loading ? (
         <>

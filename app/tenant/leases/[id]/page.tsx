@@ -5,6 +5,7 @@ import Link from 'next/link'
 import LeaseActions from '@/components/leases/LeaseActions'
 import ReviewButton from '@/components/leases/ReviewButton'
 import ColocationManager from '@/components/leases/ColocationManager'
+import ContactButton from '@/components/messages/ContactButton'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -275,6 +276,12 @@ export default async function TenantLeaseDetailPage({ params }: PageProps) {
             >
               📄 Documents du bail
             </Link>
+
+            {/* 🆕 Bouton Contact Propriétaire */}
+            <ContactButton
+              recipientId={lease.property.owner.id}
+              recipientName={lease.property.owner.firstName}
+            />
 
             {/* Actions Card */}
             <div className="border border-gray-200 rounded-2xl p-5 sm:p-6">

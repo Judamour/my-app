@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import CreateLeaseModal from '@/components/leases/CreateLeaseModal'
+import ContactButton from '@/components/messages/ContactButton'
 
 interface Application {
   id: string
@@ -45,6 +46,7 @@ export default function ApplicationCard({
   application,
   role,
 }: ApplicationCardProps) {
+  const [showCancelModal, setShowCancelModal] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showLeaseModal, setShowLeaseModal] = useState(false)
   const router = useRouter()
@@ -68,6 +70,32 @@ export default function ApplicationCard({
       toast.success(
         status === 'ACCEPTED' ? 'Candidature acceptée !' : 'Candidature refusée'
       )
+      router.refresh()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erreur')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCancel = async () => {
+    setLoading(true)
+
+    try {
+      const response = await fetch(`/api/applications/${application.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'CANCELLED' }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erreur')
+      }
+
+      toast.success('Candidature annulée')
+      setShowCancelModal(false)
       router.refresh()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Erreur')
@@ -143,7 +171,9 @@ export default function ApplicationCard({
                 {hasDocuments && (
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">
                     <span>📄</span>
-                    <span>{documentCount} doc{documentCount > 1 ? 's' : ''}</span>
+                    <span>
+                      {documentCount} doc{documentCount > 1 ? 's' : ''}
+                    </span>
                   </span>
                 )}
               </div>
@@ -186,6 +216,13 @@ export default function ApplicationCard({
               <span>Voir le profil</span>
             </Link>
 
+            {/* 🆕 Bouton Contacter */}
+            <ContactButton
+              recipientId={application.tenant.id}
+              recipientName={application.tenant.firstName}
+              propertyId={application.property.id}
+            />
+
             {/* Boutons accepter/refuser */}
             {application.status === 'PENDING' && (
               <div className="grid grid-cols-2 gap-2">
@@ -213,7 +250,7 @@ export default function ApplicationCard({
                 className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white font-medium rounded-xl hover:bg-gray-800 transition-colors text-sm w-full"
               >
                 <span>📄</span>
-                <span>Créer le bail</span>
+                <span>Préparer le bail</span>
               </button>
             )}
           </div>
@@ -239,7 +276,8 @@ export default function ApplicationCard({
       {/* Header avec image et infos */}
       <div className="flex items-start gap-3 sm:gap-4 mb-4">
         <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gray-100 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">
-          {application.property.images && application.property.images.length > 0 ? (
+          {application.property.images &&
+          application.property.images.length > 0 ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={application.property.images[0]}
@@ -259,7 +297,8 @@ export default function ApplicationCard({
           </div>
           <p className="text-sm text-gray-500 mb-1">
             📍 {application.property.city}{' '}
-            {application.property.postalCode && `(${application.property.postalCode})`}
+            {application.property.postalCode &&
+              `(${application.property.postalCode})`}
           </p>
           <p className="text-lg font-semibold text-gray-900">
             {formatPrice(application.property.rent)}
@@ -300,9 +339,18 @@ export default function ApplicationCard({
         )}
 
         {application.status === 'PENDING' && (
-          <div className="flex items-center justify-center gap-2 px-4 py-2.5 bg-orange-50 text-orange-700 rounded-xl text-sm">
-            <span>⏳</span>
-            <span>En attente de réponse</span>
+          <div className="space-y-2">
+            <div className="flex items-center justify-center gap-2 px-4 py-2.5 bg-orange-50 text-orange-700 rounded-xl text-sm">
+              <span>⏳</span>
+              <span>En attente de réponse</span>
+            </div>
+            <button
+              onClick={() => setShowCancelModal(true)}
+              disabled={loading}
+              className="w-full px-4 py-2.5 border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 disabled:bg-gray-100 transition-colors text-sm"
+            >
+              ✗ Annuler ma candidature
+            </button>
           </div>
         )}
 
@@ -312,6 +360,41 @@ export default function ApplicationCard({
           </div>
         )}
       </div>
+      {/* Modal confirmation annulation */}
+      {showCancelModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">⚠️</span>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Annuler cette candidature ?
+              </h3>
+              <p className="text-gray-600">
+                Vous devrez attendre <strong>7 jours</strong> avant de pouvoir
+                repostuler à cette annonce.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowCancelModal(false)}
+                className="flex-1 px-4 py-3 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+              >
+                Garder
+              </button>
+              <button
+                onClick={handleCancel}
+                disabled={loading}
+                className="flex-1 px-4 py-3 bg-red-500 text-white font-medium rounded-xl hover:bg-red-600 disabled:bg-gray-300 transition-colors"
+              >
+                {loading ? '⏳ Annulation...' : 'Confirmer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

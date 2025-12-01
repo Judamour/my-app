@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { signIn } from 'next-auth/react'
+import { signIn, getSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -26,10 +26,31 @@ export default function LoginPage() {
 
       if (result?.error) {
         setError('Email ou mot de passe incorrect')
+        setLoading(false)
         return
       }
 
-      router.push('/owner')
+      // 🆕 Récupérer la session pour connaître les rôles
+      const session = await getSession()
+      
+      // 🆕 Rediriger selon le rôle
+      if (session?.user) {
+        const { isOwner, isTenant } = session.user as { isOwner?: boolean; isTenant?: boolean }
+        
+        if (!isOwner && !isTenant) {
+          // Aucun rôle → compléter le profil
+          router.push('/profile/complete')
+        } else if (isOwner) {
+          // Priorité owner
+          router.push('/owner')
+        } else {
+          // Sinon tenant
+          router.push('/tenant')
+        }
+      } else {
+        router.push('/profile/complete')
+      }
+      
       router.refresh()
     } catch {
       setError('Une erreur est survenue')
@@ -37,6 +58,8 @@ export default function LoginPage() {
       setLoading(false)
     }
   }
+
+
 
   return (
     <div className="min-h-screen bg-white flex">

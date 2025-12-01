@@ -8,6 +8,14 @@ import MarkAllReadButton from '@/components/notifications/MarkAllReadButton'
 export default async function NotificationsPage() {
   const session = await requireAuth()
 
+  // 🆕 Récupérer les rôles pour le bouton retour
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { isOwner: true, isTenant: true },
+  })
+
+  const backUrl = user?.isOwner ? '/owner' : user?.isTenant ? '/tenant' : '/'
+
   const notifications = await prisma.notification.findMany({
     where: { userId: session.user.id },
     orderBy: { createdAt: 'desc' },
@@ -51,17 +59,20 @@ export default async function NotificationsPage() {
       <div className="min-h-screen bg-gray-50 pt-4">
         {/* Page Header */}
         <div className="bg-white border-b border-gray-200">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
-            <div className="flex items-center gap-4 mb-4">
-              <Link
-                href="/"
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </Link>
-              <div className="flex-1">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 py-1">
+            {/* 🆕 Bouton retour style cohérent */}
+            <Link
+              href={backUrl}
+              className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors text-sm font-medium mb-4"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Retour au dashboard
+            </Link>
+
+            <div className="flex items-center justify-between">
+              <div>
                 <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
                 <p className="text-gray-500 mt-1">
                   {unreadCount > 0 
@@ -77,7 +88,7 @@ export default async function NotificationsPage() {
           </div>
         </div>
 
-        {/* Liste */}
+        {/* Liste - reste inchangé */}
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
           {notifications.length === 0 ? (
             <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
@@ -127,4 +138,3 @@ export default async function NotificationsPage() {
     </>
   )
 }
-

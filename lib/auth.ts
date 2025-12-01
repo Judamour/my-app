@@ -68,7 +68,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id as string
         token.role = user.role as string
@@ -76,6 +76,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.isTenant = user.isTenant as boolean
         token.firstName = user.firstName as string
         token.lastName = user.lastName as string
+      }
+
+      if (trigger === 'update' && session) {
+        if (session.isOwner !== undefined) token.isOwner = session.isOwner
+        if (session.isTenant !== undefined) token.isTenant = session.isTenant
       }
       return token
     },

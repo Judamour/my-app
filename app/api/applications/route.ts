@@ -62,11 +62,41 @@ export async function POST(request: Request) {
       )
     }
 
-    // Vérifier si une candidature active existe (pas avec un bail terminé)
+    // 🆕 Vérifier cooldown après annulation (7 jours)
+    const COOLDOWN_DAYS = 7
+    const cooldownDate = new Date()
+    cooldownDate.setDate(cooldownDate.getDate() - COOLDOWN_DAYS)
+
+    const cancelledApplication = await prisma.application.findFirst({
+      where: {
+        propertyId,
+        tenantId: session.user.id,
+        status: 'CANCELLED',
+        updatedAt: { gte: cooldownDate },
+      },
+    })
+
+    if (cancelledApplication) {
+      const daysSinceCancelled = Math.ceil(
+        (Date.now() - new Date(cancelledApplication.updatedAt).getTime()) /
+          (1000 * 60 * 60 * 24)
+      )
+      const daysRemaining = COOLDOWN_DAYS - daysSinceCancelled
+
+      return NextResponse.json(
+        {
+          error: `Vous avez annulé votre candidature récemment. Veuillez patienter ${daysRemaining} jour${daysRemaining > 1 ? 's' : ''} avant de repostuler.`,
+        },
+        { status: 400 }
+      )
+    }
+
+    // Vérifier si une candidature active existe (PENDING ou ACCEPTED)
     const existingApplication = await prisma.application.findFirst({
       where: {
         propertyId,
         tenantId: session.user.id,
+        status: { in: ['PENDING', 'ACCEPTED'] },
       },
       include: {
         property: {
@@ -83,7 +113,7 @@ export async function POST(request: Request) {
     if (existingApplication) {
       // Vérifier si tous les baux sont terminés (permet de repostuler)
       const hasActiveLease = existingApplication.property.leases.some(
-        (lease) => lease.status !== 'ENDED'
+        lease => lease.status !== 'ENDED'
       )
 
       // Si un bail actif/pending existe, ou si pas de bail du tout (candidature en cours)
@@ -110,7 +140,7 @@ export async function POST(request: Request) {
         select: { id: true },
       })
 
-      const validIds = validDocuments.map((d) => d.id)
+      const validIds = validDocuments.map(d => d.id)
       const invalidIds = sharedDocumentIds.filter(
         (id: string) => !validIds.includes(id)
       )
@@ -184,7 +214,7 @@ export async function POST(request: Request) {
         application.property.owner.email
       )
 
-           // 🆕 Notification in-app pour le propriétaire
+      // 🆕 Notification in-app pour le propriétaire
       await prisma.notification.create({
         data: {
           userId: application.property.owner.id,

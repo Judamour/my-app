@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import ApplyButton from '@/components/properties/ApplyButton'
 import ImageGallery from '@/components/properties/ImageGallery'
+import ContactButton from '@/components/messages/ContactButton'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -21,7 +22,10 @@ export default async function PropertyPublicPage({ params }: PageProps) {
 
   // Récupérer la propriété
   const property = await prisma.property.findUnique({
-    where: { id },
+    where: {
+      id,
+      deletedAt: null, // 🆕 Exclure les supprimées
+    },
     include: {
       owner: {
         select: {
@@ -225,8 +229,8 @@ export default async function PropertyPublicPage({ params }: PageProps) {
                     {existingApplication!.status === 'PENDING'
                       ? 'En attente'
                       : existingApplication!.status === 'ACCEPTED'
-                      ? 'Acceptée ✅'
-                      : 'Refusée ❌'}
+                        ? 'Acceptée ✅'
+                        : 'Refusée ❌'}
                   </p>
                 </div>
               ) : !property.available ? (
@@ -239,6 +243,15 @@ export default async function PropertyPublicPage({ params }: PageProps) {
               ) : (
                 <ApplyButton propertyId={property.id} />
               )}
+
+              {/* 🆕 Bouton Contact */}
+              <div className="mt-4">
+                <ContactButton
+                  recipientId={property.owner.id}
+                  recipientName={property.owner.firstName}
+                  propertyId={property.id}
+                />
+              </div>
 
               {/* Infos */}
               <div className="pt-4 border-t border-gray-100 mt-4">

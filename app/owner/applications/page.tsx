@@ -9,6 +9,7 @@ export default async function OwnerApplicationsPage() {
 const allApplications = await prisma.application.findMany({
   where: {
     property: { ownerId: session.user.id },
+    status: { not: 'CANCELLED' },  // Exclure les annulées
   },
   include: {
     property: {

@@ -30,6 +30,7 @@ export async function GET() {
     const properties: PropertyWithTenant[] = await prisma.property.findMany({
       where: {
         ownerId: session.user.id,
+          deletedAt: null, 
       },
       orderBy: {
         createdAt: 'desc',

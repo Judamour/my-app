@@ -14,16 +14,76 @@ interface NewPropertyFormProps {
 }
 
 const PROPERTY_TYPES = [
-  { value: 'APARTMENT', label: '🏢 Appartement', icon: '🏢', hasRooms: true, hasBedrooms: true },
-  { value: 'HOUSE', label: '🏠 Maison', icon: '🏠', hasRooms: true, hasBedrooms: true },
-  { value: 'STUDIO', label: '🛏️ Studio', icon: '🛏️', hasRooms: false, hasBedrooms: false },
-  { value: 'PARKING', label: '🅿️ Parking', icon: '🅿️', hasRooms: false, hasBedrooms: false },
-  { value: 'OFFICE', label: '🏢 Bureau', icon: '🏢', hasRooms: true, hasBedrooms: false },
-  { value: 'SHOP', label: '🏪 Commerce', icon: '🏪', hasRooms: true, hasBedrooms: false },
-  { value: 'LAND', label: '🌳 Terrain', icon: '🌳', hasRooms: false, hasBedrooms: false },
-  { value: 'WAREHOUSE', label: '🏭 Entrepôt', icon: '🏭', hasRooms: false, hasBedrooms: false },
-  { value: 'GARAGE', label: '🚗 Garage', icon: '🚗', hasRooms: false, hasBedrooms: false },
-  { value: 'ROOM', label: '🚪 Chambre', icon: '🚪', hasRooms: false, hasBedrooms: false },
+  {
+    value: 'APARTMENT',
+    label: '🏢 Appartement',
+    icon: '🏢',
+    hasRooms: true,
+    hasBedrooms: true,
+  },
+  {
+    value: 'HOUSE',
+    label: '🏠 Maison',
+    icon: '🏠',
+    hasRooms: true,
+    hasBedrooms: true,
+  },
+  {
+    value: 'STUDIO',
+    label: '🛏️ Studio',
+    icon: '🛏️',
+    hasRooms: false,
+    hasBedrooms: false,
+  },
+  {
+    value: 'PARKING',
+    label: '🅿️ Parking',
+    icon: '🅿️',
+    hasRooms: false,
+    hasBedrooms: false,
+  },
+  {
+    value: 'OFFICE',
+    label: '🏢 Bureau',
+    icon: '🏢',
+    hasRooms: true,
+    hasBedrooms: false,
+  },
+  {
+    value: 'SHOP',
+    label: '🏪 Commerce',
+    icon: '🏪',
+    hasRooms: true,
+    hasBedrooms: false,
+  },
+  {
+    value: 'LAND',
+    label: '🌳 Terrain',
+    icon: '🌳',
+    hasRooms: false,
+    hasBedrooms: false,
+  },
+  {
+    value: 'WAREHOUSE',
+    label: '🏭 Entrepôt',
+    icon: '🏭',
+    hasRooms: false,
+    hasBedrooms: false,
+  },
+  {
+    value: 'GARAGE',
+    label: '🚗 Garage',
+    icon: '🚗',
+    hasRooms: false,
+    hasBedrooms: false,
+  },
+  {
+    value: 'ROOM',
+    label: '🚪 Chambre',
+    icon: '🚪',
+    hasRooms: false,
+    hasBedrooms: false,
+  },
 ]
 
 export default function NewPropertyForm({
@@ -71,7 +131,10 @@ export default function NewPropertyForm({
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
       const target = e.target as HTMLElement
-      if (target.tagName === 'INPUT' && (target as HTMLInputElement).type === 'number') {
+      if (
+        target.tagName === 'INPUT' &&
+        (target as HTMLInputElement).type === 'number'
+      ) {
         e.preventDefault()
       }
     }
@@ -110,7 +173,9 @@ export default function NewPropertyForm({
         type,
         surface: Math.round(Number(surface)),
         rooms: selectedTypeConfig?.hasRooms ? Math.round(Number(rooms)) : 0,
-        bedrooms: selectedTypeConfig?.hasBedrooms ? Math.round(Number(bedrooms)) : 0,
+        bedrooms: selectedTypeConfig?.hasBedrooms
+          ? Math.round(Number(bedrooms))
+          : 0,
         rent: Number(rent),
         description: description || null,
         images,
@@ -191,8 +256,18 @@ export default function NewPropertyForm({
             href="/owner/properties"
             className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors text-sm font-medium mb-4"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
             Retour aux propriétés
           </Link>
@@ -223,12 +298,13 @@ export default function NewPropertyForm({
               {/* Titre */}
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-2">
-                  Titre de l&apos;annonce <span className="text-red-500">*</span>
+                  Titre de l&apos;annonce{' '}
+                  <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={e => setTitle(e.target.value)}
                   required
                   className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900 placeholder-gray-400"
                   placeholder="Ex: Appartement T2 centre-ville avec balcon"
@@ -241,7 +317,7 @@ export default function NewPropertyForm({
                   Type de bien <span className="text-red-500">*</span>
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                  {PROPERTY_TYPES.map((propertyType) => (
+                  {PROPERTY_TYPES.map(propertyType => (
                     <button
                       key={propertyType.value}
                       type="button"
@@ -253,7 +329,9 @@ export default function NewPropertyForm({
                       }`}
                     >
                       <div className="text-2xl mb-1">{propertyType.icon}</div>
-                      <div className="text-xs">{propertyType.label.split(' ')[1]}</div>
+                      <div className="text-xs">
+                        {propertyType.label.split(' ')[1]}
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -274,7 +352,7 @@ export default function NewPropertyForm({
                 <input
                   type="text"
                   value={address}
-                  onChange={(e) => setAddress(e.target.value)}
+                  onChange={e => setAddress(e.target.value)}
                   required
                   className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900 placeholder-gray-400"
                   placeholder="12 rue de la République"
@@ -290,7 +368,7 @@ export default function NewPropertyForm({
                   <input
                     type="text"
                     value={city}
-                    onChange={(e) => setCity(e.target.value)}
+                    onChange={e => setCity(e.target.value)}
                     required
                     className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900 placeholder-gray-400"
                     placeholder="Paris"
@@ -303,14 +381,16 @@ export default function NewPropertyForm({
                   <input
                     type="text"
                     value={postalCode}
-                    onChange={(e) => handlePostalCodeChange(e.target.value)}
+                    onChange={e => handlePostalCodeChange(e.target.value)}
                     required
                     maxLength={5}
                     pattern="[0-9]{5}"
                     className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900 placeholder-gray-400"
                     placeholder="75001"
                   />
-                  <p className="text-xs text-gray-500 mt-1">5 chiffres requis</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    5 chiffres requis
+                  </p>
                 </div>
               </div>
             </div>
@@ -321,66 +401,159 @@ export default function NewPropertyForm({
                 📐 Caractéristiques
               </h2>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {/* Surface - toujours affiché */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">
-                    Surface (m²) <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    value={surface}
-                    onChange={(e) => setSurface(e.target.value)}
-                    onWheel={(e) => e.currentTarget.blur()}
-                    required
-                    min="1"
-                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
-                  />
-                </div>
-
-                {/* Pièces - conditionnel */}
-                {selectedTypeConfig?.hasRooms && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-900 mb-2">
-                      Pièces <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      value={rooms}
-                      onChange={(e) => setRooms(e.target.value)}
-                      onWheel={(e) => e.currentTarget.blur()}
-                      required
-                      min="1"
-                      className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
-                    />
-                  </div>
-                )}
-
-                {/* Chambres - conditionnel */}
-                {selectedTypeConfig?.hasBedrooms && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-900 mb-2">
-                      Chambres <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      value={bedrooms}
-                      onChange={(e) => setBedrooms(e.target.value)}
-                      onWheel={(e) => e.currentTarget.blur()}
-                      required
-                      min="0"
-                      className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
-                    />
-                  </div>
-                )}
+              {/* Surface - input classique */}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  Surface (m²) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  value={surface}
+                  onChange={e => setSurface(e.target.value)}
+                  onWheel={e => e.currentTarget.blur()}
+                  required
+                  min="1"
+                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
+                  placeholder="45"
+                />
               </div>
 
-              {/* Message info si pas de pièces/chambres */}
-              {!selectedTypeConfig?.hasRooms && !selectedTypeConfig?.hasBedrooms && (
-                <p className="text-sm text-gray-500 italic">
-                  Ce type de bien ne nécessite pas de préciser le nombre de pièces ou chambres
-                </p>
+              {/* Pièces et Chambres - Boutons +/- style Airbnb */}
+              {(selectedTypeConfig?.hasRooms ||
+                selectedTypeConfig?.hasBedrooms) && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {/* Pièces */}
+                  {selectedTypeConfig?.hasRooms && (
+                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                      <div>
+                        <p className="font-medium text-gray-900">Pièces</p>
+                        <p className="text-sm text-gray-500">
+                          Nombre total de pièces
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setRooms(String(Math.max(1, Number(rooms) - 1)))
+                          }
+                          disabled={Number(rooms) <= 1}
+                          className="w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-900 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-gray-300 transition-colors"
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M20 12H4"
+                            />
+                          </svg>
+                        </button>
+                        <span className="w-8 text-center text-lg font-semibold text-gray-900">
+                          {rooms}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setRooms(String(Number(rooms) + 1))}
+                          disabled={Number(rooms) >= 20}
+                          className="w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-900 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-gray-300 transition-colors"
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 4v16m8-8H4"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Chambres */}
+                  {selectedTypeConfig?.hasBedrooms && (
+                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                      <div>
+                        <p className="font-medium text-gray-900">Chambres</p>
+                        <p className="text-sm text-gray-500">
+                          Pièces pour dormir
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setBedrooms(
+                              String(Math.max(0, Number(bedrooms) - 1))
+                            )
+                          }
+                          disabled={Number(bedrooms) <= 0}
+                          className="w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-900 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-gray-300 transition-colors"
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M20 12H4"
+                            />
+                          </svg>
+                        </button>
+                        <span className="w-8 text-center text-lg font-semibold text-gray-900">
+                          {bedrooms}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setBedrooms(String(Number(bedrooms) + 1))
+                          }
+                          disabled={Number(bedrooms) >= Number(rooms)}
+                          className="w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-900 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-gray-300 transition-colors"
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 4v16m8-8H4"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
+
+              {/* Message info si pas de pièces/chambres */}
+              {!selectedTypeConfig?.hasRooms &&
+                !selectedTypeConfig?.hasBedrooms && (
+                  <p className="text-sm text-gray-500 italic">
+                    Ce type de bien ne nécessite pas de préciser le nombre de
+                    pièces ou chambres
+                  </p>
+                )}
             </div>
 
             {/* Section 4 : Loyer */}
@@ -397,8 +570,8 @@ export default function NewPropertyForm({
                   <input
                     type="number"
                     value={rent}
-                    onChange={(e) => setRent(e.target.value)}
-                    onWheel={(e) => e.currentTarget.blur()}
+                    onChange={e => setRent(e.target.value)}
+                    onWheel={e => e.currentTarget.blur()}
                     required
                     min="1"
                     step="0.01"
@@ -424,12 +597,14 @@ export default function NewPropertyForm({
                 </label>
                 <textarea
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={e => setDescription(e.target.value)}
                   rows={5}
                   className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900 placeholder-gray-400 resize-none"
                   placeholder="Décrivez les points forts de votre bien : équipements, état, proximités, transports..."
                 />
-                <p className="text-xs text-gray-500 mt-1">Optionnel mais recommandé</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Optionnel mais recommandé
+                </p>
               </div>
             </div>
 
@@ -470,9 +645,7 @@ export default function NewPropertyForm({
                     Création en cours...
                   </>
                 ) : (
-                  <>
-                    ✓ Créer la propriété
-                  </>
+                  <>✓ Créer la propriété</>
                 )}
               </button>
               <Link

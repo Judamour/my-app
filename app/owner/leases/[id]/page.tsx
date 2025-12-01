@@ -6,6 +6,7 @@ import LeaseActions from '@/components/leases/LeaseActions'
 import OwnerDeclarePayment from '@/components/receipts/OwnerDeclarePayment'
 import ReviewButton from '@/components/leases/ReviewButton'
 import ColocationManager from '@/components/leases/ColocationManager'
+import ContactButton from '@/components/messages/ContactButton'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -17,7 +18,20 @@ export default async function LeaseDetailPage({ params }: PageProps) {
 
   const lease = await prisma.lease.findUnique({
     where: { id },
-    include: {
+    select: {
+      id: true,
+      startDate: true,
+      endDate: true,
+      monthlyRent: true,
+      deposit: true,
+      charges: true,
+      status: true,
+      createdAt: true,
+      // 🆕 États des lieux
+      inventoryInDone: true,
+      inventoryInAt: true,
+      inventoryOutDone: true,
+      inventoryOutAt: true,
       property: {
         select: {
           id: true,
@@ -178,6 +192,11 @@ export default async function LeaseDetailPage({ params }: PageProps) {
               >
                 👤 Voir le profil complet
               </Link>
+                 <ContactButton
+                 
+                recipientId={lease.tenant.id}
+                recipientName={lease.tenant.firstName}
+              />
             </div>
 
             {/* Colocataires */}
@@ -286,6 +305,10 @@ export default async function LeaseDetailPage({ params }: PageProps) {
                 leaseId={lease.id}
                 status={lease.status}
                 role="owner"
+                inventoryInDone={lease.inventoryInDone}
+                inventoryInAt={lease.inventoryInAt}
+                inventoryOutDone={lease.inventoryOutDone}
+                inventoryOutAt={lease.inventoryOutAt}
               />
             </div>
 
