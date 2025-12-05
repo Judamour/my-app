@@ -16,7 +16,7 @@ function VerifyEmailContent() {
   const [message, setMessage] = useState(() =>
     token ? '' : 'Token de vérification manquant'
   )
-
+// commentaire test
   useEffect(() => {
     if (!token) return
 
