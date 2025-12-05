@@ -60,8 +60,15 @@ npx prisma migrate dev  # Migrations
 - [ ] Mot de passe oublié
 - [ ] Tests avant mise en prod
 
+## À faire
+- [ ] Contacts utiles sur fiche bail (plombier, syndic, urgences...)
+- [ ] Bouton "Rapport de bug" sur dashboards owner/tenant → formulaire → dashboard admin
+- [ ] Dashboard admin (gestion bugs, utilisateurs, stats)
+- [ ] Aide déclaration impôts (revenus locatifs)
+- [ ] Dark mode
+- [ ] Suppression colocataire avec modal de confirmation
+
 ## À venir
-- [ ] Dashboard admin
 - [ ] Déploiement Vercel
 
 ---
