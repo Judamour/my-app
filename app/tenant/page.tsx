@@ -287,7 +287,7 @@ export default async function TenantDashboardPage() {
                   {user.firstName} {user.lastName}
                 </p>
                 <div className="flex items-center gap-2 mt-1">
-                  {user.profileComplete ? (
+                  {!isProfileIncomplete ? (
                     <span className="inline-flex items-center gap-1 text-sm text-emerald-600 font-medium">
                       <svg
                         className="w-4 h-4"

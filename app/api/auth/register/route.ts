@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcrypt'
-import { sendEmail } from '@/lib/email/send-email'
-import WelcomeEmail from '@/emails/templates/WelcomeEmail'
+import { sendVerificationEmail } from '@/lib/email/send-email'
+import crypto from 'crypto'
 
 export async function POST(request: Request) {
   try {
@@ -32,41 +32,44 @@ export async function POST(request: Request) {
     // Hasher le mot de passe
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    // Créer l'utilisateur avec le nouveau format
+    // Générer un token de vérification unique
+    const verificationToken = crypto.randomBytes(32).toString('hex')
+
+    // Créer l'utilisateur
     const user = await prisma.user.create({
       data: {
         firstName,
         lastName,
         email,
         password: hashedPassword,
-        role: 'USER', // Par défaut USER
-        isOwner: false, // Par défaut false
-        isTenant: false, // Par défaut false
-        profileComplete: false, // Profil pas encore complété
+        emailVerificationToken: verificationToken,
+        emailVerified: null, // Pas encore vérifié
+        role: 'USER',
+        isOwner: false,
+        isTenant: false,
+        profileComplete: false,
       },
     })
 
-    // ✅ NOUVEAU : Envoyer l'email de bienvenue
+    // Envoyer l'email de vérification
     try {
-      await sendEmail({
-        to: user.email,
-        subject: '🏠 Bienvenue sur RentEasy !',
-        react: WelcomeEmail({
-          userName: `${user.firstName} ${user.lastName}`,
-          userEmail: user.email,
-          loginUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/login`,
-        }),
-      })
-      console.log('✅ Welcome email sent to:', user.email)
+      await sendVerificationEmail(user.email, verificationToken, user.firstName)
+      console.log('✅ Verification email sent to:', user.email)
     } catch (emailError) {
-      // Ne pas bloquer l'inscription si l'email échoue
       console.error('⚠️ Email sending failed:', emailError)
+      // Ne pas bloquer l'inscription si l'email échoue
     }
 
-    // Ne pas retourner le password
-    const { password: _, ...userWithoutPassword } = user
+    // Ne pas retourner le password ni le token
+    const { password: _, emailVerificationToken: __, ...userWithoutSensitiveData } = user
 
-    return NextResponse.json(userWithoutPassword, { status: 201 })
+    return NextResponse.json(
+      { 
+        ...userWithoutSensitiveData,
+        message: 'Inscription réussie ! Vérifiez votre email pour activer votre compte.'
+      },
+      { status: 201 }
+    )
   } catch (error) {
     console.error('Register error:', error)
     return NextResponse.json(

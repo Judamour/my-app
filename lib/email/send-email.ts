@@ -1,4 +1,5 @@
 import { resend, EMAIL_FROM, EMAIL_FROM_NAME } from './resend'
+import VerifyEmail from '@/emails/templates/VerifyEmail'
 
 export interface SendEmailOptions {
   to: string | string[]
@@ -24,6 +25,24 @@ export async function sendEmail({ to, subject, react }: SendEmailOptions) {
     console.error('❌ Email error:', error)
     return { success: false, error }
   }
+}
+
+
+/**
+ * Envoie un email de vérification
+ */
+export async function sendVerificationEmail(
+  email: string,
+  token: string,
+  firstName: string
+) {
+  const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verify-email?token=${token}`
+
+  return sendEmail({
+    to: email,
+    subject: 'Vérifiez votre email - Renty',
+    react: VerifyEmail({ firstName, verificationUrl }),
+  })
 }
 
 /**

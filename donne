@@ -1,0 +1,4 @@
+prisma:
+total 24K
+drwxrwxr-x 22 damoria damoria 4,0K déc.   5 20:23 migrations
+-rw-rw-r--  1 damoria damoria  18K déc.   5 20:22 schema.prisma

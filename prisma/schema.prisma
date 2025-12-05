@@ -109,9 +109,11 @@ enum NotificationType {
 model User {
   id              String   @id @default(cuid())
   email           String   @unique
+   emailVerified   DateTime? // Date de vérification email
+  emailVerificationToken String? @unique // Token de vérification
   firstName       String
   lastName        String
-  password        String
+  password        String? // Nullable pour OAuth
   
  gender          Gender?
  birthDate       DateTime?
