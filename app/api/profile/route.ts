@@ -18,6 +18,7 @@ export async function PATCH(request: Request) {
       birthDate,
       phone,
       address,
+      avatar,
       // 🆕 Infos professionnelles
       salary,
       profession,
@@ -36,6 +37,8 @@ export async function PATCH(request: Request) {
       showReviewStats,
       showPhone,
       showAddress,
+      showAvatar,
+      
     } = body
 
     // Validation : au moins un rôle doit être true (seulement si profileComplete est présent)
@@ -57,6 +60,8 @@ export async function PATCH(request: Request) {
     if (birthDate !== undefined) updateData.birthDate = birthDate ? new Date(birthDate) : null
     if (phone !== undefined) updateData.phone = phone || null
     if (address !== undefined) updateData.address = address || null
+    if (avatar !== undefined) updateData.avatar = avatar  // 🆕 Ajoute ça
+
 
     // 🆕 Infos professionnelles
     if (salary !== undefined) updateData.salary = salary
@@ -78,6 +83,8 @@ export async function PATCH(request: Request) {
     if (showReviewStats !== undefined) updateData.showReviewStats = showReviewStats
     if (showPhone !== undefined) updateData.showPhone = showPhone
     if (showAddress !== undefined) updateData.showAddress = showAddress
+    if (showAvatar !== undefined) updateData.showAvatar = showAvatar
+
 
     // Mettre à jour l'utilisateur
     const updatedUser = await prisma.user.update({

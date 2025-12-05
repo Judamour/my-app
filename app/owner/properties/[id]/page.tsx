@@ -113,7 +113,7 @@ export default async function PropertyDetailPage({
             {property.available && (
               <Link
                 href={`/owner/properties/${property.id}/edit`}
-                className="flex items-center gap-2 px-5 py-3 border border-gray-200 bg-white rounded-xl hover:bg-gray-50 transition-colors font-medium"
+                className="text-gray-700 flex items-center gap-2 px-5 py-3 border border-gray-200 bg-white rounded-xl hover:bg-gray-50 transition-colors font-medium"
               >
                 ✏️ Modifier
               </Link>

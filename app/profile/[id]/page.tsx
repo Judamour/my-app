@@ -12,7 +12,8 @@ import { getBadgeById } from '@/lib/badges-config'
 import RankedAvatar from '@/components/profile/RankedAvatar'
 import RankBadge from '@/components/profile/RankBadge'
 import ContactButton from '@/components/messages/ContactButton'
-
+import RankProgress from '@/components/profile/RankProgress'
+import XPProgressBar from '@/components/profile/XPProgressBar'
 
 interface PageProps {
   params: Promise<{
@@ -75,6 +76,8 @@ export default async function ProfilePage({ params }: PageProps) {
       showReviewStats: true,
       showPhone: true,
       showAddress: true,
+      avatar: true, // 🆕
+      showAvatar: true, // 🆕
     },
   })
 
@@ -315,7 +318,7 @@ export default async function ProfilePage({ params }: PageProps) {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
-{/* Header avec boutons */}
+        {/* Header avec boutons */}
         <div className="mb-6 flex items-center justify-between">
           <BackButton />
           <div className="flex items-center gap-3">
@@ -344,6 +347,8 @@ export default async function ProfilePage({ params }: PageProps) {
               lastName={user.lastName || 'U'}
               rankInfo={rankInfo}
               showBorder={user.showRankBorder}
+              avatar={user.avatar} // 🆕
+              showAvatar={user.showAvatar} // 🆕
               size="large"
             />
 
@@ -397,7 +402,6 @@ export default async function ProfilePage({ params }: PageProps) {
               )}
             </div>
           </div>
-
 
           {/* Informations professionnelles */}
           {user.isTenant &&
@@ -674,7 +678,6 @@ export default async function ProfilePage({ params }: PageProps) {
               </div>
             </div>
           )}
-
 
           {/* Badges débloqués */}
           {user.showBadges && unlockedBadgesDetails.length > 0 && (

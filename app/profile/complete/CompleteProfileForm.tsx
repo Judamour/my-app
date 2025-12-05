@@ -122,6 +122,7 @@ export default function CompleteProfileForm({
           birthDate: birthDate || null,
           phone: phone || null,
           address: address || null,
+            avatar: photoPreview || null, 
           
           // 🆕 Infos professionnelles (locataire)
           salary: salary ? parseInt(salary) : null,

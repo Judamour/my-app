@@ -17,6 +17,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Renty - Gestion locative simplifiée",
   description: "Plateforme de gestion locative pour propriétaires et locataires",
+  icons : "/logo/renty_logo_favicon.svg" ,
+      shortcut: "/logo/renty_logo_favicon.svg",
+       apple: "/logo/renty_logo_favicon.svg",
 };
 
 export default function RootLayout({

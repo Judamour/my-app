@@ -43,6 +43,8 @@ export default async function ProfileEditPage({
       showReviewStats: true,
       showPhone: true,
       showAddress: true,
+      avatar: true, // 🆕
+      showAvatar: true, // 🆕
     },
   })
 
@@ -50,41 +52,51 @@ export default async function ProfileEditPage({
     redirect('/login')
   }
 
-return (
-  <div className="min-h-screen bg-gray-50">
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* 🆕 Bouton retour */}
-      <Link
-        href={user.isOwner ? '/owner' : user.isTenant ? '/tenant' : '/'}
-        className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors text-sm font-medium mb-6"
-      >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-        Retour au tableau de bord
-      </Link>
-
-      {/* Header de page */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            ✏️ Modifier mon profil
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Gérez vos informations personnelles et vos documents
-          </p>
-        </div>
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* 🆕 Bouton retour */}
         <Link
-          href={`/profile/${session.user.id}`}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium text-sm shadow-sm"
+          href={user.isOwner ? '/owner' : user.isTenant ? '/tenant' : '/'}
+          className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors text-sm font-medium mb-6"
         >
-          <span>👁️</span>
-          <span>Voir mon profil public</span>
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+          Retour au tableau de bord
         </Link>
-      </div>
 
-      <ProfileEditTabs userData={user} activeTab={activeTab} />
+        {/* Header de page */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              ✏️ Modifier mon profil
+            </h1>
+            <p className="text-gray-600 mt-2">
+              Gérez vos informations personnelles et vos documents
+            </p>
+          </div>
+          <Link
+            href={`/profile/${session.user.id}`}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium text-sm shadow-sm"
+          >
+            <span>👁️</span>
+            <span>Voir mon profil public</span>
+          </Link>
+        </div>
+
+        <ProfileEditTabs userData={user} activeTab={activeTab} />
+      </div>
     </div>
-  </div>
-)
+  )
 }

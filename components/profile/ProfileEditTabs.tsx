@@ -28,6 +28,8 @@ interface UserData {
   showReviewStats: boolean
   showPhone: boolean
   showAddress: boolean
+  avatar: string | null // 🆕
+  showAvatar: boolean // 🆕
 }
 
 const CONTRACT_TYPES = [
@@ -42,6 +44,7 @@ const CONTRACT_TYPES = [
 
 const TABS = [
   { id: 'general', label: 'Informations générales', icon: '👤' },
+  { id: 'photo', label: 'Photo de profil', icon: '📷' }, // 🆕
   { id: 'professional', label: 'Infos professionnelles', icon: '💼' },
   { id: 'documents', label: 'Mes documents', icon: '📄' },
   { id: 'privacy', label: 'Confidentialité', icon: '🔒' },
@@ -61,10 +64,16 @@ export default function ProfileEditTabs({
   // États formulaire général
   const [gender, setGender] = useState(userData.gender || '')
   const [birthDate, setBirthDate] = useState(
-    userData.birthDate ? new Date(userData.birthDate).toISOString().split('T')[0] : ''
+    userData.birthDate
+      ? new Date(userData.birthDate).toISOString().split('T')[0]
+      : ''
   )
   const [phone, setPhone] = useState(userData.phone || '')
   const [address, setAddress] = useState(userData.address || '')
+
+  // États photo
+  const [avatar, setAvatar] = useState(userData.avatar || '')
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
 
   // États formulaire professionnel
   const [salary, setSalary] = useState(userData.salary?.toString() || '')
@@ -72,15 +81,20 @@ export default function ProfileEditTabs({
   const [companyName, setCompanyName] = useState(userData.companyName || '')
   const [contractType, setContractType] = useState(userData.contractType || '')
   const [currentCity, setCurrentCity] = useState(userData.currentCity || '')
-  const [currentPostalCode, setCurrentPostalCode] = useState(userData.currentPostalCode || '')
+  const [currentPostalCode, setCurrentPostalCode] = useState(
+    userData.currentPostalCode || ''
+  )
 
   // États confidentialité
   const [showBadges, setShowBadges] = useState(userData.showBadges)
   const [showLevel, setShowLevel] = useState(userData.showLevel)
   const [showRankBorder, setShowRankBorder] = useState(userData.showRankBorder)
-  const [showReviewStats, setShowReviewStats] = useState(userData.showReviewStats)
+  const [showReviewStats, setShowReviewStats] = useState(
+    userData.showReviewStats
+  )
   const [showPhone, setShowPhone] = useState(userData.showPhone)
   const [showAddress, setShowAddress] = useState(userData.showAddress)
+  const [showAvatar, setShowAvatar] = useState(userData.showAvatar)
 
   const handleSaveGeneral = async () => {
     setLoading(true)
@@ -104,7 +118,9 @@ export default function ProfileEditTabs({
       toast.success('Informations mises à jour')
       router.refresh()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Erreur de mise à jour')
+      toast.error(
+        error instanceof Error ? error.message : 'Erreur de mise à jour'
+      )
     } finally {
       setLoading(false)
     }
@@ -134,7 +150,9 @@ export default function ProfileEditTabs({
       toast.success('Informations professionnelles mises à jour')
       router.refresh()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Erreur de mise à jour')
+      toast.error(
+        error instanceof Error ? error.message : 'Erreur de mise à jour'
+      )
     } finally {
       setLoading(false)
     }
@@ -153,6 +171,7 @@ export default function ProfileEditTabs({
           showReviewStats,
           showPhone,
           showAddress,
+          showAvatar,
         }),
       })
 
@@ -164,7 +183,9 @@ export default function ProfileEditTabs({
       toast.success('Préférences de confidentialité mises à jour')
       router.refresh()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Erreur de mise à jour')
+      toast.error(
+        error instanceof Error ? error.message : 'Erreur de mise à jour'
+      )
     } finally {
       setLoading(false)
     }
@@ -175,7 +196,7 @@ export default function ProfileEditTabs({
       {/* Tabs navigation */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2 mb-6">
         <div className="flex flex-wrap gap-2 justify-center">
-          {TABS.map((tab) => (
+          {TABS.map(tab => (
             <button
               key={tab.id}
               onClick={() => setCurrentTab(tab.id)}
@@ -212,11 +233,13 @@ export default function ProfileEditTabs({
                   { value: 'FEMALE', label: 'Mme' },
                   { value: 'OTHER', label: 'Autre' },
                   { value: 'PREFER_NOT_TO_SAY', label: '—' },
-                ].map((option) => (
+                ].map(option => (
                   <button
                     key={option.value}
                     type="button"
-                    onClick={() => setGender(gender === option.value ? '' : option.value)}
+                    onClick={() =>
+                      setGender(gender === option.value ? '' : option.value)
+                    }
                     className={`py-3 rounded-xl border-2 text-sm font-medium transition-all ${
                       gender === option.value
                         ? 'border-blue-600 bg-blue-50 text-blue-700'
@@ -237,9 +260,11 @@ export default function ProfileEditTabs({
               <input
                 type="date"
                 value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
+                onChange={e => setBirthDate(e.target.value)}
                 max={
-                  new Date(new Date().setFullYear(new Date().getFullYear() - 18))
+                  new Date(
+                    new Date().setFullYear(new Date().getFullYear() - 18)
+                  )
                     .toISOString()
                     .split('T')[0]
                 }
@@ -255,7 +280,7 @@ export default function ProfileEditTabs({
               <input
                 type="tel"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={e => setPhone(e.target.value)}
                 placeholder="06 12 34 56 78"
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-600 focus:outline-none transition-all text-gray-900"
               />
@@ -268,7 +293,7 @@ export default function ProfileEditTabs({
               </label>
               <textarea
                 value={address}
-                onChange={(e) => setAddress(e.target.value)}
+                onChange={e => setAddress(e.target.value)}
                 placeholder="12 rue de la Paix, 75000 Paris"
                 rows={2}
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-600 focus:outline-none transition-all resize-none text-gray-900"
@@ -285,6 +310,125 @@ export default function ProfileEditTabs({
           </div>
         )}
 
+        {/* Onglet Photo */}
+        {currentTab === 'photo' && (
+          <div className="space-y-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
+              Photo de profil
+            </h2>
+
+            <div className="flex flex-col items-center">
+              {/* Preview */}
+              <div className="relative mb-6">
+                {avatar ? (
+                  <div className="relative">
+                    <img
+                      src={avatar}
+                      alt="Photo de profil"
+                      className="w-32 h-32 rounded-full object-cover border-4 border-gray-100"
+                    />
+                    <button
+                      onClick={() => setAvatar('')}
+                      className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <div className="w-32 h-32 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-3xl font-semibold">
+                    {userData.firstName[0]}
+                    {userData.lastName[0]}
+                  </div>
+                )}
+              </div>
+
+              {/* Upload button */}
+              <label className="cursor-pointer">
+                <span className="px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors inline-block">
+                  {uploadingAvatar
+                    ? '⏳ Upload...'
+                    : avatar
+                      ? 'Changer la photo'
+                      : 'Ajouter une photo'}
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={async e => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+
+                    if (file.size > 5 * 1024 * 1024) {
+                      toast.error('Image trop lourde (max 5MB)')
+                      return
+                    }
+
+                    setUploadingAvatar(true)
+                    try {
+                      const formData = new FormData()
+                      formData.append('file', file)
+
+                      const response = await fetch('/api/upload', {
+                        method: 'POST',
+                        body: formData,
+                      })
+
+                      if (!response.ok) {
+                        throw new Error('Erreur upload')
+                      }
+
+                      const data = await response.json()
+                      setAvatar(data.url)
+                      toast.success('Photo uploadée')
+                    } catch (error) {
+                      toast.error("Erreur lors de l'upload")
+                    } finally {
+                      setUploadingAvatar(false)
+                    }
+                  }}
+                  disabled={uploadingAvatar}
+                  className="hidden"
+                />
+              </label>
+              <p className="text-xs text-gray-400 mt-2">JPG, PNG • Max 5MB</p>
+
+              {avatar && (
+                <p className="text-sm text-gray-600 mt-4 text-center max-w-md">
+                  💡 N&apos;oubliez pas d&apos;enregistrer pour sauvegarder votre photo
+                </p>
+              )}
+            </div>
+
+            <button
+              onClick={async () => {
+                setLoading(true)
+                try {
+                  const response = await fetch('/api/profile', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ avatar: avatar || null }),
+                  })
+
+                  if (!response.ok) {
+                    throw new Error('Erreur de mise à jour')
+                  }
+
+                  toast.success('Photo de profil mise à jour')
+                  router.refresh()
+                } catch (error) {
+                  toast.error('Erreur de mise à jour')
+                } finally {
+                  setLoading(false)
+                }
+              }}
+              disabled={loading || uploadingAvatar}
+              className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            >
+              {loading ? 'Enregistrement...' : 'Enregistrer'}
+            </button>
+          </div>
+        )}
+
         {/* Onglet Professionnel */}
         {currentTab === 'professional' && (
           <div className="space-y-6">
@@ -294,7 +438,8 @@ export default function ProfileEditTabs({
               </h2>
               {!userData.isTenant && (
                 <p className="text-sm text-gray-600 mb-4">
-                  Ces informations sont particulièrement importantes si vous êtes locataire.
+                  Ces informations sont particulièrement importantes si vous
+                  êtes locataire.
                 </p>
               )}
             </div>
@@ -307,8 +452,8 @@ export default function ProfileEditTabs({
               <input
                 type="number"
                 value={salary}
-                onChange={(e) => setSalary(e.target.value)}
-                onWheel={(e) => e.currentTarget.blur()}
+                onChange={e => setSalary(e.target.value)}
+                onWheel={e => e.currentTarget.blur()}
                 placeholder="2500"
                 min="0"
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-600 focus:outline-none transition-all text-gray-900"
@@ -323,7 +468,7 @@ export default function ProfileEditTabs({
               <input
                 type="text"
                 value={profession}
-                onChange={(e) => setProfession(e.target.value)}
+                onChange={e => setProfession(e.target.value)}
                 placeholder="Développeur web"
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-600 focus:outline-none transition-all text-gray-900"
               />
@@ -337,7 +482,7 @@ export default function ProfileEditTabs({
               <input
                 type="text"
                 value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
+                onChange={e => setCompanyName(e.target.value)}
                 placeholder="TechCorp"
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-600 focus:outline-none transition-all text-gray-900"
               />
@@ -350,11 +495,11 @@ export default function ProfileEditTabs({
               </label>
               <select
                 value={contractType}
-                onChange={(e) => setContractType(e.target.value)}
+                onChange={e => setContractType(e.target.value)}
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-600 focus:outline-none transition-all text-gray-900 bg-white"
               >
                 <option value="">Sélectionnez</option>
-                {CONTRACT_TYPES.map((type) => (
+                {CONTRACT_TYPES.map(type => (
                   <option key={type.value} value={type.value}>
                     {type.label}
                   </option>
@@ -371,7 +516,7 @@ export default function ProfileEditTabs({
                 <input
                   type="text"
                   value={currentCity}
-                  onChange={(e) => setCurrentCity(e.target.value)}
+                  onChange={e => setCurrentCity(e.target.value)}
                   placeholder="Paris"
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-600 focus:outline-none transition-all text-gray-900"
                 />
@@ -383,8 +528,10 @@ export default function ProfileEditTabs({
                 <input
                   type="text"
                   value={currentPostalCode}
-                  onChange={(e) =>
-                    setCurrentPostalCode(e.target.value.replace(/\D/g, '').slice(0, 5))
+                  onChange={e =>
+                    setCurrentPostalCode(
+                      e.target.value.replace(/\D/g, '').slice(0, 5)
+                    )
                   }
                   placeholder="75001"
                   maxLength={5}
@@ -421,6 +568,12 @@ export default function ProfileEditTabs({
             </h2>
 
             <div className="space-y-4">
+              <PrivacyToggle
+                label="Afficher ma photo de profil"
+                description="Ma photo sera visible au lieu de mes initiales"
+                checked={showAvatar}
+                onChange={setShowAvatar}
+              />
               <PrivacyToggle
                 label="Afficher mes badges"
                 description="Les badges de gamification seront visibles sur mon profil"

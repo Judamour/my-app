@@ -249,3 +249,49 @@ export function calculateLevelFromXP(xp: number): number {
 export function getXPForNextLevel(currentLevel: number): number {
   return (currentLevel + 1) ** 2 * 100
 }
+
+/**
+ * Synchronise les XP de l'utilisateur avec ses badges débloqués
+ * À appeler après chaque action qui pourrait débloquer un badge
+ */
+export async function syncUserXPWithBadges(userId: string): Promise<{ xp: number; level: number; newBadges: string[] }> {
+  // Calculer les badges actuels
+  const unlockedBadges = await calculateUserBadges(userId)
+  
+  // Calculer les XP totaux basés sur les badges
+  let totalXP = 0
+  const badgeIds: string[] = []
+  
+  for (const ub of unlockedBadges) {
+    const badge = getBadgeById(ub.badgeId)
+    if (badge) {
+      totalXP += badge.points
+      badgeIds.push(ub.badgeId)
+    }
+  }
+  
+  // Récupérer l'utilisateur actuel
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { xp: true, badges: true },
+  })
+  
+  // Trouver les nouveaux badges (pas encore dans la liste stockée)
+  const existingBadges = (user?.badges as string[]) || []
+  const newBadges = badgeIds.filter(id => !existingBadges.includes(id))
+  
+  // Calculer le nouveau niveau
+  const newLevel = calculateLevelFromXP(totalXP)
+  
+  // Mettre à jour l'utilisateur
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      xp: totalXP,
+      level: newLevel,
+      badges: badgeIds,
+    },
+  })
+  
+  return { xp: totalXP, level: newLevel, newBadges }
+}

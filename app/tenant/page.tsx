@@ -17,13 +17,15 @@ export default async function TenantDashboardPage() {
       isTenant: true,
       isOwner: true,
       profileComplete: true,
+      phone: true,
+      salary: true,
+      profession: true,
     },
   })
 
   if (!user) {
     redirect('/login')
   }
-
 
   const applicationsCount = await prisma.application.count({
     where: {
@@ -58,28 +60,30 @@ export default async function TenantDashboardPage() {
   })
 
   // 🆕 Compter les baux où je suis tenant principal OU colocataire
-const [directLeasesCount, coTenantLeasesCount] = await Promise.all([
-  // Baux où je suis le tenant principal
-  prisma.lease.count({
-    where: {
-      tenantId: user.id,
-      status: { in: ['ACTIVE', 'PENDING'] },
-    },
-  }),
-  // Baux où je suis colocataire (via LeaseTenant)
-  prisma.leaseTenant.count({
-    where: {
-      tenantId: user.id,
-      leftAt: null,
-      lease: {
-        tenantId: { not: user.id }, // Pas déjà compté
+  const [directLeasesCount, coTenantLeasesCount] = await Promise.all([
+    // Baux où je suis le tenant principal
+    prisma.lease.count({
+      where: {
+        tenantId: user.id,
         status: { in: ['ACTIVE', 'PENDING'] },
       },
-    },
-  }),
-])
+    }),
+    // Baux où je suis colocataire (via LeaseTenant)
+    prisma.leaseTenant.count({
+      where: {
+        tenantId: user.id,
+        leftAt: null,
+        lease: {
+          tenantId: { not: user.id }, // Pas déjà compté
+          status: { in: ['ACTIVE', 'PENDING'] },
+        },
+      },
+    }),
+  ])
 
-const activeLeases = directLeasesCount + coTenantLeasesCount
+  const isProfileIncomplete = !user.phone || !user.salary || !user.profession
+
+  const activeLeases = directLeasesCount + coTenantLeasesCount
 
   const receiptsCount = await prisma.receipt.count({
     where: {
@@ -95,46 +99,46 @@ const activeLeases = directLeasesCount + coTenantLeasesCount
     },
   })
 
- // 🆕 Récupérer le bail actif pour le widget services (incluant colocations)
-let activeLease = await prisma.lease.findFirst({
-  where: {
-    tenantId: user.id,
-    status: 'ACTIVE',
-  },
-  select: {
-    id: true,
-    property: {
-      select: { title: true },
-    },
-  },
-})
-
-// Si pas de bail direct, chercher via colocation
-if (!activeLease) {
-  const coTenantLease = await prisma.leaseTenant.findFirst({
+  // 🆕 Récupérer le bail actif pour le widget services (incluant colocations)
+  let activeLease = await prisma.lease.findFirst({
     where: {
       tenantId: user.id,
-      leftAt: null,
-      lease: {
-        status: 'ACTIVE',
-      },
+      status: 'ACTIVE',
     },
     select: {
-      lease: {
-        select: {
-          id: true,
-          property: {
-            select: { title: true },
-          },
-        },
+      id: true,
+      property: {
+        select: { title: true },
       },
     },
   })
-  
-  if (coTenantLease) {
-    activeLease = coTenantLease.lease
+
+  // Si pas de bail direct, chercher via colocation
+  if (!activeLease) {
+    const coTenantLease = await prisma.leaseTenant.findFirst({
+      where: {
+        tenantId: user.id,
+        leftAt: null,
+        lease: {
+          status: 'ACTIVE',
+        },
+      },
+      select: {
+        lease: {
+          select: {
+            id: true,
+            property: {
+              select: { title: true },
+            },
+          },
+        },
+      },
+    })
+
+    if (coTenantLease) {
+      activeLease = coTenantLease.lease
+    }
   }
-}
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -148,7 +152,7 @@ if (!activeLease) {
         {/* Alertes */}
         <div className="space-y-4 mb-8">
           {/* Alerte profil incomplet */}
-          {!user.profileComplete && (
+          {isProfileIncomplete && (
             <div className="bg-orange-50 rounded-xl p-4 border border-orange-200">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center flex-shrink-0">
@@ -160,10 +164,11 @@ if (!activeLease) {
                   </h3>
                   <p className="text-sm text-gray-600 mt-1">
                     Les propriétaires acceptent 3x plus les profils complets
+                    (téléphone, salaire, profession)
                   </p>
                 </div>
                 <Link
-                  href="/profile/complete"
+                  href="/profile/edit"
                   className="px-4 py-2 bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-700 transition-colors flex-shrink-0"
                 >
                   Compléter

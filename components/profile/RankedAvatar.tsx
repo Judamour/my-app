@@ -1,4 +1,5 @@
 import { RankInfo } from '@/lib/badges'
+import Image from 'next/image'
 
 interface RankedAvatarProps {
   firstName: string
@@ -6,6 +7,8 @@ interface RankedAvatarProps {
   rankInfo: RankInfo
   showBorder?: boolean
   size?: 'small' | 'medium' | 'large'
+  avatar?: string | null
+  showAvatar?: boolean
 }
 
 export default function RankedAvatar({
@@ -14,8 +17,11 @@ export default function RankedAvatar({
   rankInfo,
   showBorder = true,
   size = 'large',
+  avatar = null,
+  showAvatar = true,
 }: RankedAvatarProps) {
   const initials = `${firstName[0]}${lastName[0]}`
+  const usePhoto = avatar && showAvatar
 
   // Tailles selon le prop
   const sizeClasses = {
@@ -30,15 +36,28 @@ export default function RankedAvatar({
     large: 'p-1',
   }
 
+  // 🆕 Avatar content en JSX (pas en fonction)
+  const avatarContent = usePhoto ? (
+    <div className={`${sizeClasses[size]} rounded-full overflow-hidden shadow-lg relative`}>
+      <Image
+        src={avatar}
+        alt={`${firstName} ${lastName}`}
+        fill
+        className="object-cover"
+         sizes="(max-width: 768px) 100vw, 200px" 
+      />
+    </div>
+  ) : (
+    <div
+      className={`${sizeClasses[size]} bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-white font-semibold shadow-lg`}
+    >
+      {initials}
+    </div>
+  )
+
   // Si pas de bordure, afficher avatar simple
   if (!showBorder || rankInfo.rank === 'NONE') {
-    return (
-      <div
-        className={`${sizeClasses[size]} bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-white font-semibold shadow-lg`}
-      >
-        {initials}
-      </div>
-    )
+    return avatarContent
   }
 
   // Avatar avec bordure selon le rang
@@ -56,11 +75,7 @@ export default function RankedAvatar({
           className={`relative ${paddingClasses[size]} rounded-full bg-gradient-to-br ${rankInfo.gradient}`}
         >
           <div className={`${paddingClasses[size]} rounded-full bg-white`}>
-            <div
-              className={`${sizeClasses[size]} rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-semibold shadow-lg`}
-            >
-              {initials}
-            </div>
+            {avatarContent}
           </div>
         </div>
 
@@ -80,11 +95,7 @@ export default function RankedAvatar({
         className={`${paddingClasses[size]} rounded-full bg-gradient-to-br ${rankInfo.color}`}
       >
         <div className={`${paddingClasses[size]} rounded-full bg-white`}>
-          <div
-            className={`${sizeClasses[size]} rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-semibold shadow-lg`}
-          >
-            {initials}
-          </div>
+          {avatarContent}
         </div>
       </div>
 

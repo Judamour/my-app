@@ -128,6 +128,9 @@ model User {
   profession        String?    // Métier
   companyName       String?    // Entreprise
   contractType      String?    // CDI, CDD, etc.
+
+  avatar        String?   // URL photo de profil Cloudinary
+  showAvatar    Boolean   @default(true)  // Afficher la photo (confidentialité)
   
   // 🆕 PROFIL LOCATAIRE - Adresse actuelle
   currentCity       String?

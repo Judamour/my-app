@@ -37,17 +37,19 @@ export default function Header() {
     <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
+                   {/* Logo */}
           <Link
-            href={user.isOwner ? '/owner' : '/tenant'}
-            className="flex items-center gap-2 flex-shrink-0"
+          href={user.isOwner ? "/owner" : "/tenant"}
+            className="flex items-center flex-shrink-0 hover:opacity-80 transition-opacity"
           >
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-              <span className="text-2xl">🏠</span>
-            </div>
-            <span className="font-bold text-xl text-gray-900">Renty</span>
+            <img
+              src="/logo/renty_logo_navbar.svg"
+              alt="Renty"
+              className="h-10 w-10"
+            /> <span className="pt-3 font-bold text-xl text-gray-900">Renty</span>
           </Link>
 
+     
           {/* Navigation Desktop */}
           <nav className="hidden lg:flex items-center gap-1">
             {isOwner ? (
@@ -301,17 +303,20 @@ export default function Header() {
                 <MobileNavLink href="/tenant" active={pathname === '/tenant'}>
                   📊 Dashboard
                 </MobileNavLink>
+
                 <MobileNavLink
                   href="/tenant/applications"
                   active={pathname.startsWith('/tenant/applications')}
                 >
+
                   📝 Candidatures
                 </MobileNavLink>
+
                 <MobileNavLink
-                  href="/tenant/leases"
-                  active={pathname.startsWith('/tenant/leases')}
+                  href="/tenant/receipts"
+                  active={pathname.startsWith('/tenant/receipts')}
                 >
-                  📄 Baux
+                  📄 Quittances
                 </MobileNavLink>
               </>
             )
