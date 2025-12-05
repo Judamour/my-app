@@ -12,7 +12,7 @@ export default async function LandingPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-2xl">🏠</span>
-              <span className="text-xl font-bold text-gray-900">LocaTop</span>
+              <span className="text-xl font-bold text-gray-900">Renty</span>
             </div>
 
             <div className="hidden md:flex items-center gap-8">
@@ -39,8 +39,7 @@ export default async function LandingPage() {
             <div className="flex items-center gap-4">
               {session?.user ? (
                 <Link
-                  href="/login
-                  "
+                  href="/dashboard"
                   className="px-5 py-2.5 bg-gray-900 text-white font-medium rounded-xl hover:bg-gray-800 transition-colors"
                 >
                   Mon espace
@@ -73,11 +72,11 @@ export default async function LandingPage() {
             <div>
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 rounded-full text-emerald-700 text-sm font-medium mb-6">
                 <span>✨</span>
-                <span>La gestion locative simplifiée</span>
+                <span>La gestion locative nouvelle génération</span>
               </div>
 
               <h1 className="text-5xl md:text-6xl font-bold text-gray-900 leading-tight mb-6">
-                Gérez vos locations en toute
+                Louez en toute
                 <span className="bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent">
                   {' '}
                   confiance
@@ -85,8 +84,8 @@ export default async function LandingPage() {
               </h1>
 
               <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-                La plateforme qui connecte propriétaires et locataires.
-                Candidatures, baux, quittances et paiements au même endroit.
+                Candidatures, baux, quittances, messagerie, avis et services partenaires.
+                Tout ce dont propriétaires et locataires ont besoin, en un seul endroit.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4">
@@ -118,17 +117,17 @@ export default async function LandingPage() {
                 <div className="w-px h-10 bg-gray-200"></div>
                 <div className="text-center">
                   <p className="text-2xl font-bold text-gray-900">⭐</p>
-                  <p className="text-sm text-gray-500">Avis vérifiés</p>
+                  <p className="text-sm text-gray-500">Avis double-blind</p>
                 </div>
               </div>
             </div>
 
-            {/* Hero image/illustration */}
+            {/* Hero illustration */}
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-3xl transform rotate-3"></div>
               <div className="relative bg-white rounded-3xl shadow-2xl p-8 transform -rotate-1">
                 <div className="space-y-4">
-                  {/* Fake dashboard preview */}
+                  {/* Dashboard preview */}
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
@@ -148,33 +147,31 @@ export default async function LandingPage() {
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                        🏢
+                        💬
                       </div>
                       <div>
                         <p className="font-semibold text-gray-900">
-                          Studio Lyon 6
+                          Nouveau message
                         </p>
-                        <p className="text-sm text-gray-500">1 pièce • 25m²</p>
+                        <p className="text-sm text-gray-500">Marie D. - Il y a 5 min</p>
                       </div>
                     </div>
-                    <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm">
-                      3 candidats
-                    </span>
+                    <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
                   </div>
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                        🏡
+                      <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                        📄
                       </div>
                       <div>
                         <p className="font-semibold text-gray-900">
-                          Maison Bordeaux
+                          Quittance Novembre
                         </p>
-                        <p className="text-sm text-gray-500">4 pièces • 90m²</p>
+                        <p className="text-sm text-gray-500">Prête à télécharger</p>
                       </div>
                     </div>
                     <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm">
-                      Loué
+                      Confirmée
                     </span>
                   </div>
                 </div>
@@ -206,8 +203,8 @@ export default async function LandingPage() {
                 Candidatures simplifiées
               </h3>
               <p className="text-gray-600">
-                Recevez et gérez les candidatures en un clic. Profils vérifiés
-                et dossiers complets.
+                Recevez et gérez les candidatures en un clic. Profils vérifiés,
+                documents partagés et dossiers complets.
               </p>
             </div>
 
@@ -217,11 +214,11 @@ export default async function LandingPage() {
                 <span className="text-2xl">📄</span>
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                Baux dématérialisés
+                Baux & états des lieux
               </h3>
               <p className="text-gray-600">
-                Créez et signez vos baux en ligne. Tout est archivé et
-                accessible à tout moment.
+                Créez vos baux, gérez les colocataires et réalisez les états des
+                lieux entrée/sortie avec photos.
               </p>
             </div>
 
@@ -234,22 +231,22 @@ export default async function LandingPage() {
                 Quittances automatiques
               </h3>
               <p className="text-gray-600">
-                Générez et envoyez vos quittances de loyer automatiquement
-                chaque mois.
+                Générez et envoyez vos quittances de loyer automatiquement.
+                Suivi des paiements en temps réel.
               </p>
             </div>
 
             {/* Feature 4 */}
             <div className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow">
               <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center mb-6">
-                <span className="text-2xl">💰</span>
+                <span className="text-2xl">💬</span>
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                Suivi des paiements
+                Messagerie intégrée
               </h3>
               <p className="text-gray-600">
-                Suivez les paiements en temps réel. Confirmations
-                bidirectionnelles sécurisées.
+                Échangez directement avec vos locataires ou propriétaires.
+                Historique complet et notifications.
               </p>
             </div>
 
@@ -262,8 +259,8 @@ export default async function LandingPage() {
                 Avis double-blind
               </h3>
               <p className="text-gray-600">
-                Système d&apos;avis équitable où propriétaires et locataires
-                s&apos;évaluent mutuellement.
+                Système d&apos;avis équitable. Les avis restent cachés tant que
+                les deux parties n&apos;ont pas évalué.
               </p>
             </div>
 
@@ -273,11 +270,53 @@ export default async function LandingPage() {
                 <span className="text-2xl">🏆</span>
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                Badges et Gamification
+                Gamification & badges
               </h3>
               <p className="text-gray-600">
-                Gagnez des badges et construisez votre réputation pour des
-                locations en confiance.
+                Gagnez de l&apos;XP, débloquez des badges et construisez votre
+                réputation pour des locations en confiance.
+              </p>
+            </div>
+
+            {/* Feature 7 */}
+            <div className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-14 h-14 bg-indigo-100 rounded-2xl flex items-center justify-center mb-6">
+                <span className="text-2xl">📁</span>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                Gestion documentaire
+              </h3>
+              <p className="text-gray-600">
+                Centralisez tous vos documents : pièces d&apos;identité, bulletins de
+                salaire, contrats, attestations d&apos;assurance.
+              </p>
+            </div>
+
+            {/* Feature 8 */}
+            <div className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center mb-6">
+                <span className="text-2xl">🤝</span>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                Services partenaires
+              </h3>
+              <p className="text-gray-600">
+                Accédez à nos partenaires : assurance habitation, électricité,
+                gaz, internet et déménagement.
+              </p>
+            </div>
+
+            {/* Feature 9 */}
+            <div className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-14 h-14 bg-cyan-100 rounded-2xl flex items-center justify-center mb-6">
+                <span className="text-2xl">🔗</span>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                Partage facile
+              </h3>
+              <p className="text-gray-600">
+                Partagez votre profil ou vos annonces via un lien court.
+                Contrôlez ce que vous rendez public.
               </p>
             </div>
           </div>
@@ -318,8 +357,8 @@ export default async function LandingPage() {
                       Ajoutez vos biens
                     </h4>
                     <p className="text-gray-600">
-                      Créez vos fiches propriétés avec photos et
-                      caractéristiques.
+                      Créez vos fiches avec photos, caractéristiques et loyer.
+                      Appartements, maisons, studios, parkings...
                     </p>
                   </div>
                 </div>
@@ -332,8 +371,8 @@ export default async function LandingPage() {
                       Recevez des candidatures
                     </h4>
                     <p className="text-gray-600">
-                      Les locataires intéressés postulent avec leur profil
-                      vérifié.
+                      Consultez les profils vérifiés, les documents et échangez
+                      via la messagerie intégrée.
                     </p>
                   </div>
                 </div>
@@ -343,11 +382,11 @@ export default async function LandingPage() {
                   </div>
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-1">
-                      Gérez vos baux
+                      Gérez vos locations
                     </h4>
                     <p className="text-gray-600">
-                      Créez le bail, suivez les paiements et générez les
-                      quittances.
+                      Créez le bail, réalisez l&apos;état des lieux, suivez les
+                      paiements et générez les quittances.
                     </p>
                   </div>
                 </div>
@@ -372,10 +411,11 @@ export default async function LandingPage() {
                   </div>
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-1">
-                      Créez votre profil
+                      Créez votre passport
                     </h4>
                     <p className="text-gray-600">
-                      Complétez votre passport de confiance une seule fois.
+                      Complétez votre profil avec vos infos professionnelles et
+                      uploadez vos documents une seule fois.
                     </p>
                   </div>
                 </div>
@@ -385,11 +425,11 @@ export default async function LandingPage() {
                   </div>
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-1">
-                      Postulez facilement
+                      Postulez en un clic
                     </h4>
                     <p className="text-gray-600">
-                      Envoyez votre candidature en un clic aux biens qui vous
-                      plaisent.
+                      Envoyez votre candidature avec vos documents. Suivez
+                      l&apos;avancement en temps réel.
                     </p>
                   </div>
                 </div>
@@ -402,7 +442,8 @@ export default async function LandingPage() {
                       Gérez votre location
                     </h4>
                     <p className="text-gray-600">
-                      Déclarez vos paiements et téléchargez vos quittances.
+                      Déclarez vos paiements, téléchargez vos quittances et
+                      accédez aux services partenaires.
                     </p>
                   </div>
                 </div>
@@ -412,8 +453,53 @@ export default async function LandingPage() {
         </div>
       </section>
 
+      {/* Services partenaires */}
+      <section className="py-20 px-6 bg-gradient-to-br from-emerald-50 to-teal-50">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Services pour votre logement
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Simplifiez votre emménagement avec nos partenaires de confiance
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="bg-white rounded-2xl p-6 text-center shadow-sm">
+              <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">🛡️</span>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-1">Assurance</h3>
+              <p className="text-sm text-gray-500">Habitation obligatoire</p>
+            </div>
+            <div className="bg-white rounded-2xl p-6 text-center shadow-sm">
+              <div className="w-16 h-16 bg-yellow-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">⚡</span>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-1">Électricité</h3>
+              <p className="text-sm text-gray-500">Meilleurs tarifs</p>
+            </div>
+            <div className="bg-white rounded-2xl p-6 text-center shadow-sm">
+              <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">🔥</span>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-1">Gaz</h3>
+              <p className="text-sm text-gray-500">Comparateur gratuit</p>
+            </div>
+            <div className="bg-white rounded-2xl p-6 text-center shadow-sm">
+              <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">📶</span>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-1">Internet</h3>
+              <p className="text-sm text-gray-500">Box & mobile</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Pricing */}
-      <section id="pricing" className="py-20 px-6 bg-gray-50">
+      <section id="pricing" className="py-20 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
@@ -443,20 +529,22 @@ export default async function LandingPage() {
               </div>
               <ul className="space-y-3 mb-8">
                 <li className="flex items-center gap-2 text-gray-600">
-                  <span className="text-emerald-500">✓</span> Candidatures
-                  illimitées
+                  <span className="text-emerald-500">✓</span> Candidatures illimitées
                 </li>
                 <li className="flex items-center gap-2 text-gray-600">
-                  <span className="text-emerald-500">✓</span> Passport de
-                  confiance
+                  <span className="text-emerald-500">✓</span> Passport de confiance
                 </li>
                 <li className="flex items-center gap-2 text-gray-600">
-                  <span className="text-emerald-500">✓</span> Suivi des
-                  paiements
+                  <span className="text-emerald-500">✓</span> Messagerie intégrée
                 </li>
                 <li className="flex items-center gap-2 text-gray-600">
-                  <span className="text-emerald-500">✓</span> Quittances
-                  téléchargeables
+                  <span className="text-emerald-500">✓</span> Suivi des paiements
+                </li>
+                <li className="flex items-center gap-2 text-gray-600">
+                  <span className="text-emerald-500">✓</span> Quittances PDF
+                </li>
+                <li className="flex items-center gap-2 text-gray-600">
+                  <span className="text-emerald-500">✓</span> Services partenaires
                 </li>
               </ul>
               <Link
@@ -491,16 +579,19 @@ export default async function LandingPage() {
                   <span className="text-emerald-500">✓</span> Gestion de 4 biens
                 </li>
                 <li className="flex items-center gap-2 text-gray-600">
-                  <span className="text-emerald-500">✓</span> Candidatures et
-                  baux
+                  <span className="text-emerald-500">✓</span> Candidatures & baux
                 </li>
                 <li className="flex items-center gap-2 text-gray-600">
-                  <span className="text-emerald-500">✓</span> Quittances
-                  automatiques
+                  <span className="text-emerald-500">✓</span> États des lieux
                 </li>
                 <li className="flex items-center gap-2 text-gray-600">
-                  <span className="text-emerald-500">✓</span> Suivi des
-                  paiements
+                  <span className="text-emerald-500">✓</span> Quittances auto
+                </li>
+                <li className="flex items-center gap-2 text-gray-600">
+                  <span className="text-emerald-500">✓</span> Messagerie
+                </li>
+                <li className="flex items-center gap-2 text-gray-600">
+                  <span className="text-emerald-500">✓</span> Avis & réputation
                 </li>
               </ul>
               <Link
@@ -520,7 +611,7 @@ export default async function LandingPage() {
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Pro</h3>
                 <div className="flex items-baseline justify-center gap-1">
                   <span className="text-4xl font-bold text-gray-900">
-                    39,90€
+                    9,90€
                   </span>
                   <span className="text-gray-500">/mois</span>
                 </div>
@@ -531,15 +622,19 @@ export default async function LandingPage() {
                   <span className="text-emerald-500">✓</span> Biens illimités
                 </li>
                 <li className="flex items-center gap-2 text-gray-600">
-                  <span className="text-emerald-500">✓</span> Toutes les
-                  fonctionnalités
+                  <span className="text-emerald-500">✓</span> Toutes les features
                 </li>
                 <li className="flex items-center gap-2 text-gray-600">
-                  <span className="text-emerald-500">✓</span> Support
-                  prioritaire
+                  <span className="text-emerald-500">✓</span> Colocations
                 </li>
                 <li className="flex items-center gap-2 text-gray-600">
                   <span className="text-emerald-500">✓</span> Export comptable
+                </li>
+                <li className="flex items-center gap-2 text-gray-600">
+                  <span className="text-emerald-500">✓</span> Support prioritaire
+                </li>
+                <li className="flex items-center gap-2 text-gray-600">
+                  <span className="text-emerald-500">✓</span> Analytics avancés
                 </li>
               </ul>
               <Link
@@ -553,6 +648,45 @@ export default async function LandingPage() {
         </div>
       </section>
 
+      {/* Gamification teaser */}
+      <section className="py-20 px-6 bg-gray-50">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 rounded-full text-purple-700 text-sm font-medium mb-6">
+            <span>🏆</span>
+            <span>Système de réputation unique</span>
+          </div>
+          <h2 className="text-4xl font-bold text-gray-900 mb-6">
+            Construisez votre réputation
+          </h2>
+          <p className="text-xl text-gray-600 mb-10">
+            Gagnez des badges, montez en niveau et démarquez-vous.
+            Un profil complet et des avis positifs augmentent vos chances.
+          </p>
+          <div className="flex flex-wrap justify-center gap-4">
+            <div className="px-4 py-2 bg-white rounded-full shadow-sm border border-gray-200 flex items-center gap-2">
+              <span>🌟</span>
+              <span className="text-gray-700 font-medium">Locataire exemplaire</span>
+            </div>
+            <div className="px-4 py-2 bg-white rounded-full shadow-sm border border-gray-200 flex items-center gap-2">
+              <span>✅</span>
+              <span className="text-gray-700 font-medium">Profil vérifié</span>
+            </div>
+            <div className="px-4 py-2 bg-white rounded-full shadow-sm border border-gray-200 flex items-center gap-2">
+              <span>💬</span>
+              <span className="text-gray-700 font-medium">Super communicant</span>
+            </div>
+            <div className="px-4 py-2 bg-white rounded-full shadow-sm border border-gray-200 flex items-center gap-2">
+              <span>🏠</span>
+              <span className="text-gray-700 font-medium">Propriétaire fiable</span>
+            </div>
+            <div className="px-4 py-2 bg-white rounded-full shadow-sm border border-gray-200 flex items-center gap-2">
+              <span>⚡</span>
+              <span className="text-gray-700 font-medium">Paiement rapide</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Final */}
       <section className="py-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
@@ -560,8 +694,7 @@ export default async function LandingPage() {
             Prêt à simplifier votre gestion locative ?
           </h2>
           <p className="text-xl text-gray-600 mb-8">
-            Rejoignez des milliers de propriétaires et locataires qui nous font
-            confiance.
+            Rejoignez Renty et gérez vos locations en toute sérénité.
           </p>
           <Link
             href="/register"
@@ -579,7 +712,7 @@ export default async function LandingPage() {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <span className="text-2xl">🏠</span>
-                <span className="text-xl font-bold">LocaTop</span>
+                <span className="text-xl font-bold">Renty</span>
               </div>
               <p className="text-gray-400">
                 La gestion locative moderne et simplifiée.
@@ -639,10 +772,10 @@ export default async function LandingPage() {
               <ul className="space-y-2 text-gray-400">
                 <li>
                   <a
-                    href="mailto:contact@locatop.fr"
+                    href="mailto:contact@renty.fr"
                     className="hover:text-white transition-colors"
                   >
-                    contact@locatop.fr
+                    contact@renty.fr
                   </a>
                 </li>
                 <li>
@@ -655,7 +788,7 @@ export default async function LandingPage() {
           </div>
 
           <div className="pt-8 border-t border-gray-800 text-center text-gray-500">
-            <p>© 2025 LocaTop. Tous droits réservés.</p>
+            <p>© 2025 Renty. Tous droits réservés.</p>
           </div>
         </div>
       </footer>

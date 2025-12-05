@@ -38,14 +38,31 @@ npx prisma migrate dev  # Migrations
 - Réponses courtes sauf si explication demandée
 - Ne pas expliquer les changements mineurs
 - Ne jamais toucher : `.env`
+- Pour l'UX toujours avoir un style comme Airbnb
+
+## Features implémentées
+- [x] Authentification (inscription, connexion, OAuth Google)
+- [x] Vérification email (token + page /verify-email)
+- [x] Gestion des propriétés (CRUD, photos, types variés)
+- [x] Candidatures (envoi, acceptation, rejet, documents partagés)
+- [x] Baux & colocations (création, gestion, états des lieux)
+- [x] Quittances (génération PDF, déclaration/confirmation paiements)
+- [x] Messagerie intégrée (conversations, notifications)
+- [x] Système d'avis double-blind
+- [x] Gamification (XP, niveaux, badges)
+- [x] Profil locataire (infos pro, documents)
+- [x] Services partenaires (affiliation)
+- [x] Liens de partage (profil, propriété)
+- [x] Abonnements Stripe (free, pro, business)
+- [x] Page d'accueil Renty
 
 ## En cours
-- [ ] Authentification (en développement)
-- [ ] Features diverses avant dashboard admin
-- [ ] Bugs à corriger (liste à venir)
+- [ ] Mot de passe oublié
+- [ ] Tests avant mise en prod
 
 ## À venir
-- Dashboard admin
+- [ ] Dashboard admin
+- [ ] Déploiement Vercel
 
 ---
-*Dernière mise à jour : décembre 2025*
+*Dernière mise à jour : 5 décembre 2025*
