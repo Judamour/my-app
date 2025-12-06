@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import ImageUploader from '@/components/properties/ImageUploader'
+import AddressAutocomplete from '@/components/ui/AddressAutocomplete'
 
 interface NewPropertyFormProps {
   isNearLimit: boolean
@@ -142,12 +143,6 @@ export default function NewPropertyForm({
     document.addEventListener('wheel', handleWheel, { passive: false })
     return () => document.removeEventListener('wheel', handleWheel)
   }, [])
-
-  const handlePostalCodeChange = (value: string) => {
-    // Limiter à 5 chiffres seulement
-    const numericValue = value.replace(/\D/g, '').slice(0, 5)
-    setPostalCode(numericValue)
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -344,55 +339,15 @@ export default function NewPropertyForm({
                 📍 Localisation
               </h2>
 
-              {/* Adresse */}
-              <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
-                  Adresse <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={address}
-                  onChange={e => setAddress(e.target.value)}
-                  required
-                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900 placeholder-gray-400"
-                  placeholder="12 rue de la République"
-                />
-              </div>
-
-              {/* Ville & Code postal */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">
-                    Ville <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={city}
-                    onChange={e => setCity(e.target.value)}
-                    required
-                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900 placeholder-gray-400"
-                    placeholder="Paris"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">
-                    Code postal <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={postalCode}
-                    onChange={e => handlePostalCodeChange(e.target.value)}
-                    required
-                    maxLength={5}
-                    pattern="[0-9]{5}"
-                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900 placeholder-gray-400"
-                    placeholder="75001"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    5 chiffres requis
-                  </p>
-                </div>
-              </div>
+              <AddressAutocomplete
+                address={address}
+                city={city}
+                postalCode={postalCode}
+                onAddressChange={setAddress}
+                onCityChange={setCity}
+                onPostalCodeChange={setPostalCode}
+                required
+              />
             </div>
 
             {/* Section 3 : Caractéristiques */}

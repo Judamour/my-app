@@ -55,21 +55,26 @@ npx prisma migrate dev  # Migrations
 - [x] Liens de partage (profil, propriété)
 - [x] Abonnements Stripe (free, pro, business)
 - [x] Page d'accueil Renty
+- [x] Suppression colocataire avec modal de confirmation
+- [x] Autocomplétion adresses (API Adresse gouv.fr)
 
 ## En cours
 - [ ] Mot de passe oublié
 - [ ] Tests avant mise en prod
 
-## À faire
+## À faire (MVP)
+- [ ] Révision automatique du loyer (IRL INSEE + génération lettre)
+- [ ] Relances automatiques impayés (emails J+5, J+15...)
 - [ ] Contacts utiles sur fiche bail (plombier, syndic, urgences...)
 - [ ] Bouton "Rapport de bug" sur dashboards owner/tenant → formulaire → dashboard admin
 - [ ] Dashboard admin (gestion bugs, utilisateurs, stats)
 - [ ] Aide déclaration impôts (revenus locatifs)
 - [ ] Dark mode
-- [ ] Suppression colocataire avec modal de confirmation
 
-## À venir
+## À venir (post-MVP)
+- [ ] Signature électronique (Yousign ou DocuSign)
+- [ ] Synchronisation bancaire (Bridge ou Powens)
 - [ ] Déploiement Vercel
 
 ---
-*Dernière mise à jour : 5 décembre 2025*
+*Dernière mise à jour : 6 décembre 2025 (autocomplétion adresses)*

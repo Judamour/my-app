@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import ProfileDocuments from './ProfileDocuments'
+import AddressInput from '@/components/ui/AddressInput'
 
 interface UserData {
   id: string
@@ -287,18 +288,12 @@ export default function ProfileEditTabs({
             </div>
 
             {/* Adresse */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Adresse
-              </label>
-              <textarea
-                value={address}
-                onChange={e => setAddress(e.target.value)}
-                placeholder="12 rue de la Paix, 75000 Paris"
-                rows={2}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-600 focus:outline-none transition-all resize-none text-gray-900"
-              />
-            </div>
+            <AddressInput
+              value={address}
+              onChange={setAddress}
+              label="Adresse"
+              placeholder="12 rue de la Paix, 75000 Paris"
+            />
 
             <button
               onClick={handleSaveGeneral}
@@ -508,19 +503,14 @@ export default function ProfileEditTabs({
             </div>
 
             {/* Adresse actuelle */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Ville actuelle
-                </label>
-                <input
-                  type="text"
-                  value={currentCity}
-                  onChange={e => setCurrentCity(e.target.value)}
-                  placeholder="Paris"
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-600 focus:outline-none transition-all text-gray-900"
-                />
-              </div>
+            <div className="space-y-4">
+              <AddressInput
+                value={currentCity}
+                onChange={setCurrentCity}
+                onPostalCodeChange={setCurrentPostalCode}
+                label="Ville actuelle"
+                placeholder="Rechercher une ville..."
+              />
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Code postal
@@ -537,6 +527,7 @@ export default function ProfileEditTabs({
                   maxLength={5}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-600 focus:outline-none transition-all text-gray-900"
                 />
+                <p className="text-xs text-gray-500 mt-1">Rempli automatiquement si vous sélectionnez une adresse</p>
               </div>
             </div>
 

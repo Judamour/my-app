@@ -119,6 +119,8 @@ export async function PATCH(
  const updateData: {
   title?: string
   address?: string
+  city?: string
+  postalCode?: string
   type?: PropertyType
   surface?: number
   rooms?: number
@@ -130,6 +132,8 @@ export async function PATCH(
 
 if (body.title !== undefined) updateData.title = body.title
 if (body.address !== undefined) updateData.address = body.address
+if (body.city !== undefined) updateData.city = body.city
+if (body.postalCode !== undefined) updateData.postalCode = body.postalCode
 if (body.type !== undefined) updateData.type = body.type as PropertyType
 if (body.surface !== undefined) updateData.surface = Number(body.surface)
 if (body.rooms !== undefined) updateData.rooms = Number(body.rooms)

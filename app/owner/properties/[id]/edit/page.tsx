@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { toast } from 'sonner' // ← AJOUT
-
+import { toast } from 'sonner'
+import AddressAutocomplete from '@/components/ui/AddressAutocomplete'
 
 export default function EditPropertyPage() {
   const router = useRouter()
@@ -13,6 +13,8 @@ export default function EditPropertyPage() {
 
   const [title, setTitle] = useState('')
   const [address, setAddress] = useState('')
+  const [city, setCity] = useState('')
+  const [postalCode, setPostalCode] = useState('')
   const [type, setType] = useState('APARTMENT')
   const [surface, setSurface] = useState('')
   const [rooms, setRooms] = useState('')
@@ -40,6 +42,8 @@ export default function EditPropertyPage() {
         }
         setTitle(data.title)
         setAddress(data.address)
+        setCity(data.city || '')
+        setPostalCode(data.postalCode || '')
         setType(data.type)
         setSurface(String(data.surface))
         setRooms(String(data.rooms))
@@ -65,6 +69,8 @@ const handleSubmit = async (e: React.FormEvent) => {
     const propertyData = {
       title,
       address,
+      city,
+      postalCode,
       type,
       surface: Number(surface),
       rooms: Number(rooms),
@@ -154,19 +160,15 @@ const handleSubmit = async (e: React.FormEvent) => {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Adresse <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={address}
-                onChange={e => setAddress(e.target.value)}
-                required
-                className="text-gray-900 placeholder:text-gray-500 w-full p-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="12 rue de la Paix, 75001 Paris"
-              />
-            </div>
+            <AddressAutocomplete
+              address={address}
+              city={city}
+              postalCode={postalCode}
+              onAddressChange={setAddress}
+              onCityChange={setCity}
+              onPostalCodeChange={setPostalCode}
+              required
+            />
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
