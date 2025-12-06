@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { pusherServer } from '@/lib/pusher'
 import { awardMessageXP } from '@/lib/xp'
@@ -18,10 +18,11 @@ interface RouteParams {
 // GET - Récupérer les messages d'une conversation
 export async function GET(request: Request, { params }: RouteParams) {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
     const { id } = await params
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
@@ -38,8 +39,8 @@ export async function GET(request: Request, { params }: RouteParams) {
     }
 
     if (
-      conversation.user1Id !== session.user.id &&
-      conversation.user2Id !== session.user.id
+      conversation.user1Id !== user.id &&
+      conversation.user2Id !== user.id
     ) {
       return NextResponse.json({ error: 'Accès non autorisé' }, { status: 403 })
     }
@@ -59,7 +60,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     await prisma.message.updateMany({
       where: {
         conversationId: id,
-        senderId: { not: session.user.id },
+        senderId: { not: user.id },
         read: false,
       },
       data: {
@@ -81,10 +82,11 @@ export async function GET(request: Request, { params }: RouteParams) {
 // POST - Envoyer un message
 export async function POST(request: Request, { params }: RouteParams) {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
     const { id } = await params
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
@@ -107,14 +109,14 @@ export async function POST(request: Request, { params }: RouteParams) {
     }
 
     if (
-      conversation.user1Id !== session.user.id &&
-      conversation.user2Id !== session.user.id
+      conversation.user1Id !== user.id &&
+      conversation.user2Id !== user.id
     ) {
       return NextResponse.json({ error: 'Accès non autorisé' }, { status: 403 })
     }
 
     // Déterminer le destinataire
-    const recipientId = conversation.user1Id === session.user.id 
+    const recipientId = conversation.user1Id === user.id 
       ? conversation.user2Id 
       : conversation.user1Id
 
@@ -122,7 +124,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     const message = await prisma.message.create({
       data: {
         conversationId: id,
-        senderId: session.user.id,
+        senderId: user.id,
         content: content.trim(),
       },
       include: {
@@ -140,13 +142,13 @@ export async function POST(request: Request, { params }: RouteParams) {
     try {
       const recentMessages = await prisma.message.count({
         where: {
-          senderId: session.user.id,
+          senderId: user.id,
           createdAt: { gte: new Date(Date.now() - 60000) }, // 1 minute
         },
       })
       
       if (recentMessages <= 1) {
-        await awardMessageXP(session.user.id)
+        await awardMessageXP(user.id)
       }
     } catch (error) {
       console.error('Erreur attribution XP:', error)

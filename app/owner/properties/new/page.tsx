@@ -1,18 +1,19 @@
 import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { checkSubscriptionStatus } from '@/lib/subscription'
 import { PRICING_PLANS } from '@/lib/pricing'
 import NewPropertyForm from '@/components/properties/NewPropertyForm'
 
 export default async function NewPropertyPage() {
-  const session = await auth()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  if (!session?.user?.id) {
+  if (!user?.id) {
     redirect('/login')
   }
 
   // Vérifier le statut d'abonnement
-  const subscriptionStatus = await checkSubscriptionStatus(session.user.id)
+  const subscriptionStatus = await checkSubscriptionStatus(user.id)
 
   // Si limite atteinte, rediriger vers pricing
   if (!subscriptionStatus.canAddProperty) {

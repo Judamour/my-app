@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { awardApplicationAcceptedXP } from '@/lib/xp'
 import { sendEmail } from '@/lib/email/send-email'
@@ -12,10 +12,11 @@ interface RouteParams {
 // PATCH - Accepter ou refuser une candidature
 export async function PATCH(request: Request, { params }: RouteParams) {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
     const { id } = await params
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
@@ -51,8 +52,8 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     }
 
     // 🆕 Vérifier les autorisations selon l'action
-    const isOwner = application.property.ownerId === session.user.id
-    const isTenant = application.tenantId === session.user.id
+    const isOwner = application.property.ownerId === user.id
+    const isTenant = application.tenantId === user.id
 
     // CANCELLED = seulement le locataire
     if (status === 'CANCELLED') {
@@ -139,10 +140,11 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 // GET - Récupérer une candidature spécifique
 export async function GET(request: Request, { params }: RouteParams) {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
     const { id } = await params
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
@@ -181,8 +183,8 @@ export async function GET(request: Request, { params }: RouteParams) {
     }
 
     // Vérifier accès : soit le propriétaire, soit le locataire
-    const isOwner = application.property.ownerId === session.user.id
-    const isTenant = application.tenantId === session.user.id
+    const isOwner = application.property.ownerId === user.id
+    const isTenant = application.tenantId === user.id
 
     if (!isOwner && !isTenant) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })

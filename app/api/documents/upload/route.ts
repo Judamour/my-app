@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { uploadDocument } from '@/lib/supabase'
 
 export async function POST(request: Request) {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
@@ -65,14 +66,14 @@ export async function POST(request: Request) {
     }
 
     // Vérifier que l'utilisateur est propriétaire, locataire principal, ou colocataire
-    const isOwner = lease.property.ownerId === session.user.id
-    const isTenant = lease.tenantId === session.user.id
+    const isOwner = lease.property.ownerId === user.id
+    const isTenant = lease.tenantId === user.id
 
     // Vérifier si colocataire
     const isCoTenant = await prisma.leaseTenant.findFirst({
       where: {
         leaseId,
-        tenantId: session.user.id,
+        tenantId: user.id,
         leftAt: null,
       },
     })
@@ -94,7 +95,7 @@ export async function POST(request: Request) {
     // Créer l'entrée dans la DB
     const document = await prisma.document.create({
       data: {
-        ownerId: session.user.id,
+        ownerId: user.id,
         leaseId,
         propertyId: lease.propertyId,
         type: type as any,

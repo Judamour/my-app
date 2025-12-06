@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 
@@ -9,7 +9,7 @@ interface PageProps {
 
 export default async function PassportPreviewPage({ params }: PageProps) {
   const { code } = await params
-  
+
   // Récupérer le lien de partage
   const shareLink = await prisma.shareLink.findUnique({
     where: { shortCode: code },
@@ -36,23 +36,24 @@ export default async function PassportPreviewPage({ params }: PageProps) {
     data: { views: { increment: 1 } },
   })
 
-  const user = shareLink.user
-  const session = await auth()
+  const profileUser = shareLink.user
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
   // Si connecté et propriétaire → Rediriger vers le profil complet
-  if (session?.user) {
-    redirect(`/profile/${user.id}`)
+  if (user) {
+    redirect(`/profile/${profileUser.id}`)
   }
 
   // Calculer l'ancienneté
-  const memberSince = new Date(user.createdAt)
+  const memberSince = new Date(profileUser.createdAt)
   const now = new Date()
-  const monthsDiff = (now.getFullYear() - memberSince.getFullYear()) * 12 + 
+  const monthsDiff = (now.getFullYear() - memberSince.getFullYear()) * 12 +
                      (now.getMonth() - memberSince.getMonth())
-  
-  const memberDuration = monthsDiff < 1 
-    ? 'Nouveau membre' 
-    : monthsDiff < 12 
+
+  const memberDuration = monthsDiff < 1
+    ? 'Nouveau membre'
+    : monthsDiff < 12
       ? `Membre depuis ${monthsDiff} mois`
       : `Membre depuis ${Math.floor(monthsDiff / 12)} an${Math.floor(monthsDiff / 12) > 1 ? 's' : ''}`
 
@@ -69,17 +70,17 @@ export default async function PassportPreviewPage({ params }: PageProps) {
         {/* Avatar & Nom */}
         <div className="text-center mb-8">
           <div className="w-24 h-24 bg-gradient-to-br from-rose-400 to-orange-300 rounded-full flex items-center justify-center text-white text-3xl font-semibold mx-auto mb-4">
-            {user.firstName[0]}{user.lastName[0]}
+            {profileUser.firstName[0]}{profileUser.lastName[0]}
           </div>
           <h1 className="text-2xl font-semibold text-gray-900">
-            {user.firstName} {user.lastName[0]}.
+            {profileUser.firstName} {profileUser.lastName[0]}.
           </h1>
           <p className="text-gray-500 mt-1">{memberDuration}</p>
         </div>
 
         {/* Badges */}
         <div className="flex flex-wrap justify-center gap-2 mb-8">
-          {user.profileComplete && (
+          {profileUser.profileComplete && (
             <span className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-sm">
               ✓ Profil complet
             </span>
@@ -108,7 +109,7 @@ export default async function PassportPreviewPage({ params }: PageProps) {
         {/* Message de confiance */}
         <div className="bg-gray-50 rounded-2xl p-6 mb-8 text-center">
           <p className="text-gray-600">
-            &quot;{user.firstName} a partagé son passport de confiance avec vous pour faciliter votre relation locative.&quot;
+            &quot;{profileUser.firstName} a partagé son passport de confiance avec vous pour faciliter votre relation locative.&quot;
           </p>
         </div>
 
@@ -120,17 +121,17 @@ export default async function PassportPreviewPage({ params }: PageProps) {
           <p className="text-gray-600 mb-6">
             Créez votre compte pour voir le profil complet, les avis détaillés et gérer vos biens.
           </p>
-          
+
           <Link
-            href={`/register?role=owner&redirect=/profile/${user.id}&ref=${code}`}
+            href={`/register?role=owner&redirect=/profile/${profileUser.id}&ref=${code}`}
             className="inline-block w-full max-w-xs px-8 py-4 bg-gray-900 text-white font-medium rounded-xl hover:bg-gray-800 transition-colors"
           >
             Créer mon compte propriétaire
           </Link>
-          
+
           <p className="mt-4">
             <Link
-              href={`/login?redirect=/profile/${user.id}`}
+              href={`/login?redirect=/profile/${profileUser.id}`}
               className="text-gray-500 hover:text-gray-900 text-sm"
             >
               Déjà inscrit ? Se connecter

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { sendEmail } from '@/lib/email/send-email'
 import PaymentReminderEmail from '@/emails/templates/PaymentReminderEmail'
@@ -7,12 +7,21 @@ import PaymentReminderEmail from '@/emails/templates/PaymentReminderEmail'
 // POST - Envoyer des rappels pour loyers impayés
 export async function POST(request: Request) {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
     // Vérifier que c'est un appel Vercel Cron OU un admin
     const authHeader = request.headers.get('authorization')
     const isVercelCron = authHeader === `Bearer ${process.env.CRON_SECRET}`
-    const isAdmin = session?.user?.role === 'ADMIN'
+
+    let isAdmin = false
+    if (user) {
+      const dbUser = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { role: true },
+      })
+      isAdmin = dbUser?.role === 'ADMIN'
+    }
 
     if (!isVercelCron && !isAdmin) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })

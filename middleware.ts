@@ -1,17 +1,12 @@
 // middleware.ts
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getToken } from 'next-auth/jwt'
+import { updateSession } from '@/lib/supabase/middleware'
 
 export async function middleware(request: NextRequest) {
-  const token = await getToken({ 
-    req: request, 
-    secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET
-  })
-  
   const { pathname } = request.nextUrl
 
-  // Pages publiques - pas de vérification
+  // Pages publiques - pas de vérification d'auth
   const publicPaths = [
     '/',
     '/login',
@@ -19,70 +14,51 @@ export async function middleware(request: NextRequest) {
     '/forgot-password',
     '/reset-password',
     '/properties',
+    '/verify-email',
+    '/auth/callback',
   ]
-  
+
   // Vérifier si c'est une page publique ou une ressource statique
-  if (
-    publicPaths.some(path => pathname === path || pathname.startsWith(path + '/')) ||
+  const isPublicPath = publicPaths.some(
+    path => pathname === path || pathname.startsWith(path + '/')
+  )
+  const isStaticOrApi =
     pathname.startsWith('/api/') ||
     pathname.startsWith('/_next/') ||
     pathname.includes('.')
-  ) {
-    // Exception : /properties/[id] est public mais pas /properties/new etc côté owner
+
+  // Rafraîchir la session Supabase (important pour garder la session active)
+  const { supabaseResponse, user } = await updateSession(request)
+
+  // Pages publiques → continuer
+  if (isPublicPath || isStaticOrApi) {
+    // Exception : /owner et /tenant ne sont jamais publics
     if (!pathname.startsWith('/owner') && !pathname.startsWith('/tenant')) {
-      return NextResponse.next()
+      return supabaseResponse
     }
   }
 
   // Non connecté → login
-  if (!token) {
+  if (!user) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('callbackUrl', pathname)
     return NextResponse.redirect(loginUrl)
   }
 
-  const isOwner = token.isOwner as boolean
-  const isTenant = token.isTenant as boolean
-  const hasNoRole = !isOwner && !isTenant
+  // Pour les routes /owner et /tenant, la vérification des rôles
+  // est faite dans les layouts car on a besoin des données Prisma
 
-  // 🔒 Accès /owner sans rôle owner
-  if (pathname.startsWith('/owner') && !isOwner) {
-    if (hasNoRole) {
-      return NextResponse.redirect(new URL('/profile/complete', request.url))
-    }
-    // A le rôle tenant mais pas owner
-    return NextResponse.redirect(new URL('/tenant', request.url))
-  }
-
-  // 🔒 Accès /tenant sans rôle tenant
-  if (pathname.startsWith('/tenant') && !isTenant) {
-    if (hasNoRole) {
-      return NextResponse.redirect(new URL('/profile/complete', request.url))
-    }
-    // A le rôle owner mais pas tenant
-    return NextResponse.redirect(new URL('/owner', request.url))
-  }
-
-  // 🔒 Accès /profile/complete avec déjà un rôle → rediriger vers dashboard
-  if (pathname === '/profile/complete' && !hasNoRole) {
-    if (isOwner) {
-      return NextResponse.redirect(new URL('/owner', request.url))
-    }
-    return NextResponse.redirect(new URL('/tenant', request.url))
-  }
-
-  return NextResponse.next()
+  return supabaseResponse
 }
 
 export const config = {
   matcher: [
     /*
      * Match all paths except:
-     * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 }

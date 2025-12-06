@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import BackButton from '@/components/BackButton'
 import { calculateUserBadges, calculateUserRank, calculateLevelFromXP } from '@/lib/badges'
@@ -9,15 +9,16 @@ import RankBadge from '@/components/profile/RankBadge'
 import XPProgressBar from '@/components/profile/XPProgressBar'
 
 export default async function AchievementsPage() {
-  const session = await auth()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  if (!session?.user?.id) {
+  if (!user?.id) {
     redirect('/auth/signin')
   }
 
   // Récupérer les données utilisateur
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
+  const dbUser = await prisma.user.findUnique({
+    where: { id: user.id },
     select: {
       firstName: true,
       lastName: true,
@@ -26,13 +27,13 @@ export default async function AchievementsPage() {
     },
   })
 
-  if (!user) {
+  if (!dbUser) {
     redirect('/auth/signin')
   }
 
   // Calculer badges et rang
-  const userBadges = await calculateUserBadges(session.user.id)
-  const currentLevel = calculateLevelFromXP(user.xp)
+  const userBadges = await calculateUserBadges(user.id)
+  const currentLevel = calculateLevelFromXP(dbUser.xp)
   const rankInfo = calculateUserRank(currentLevel, userBadges.length)
 
   // Badges débloqués (IDs)
@@ -74,7 +75,7 @@ export default async function AchievementsPage() {
 
             {/* XP Progress */}
             <div className="flex-1 max-w-md">
-              <XPProgressBar currentXP={user.xp} currentLevel={currentLevel} />
+              <XPProgressBar currentXP={dbUser.xp} currentLevel={currentLevel} />
             </div>
 
             {/* Stats badges */}

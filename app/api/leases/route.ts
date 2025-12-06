@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { sendEmail } from '@/lib/email/send-email'
 import LeaseSignedEmail from '@/emails/templates/LeaseSignedEmail'
@@ -7,9 +7,10 @@ import LeaseSignedEmail from '@/emails/templates/LeaseSignedEmail'
 // POST - Créer un bail
 export async function POST(request: Request) {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Non authentifié' },
         { status: 401 }
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
     }
 
     // Vérifier que c'est le propriétaire
-    if (application.property.ownerId !== session.user.id) {
+    if (application.property.ownerId !== user.id) {
       return NextResponse.json(
         { error: 'Non autorisé' },
         { status: 403 }
@@ -254,9 +255,10 @@ async function generatePastReceipts(leaseId: string, startDate: Date, monthlyRen
 // GET - Récupérer les baux
 export async function GET(request: Request) {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Non authentifié' },
         { status: 401 }
@@ -271,7 +273,7 @@ export async function GET(request: Request) {
       const leases = await prisma.lease.findMany({
         where: {
           property: {
-            ownerId: session.user.id
+            ownerId: user.id
           }
         },
         include: {
@@ -301,7 +303,7 @@ export async function GET(request: Request) {
       // Mes baux en tant que locataire
       const leases = await prisma.lease.findMany({
         where: {
-          tenantId: session.user.id
+          tenantId: user.id
         },
         include: {
           property: {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 
 // GET : Récupérer un document
@@ -8,10 +8,11 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
     const { id } = await params
 
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
@@ -24,7 +25,7 @@ export async function GET(
     }
 
     // Vérifier l'accès (propriétaire du document)
-    if (document.ownerId !== session.user.id) {
+    if (document.ownerId !== user.id) {
       return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
     }
 
@@ -41,10 +42,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
     const { id } = await params
 
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
@@ -57,7 +59,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Document non trouvé' }, { status: 404 })
     }
 
-    if (document.ownerId !== session.user.id) {
+    if (document.ownerId !== user.id) {
       return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
     }
 

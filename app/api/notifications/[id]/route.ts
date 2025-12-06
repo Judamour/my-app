@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 
 interface RouteParams {
@@ -9,10 +9,11 @@ interface RouteParams {
 // PATCH - Marquer une notification comme lue
 export async function PATCH(request: Request, { params }: RouteParams) {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
     const { id } = await params
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
@@ -29,7 +30,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       )
     }
 
-    if (notification.userId !== session.user.id) {
+    if (notification.userId !== user.id) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
     }
 
@@ -52,10 +53,11 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 // DELETE - Supprimer une notification
 export async function DELETE(request: Request, { params }: RouteParams) {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
     const { id } = await params
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
@@ -72,7 +74,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
       )
     }
 
-    if (notification.userId !== session.user.id) {
+    if (notification.userId !== user.id) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
     }
 

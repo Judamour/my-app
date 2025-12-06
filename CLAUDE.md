@@ -6,7 +6,7 @@ Plateforme SaaS de gestion locative (propriétaires & locataires)
 ## Stack
 - Next.js 16 / React 19 / TypeScript
 - Prisma + PostgreSQL (Supabase)
-- NextAuth 5 (JWT)
+- Supabase Auth (OAuth Google inclus)
 - Stripe, Cloudinary, Resend, Pusher
 
 ## Architecture
@@ -59,6 +59,7 @@ npx prisma migrate dev  # Migrations
 - [x] Autocomplétion adresses (API Adresse gouv.fr)
 - [x] Notation symétrique caution (proprio 3/5 min si 100% rendu, locataire 4/5 min)
 - [x] Badge Pionnier pour tous les inscrits (+500 XP)
+- [x] Migration Supabase Auth (remplacement NextAuth)
 
 ## En cours
 - [ ] Mot de passe oublié
@@ -80,4 +81,4 @@ npx prisma migrate dev  # Migrations
 - [ ] Déploiement Vercel
 
 ---
-*Dernière mise à jour : 6 décembre 2025 (badge pionnier)*
+*Dernière mise à jour : 6 décembre 2025 (migration Supabase Auth)*

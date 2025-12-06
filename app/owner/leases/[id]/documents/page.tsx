@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import BackButton from '@/components/BackButton'
@@ -9,10 +9,11 @@ interface PageProps {
 }
 
 export default async function LeaseDocumentsPage({ params }: PageProps) {
-  const session = await auth()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
   const { id } = await params
 
-  if (!session?.user) {
+  if (!user) {
     redirect('/login')
   }
 
@@ -42,8 +43,8 @@ export default async function LeaseDocumentsPage({ params }: PageProps) {
   }
 
   // Vérifier autorisation
-  const isOwner = lease.property.ownerId === session.user.id
-  const isTenant = lease.tenantId === session.user.id
+  const isOwner = lease.property.ownerId === user.id
+  const isTenant = lease.tenantId === user.id
 
   if (!isOwner && !isTenant) {
     redirect('/owner')

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
@@ -19,8 +19,10 @@ interface RouteParams {
 
 // GET - Récupérer les contacts utiles d'un bail
 export async function GET(request: Request, { params }: RouteParams) {
-  const session = await auth()
-  if (!session?.user?.id) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
 
@@ -45,9 +47,9 @@ export async function GET(request: Request, { params }: RouteParams) {
   }
 
   // Vérifier que l'utilisateur est propriétaire ou locataire du bail
-  const isOwner = lease.property.ownerId === session.user.id
-  const isTenant = lease.tenantId === session.user.id
-  const isCoTenant = lease.tenants.some((t) => t.tenantId === session.user.id)
+  const isOwner = lease.property.ownerId === user.id
+  const isTenant = lease.tenantId === user.id
+  const isCoTenant = lease.tenants.some((t) => t.tenantId === user.id)
 
   if (!isOwner && !isTenant && !isCoTenant) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
@@ -60,8 +62,10 @@ export async function GET(request: Request, { params }: RouteParams) {
 
 // PUT - Mettre à jour les contacts utiles (propriétaire uniquement)
 export async function PUT(request: Request, { params }: RouteParams) {
-  const session = await auth()
-  if (!session?.user?.id) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
 
@@ -81,7 +85,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
   }
 
   // Seul le propriétaire peut modifier les contacts
-  if (lease.property.ownerId !== session.user.id) {
+  if (lease.property.ownerId !== user.id) {
     return NextResponse.json(
       { error: 'Seul le propriétaire peut modifier les contacts' },
       { status: 403 }

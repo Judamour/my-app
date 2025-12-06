@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
@@ -13,10 +13,11 @@ interface PageProps {
 
 export default async function PropertyPublicPage({ params }: PageProps) {
   const { id } = await params
-  const session = await auth()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
   // Si pas connecté, rediriger vers login
-  if (!session?.user) {
+  if (!user) {
     redirect(`/login?redirect=/properties/${id}`)
   }
 
@@ -43,7 +44,7 @@ export default async function PropertyPublicPage({ params }: PageProps) {
   }
 
   // Si c'est mon propre bien, rediriger vers la page owner
-  if (property.ownerId === session.user.id) {
+  if (property.ownerId === user.id) {
     redirect(`/owner/properties/${id}`)
   }
 
@@ -51,14 +52,14 @@ export default async function PropertyPublicPage({ params }: PageProps) {
   const existingApplication = await prisma.application.findFirst({
     where: {
       propertyId: id,
-      tenantId: session.user.id,
+      tenantId: user.id,
     },
   })
 
   // Vérifier si un bail existe pour cette propriété
   const existingLease = await prisma.lease.findFirst({
     where: {
-      tenantId: session.user.id,
+      tenantId: user.id,
       property: { id },
     },
     select: { status: true },

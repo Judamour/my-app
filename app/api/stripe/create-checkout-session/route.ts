@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { stripe } from '@/lib/stripe'
 import { prisma } from '@/lib/prisma'
 import { PRICING_PLANS } from '@/lib/pricing'
 
 export async function POST(req: Request) {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Non authentifié' },
         { status: 401 }
@@ -34,8 +35,8 @@ export async function POST(req: Request) {
     }
 
     // Récupérer l'utilisateur
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
       select: {
         id: true,
         email: true,
@@ -43,7 +44,7 @@ export async function POST(req: Request) {
       },
     })
 
-    if (!user) {
+    if (!dbUser) {
       return NextResponse.json(
         { error: 'Utilisateur introuvable' },
         { status: 404 }
@@ -51,11 +52,11 @@ export async function POST(req: Request) {
     }
 
     // Créer ou récupérer le customer Stripe
-    let customerId = user.stripeCustomerId
+    let customerId = dbUser.stripeCustomerId
 
     if (!customerId) {
       const customer = await stripe.customers.create({
-        email: user.email,
+        email: dbUser.email,
         metadata: {
           userId: user.id,
         },

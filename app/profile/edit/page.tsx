@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import ProfileEditTabs from '@/components/profile/ProfileEditTabs'
@@ -9,17 +9,18 @@ export default async function ProfileEditPage({
 }: {
   searchParams: Promise<{ tab?: string }>
 }) {
-  const session = await auth()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  if (!session?.user?.id) {
+  if (!user?.id) {
     redirect('/login')
   }
 
   const params = await searchParams
   const activeTab = params.tab || 'general'
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
+  const dbUser = await prisma.user.findUnique({
+    where: { id: user.id },
     select: {
       id: true,
       firstName: true,
@@ -48,7 +49,7 @@ export default async function ProfileEditPage({
     },
   })
 
-  if (!user) {
+  if (!dbUser) {
     redirect('/login')
   }
 
@@ -57,7 +58,7 @@ export default async function ProfileEditPage({
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 🆕 Bouton retour */}
         <Link
-          href={user.isOwner ? '/owner' : user.isTenant ? '/tenant' : '/'}
+          href={dbUser.isOwner ? '/owner' : dbUser.isTenant ? '/tenant' : '/'}
           className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors text-sm font-medium mb-6"
         >
           <svg
@@ -87,7 +88,7 @@ export default async function ProfileEditPage({
             </p>
           </div>
           <Link
-            href={`/profile/${session.user.id}`}
+            href={`/profile/${user.id}`}
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium text-sm shadow-sm"
           >
             <span>👁️</span>
@@ -95,7 +96,7 @@ export default async function ProfileEditPage({
           </Link>
         </div>
 
-        <ProfileEditTabs userData={user} activeTab={activeTab} />
+        <ProfileEditTabs userData={dbUser} activeTab={activeTab} />
       </div>
     </div>
   )

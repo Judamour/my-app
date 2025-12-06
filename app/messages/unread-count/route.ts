@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
@@ -14,11 +15,11 @@ export async function GET() {
       where: {
         conversation: {
           OR: [
-            { user1Id: session.user.id },
-            { user2Id: session.user.id },
+            { user1Id: user.id },
+            { user2Id: user.id },
           ],
         },
-        senderId: { not: session.user.id },
+        senderId: { not: user.id },
         read: false,
       },
     })

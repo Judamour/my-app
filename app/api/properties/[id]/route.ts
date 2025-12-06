@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { PropertyType } from '@prisma/client'
 
@@ -9,9 +9,10 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth()
-    
-    if (!session || !session.user) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
       return NextResponse.json(
         { error: 'Non authentifié' },
         { status: 401 }
@@ -49,7 +50,7 @@ export async function GET(
       )
     }
 
-    if (property.ownerId !== session.user.id) {
+    if (property.ownerId !== user.id) {
       return NextResponse.json(
         { error: 'Vous n\'êtes pas autorisé à voir cette propriété' },
         { status: 403 }
@@ -71,9 +72,10 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth()
-    
-    if (!session || !session.user) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
       return NextResponse.json(
         { error: 'Non authentifié' },
         { status: 401 }
@@ -94,7 +96,7 @@ export async function PATCH(
       )
     }
 
-    if (existingProperty.ownerId !== session.user.id) {
+    if (existingProperty.ownerId !== user.id) {
       return NextResponse.json(
         { error: 'Vous n\'êtes pas autorisé à modifier cette propriété' },
         { status: 403 }
@@ -162,9 +164,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth()
-    
-    if (!session || !session.user) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
       return NextResponse.json(
         { error: 'Non authentifié' },
         { status: 401 }
@@ -177,9 +180,9 @@ export async function DELETE(
       where: { id },
       include: {
         leases: {
-          where: { 
+          where: {
             status: { in: ['ACTIVE', 'PENDING'] },
-            deletedAt: null 
+            deletedAt: null
           }
         }
       }
@@ -192,7 +195,7 @@ export async function DELETE(
       )
     }
 
-    if (property.ownerId !== session.user.id) {
+    if (property.ownerId !== user.id) {
       return NextResponse.json(
         { error: 'Vous n\'êtes pas autorisé à supprimer cette propriété' },
         { status: 403 }

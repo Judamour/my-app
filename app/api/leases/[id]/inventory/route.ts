@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 
 export async function POST(
@@ -7,9 +7,10 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
@@ -33,7 +34,7 @@ export async function POST(
     }
 
     // Seul le propriétaire peut confirmer l'état des lieux
-    if (lease.property.ownerId !== session.user.id) {
+    if (lease.property.ownerId !== user.id) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
     }
 
@@ -60,12 +61,12 @@ export async function POST(
         ? {
             inventoryInDone: true,
             inventoryInAt: new Date(),
-            inventoryInBy: session.user.id,
+            inventoryInBy: user.id,
           }
         : {
             inventoryOutDone: true,
             inventoryOutAt: new Date(),
-            inventoryOutBy: session.user.id,
+            inventoryOutBy: user.id,
           }
 
     await prisma.lease.update({

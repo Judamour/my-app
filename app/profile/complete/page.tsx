@@ -1,5 +1,6 @@
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { prisma } from '@/lib/prisma'
 import CompleteProfileForm from './CompleteProfileForm'
 
 export default async function CompleteProfilePage({
@@ -7,13 +8,23 @@ export default async function CompleteProfilePage({
 }: {
   searchParams: Promise<{ required?: string }>
 }) {
-  const session = await auth()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
+    redirect('/login')
+  }
+
+  const dbUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { id: true, firstName: true, lastName: true },
+  })
+
+  if (!dbUser) {
     redirect('/login')
   }
 
   const params = await searchParams
 
-  return <CompleteProfileForm session={session} required={params.required} />
+  return <CompleteProfileForm session={{ user: dbUser }} required={params.required} />
 }

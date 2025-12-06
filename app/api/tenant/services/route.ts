@@ -1,20 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 
 // GET - Récupérer le statut des services du locataire
 export async function GET() {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
     // Récupérer le bail actif avec le statut des services
     const activeLease = await prisma.lease.findFirst({
       where: {
-        tenantId: session.user.id,
+        tenantId: user.id,
         status: 'ACTIVE',
       },
       select: {
@@ -69,9 +70,10 @@ export async function GET() {
 // PATCH - Mettre à jour le statut d'un service
 export async function PATCH(request: NextRequest) {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
@@ -96,7 +98,7 @@ export async function PATCH(request: NextRequest) {
     // Trouver le bail actif
     const activeLease = await prisma.lease.findFirst({
       where: {
-        tenantId: session.user.id,
+        tenantId: user.id,
         status: 'ACTIVE',
       },
     })

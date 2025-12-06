@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { awardCompleteProfileXP } from '@/lib/xp'
 
 export async function PUT(req: Request) {
   try {
-    const session = await auth()
-    if (!session?.user?.id) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
@@ -23,7 +24,7 @@ export async function PUT(req: Request) {
 
     // Mise à jour du profil
     const updatedUser = await prisma.user.update({
-      where: { id: session.user.id },
+      where: { id: user.id },
       data: {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
@@ -57,7 +58,7 @@ export async function PUT(req: Request) {
     // Attribution XP si profil complété à 100% (une seule fois)
     if (isNowComplete && updatedUser.xp < 100) {
       try {
-        await awardCompleteProfileXP(session.user.id)
+        await awardCompleteProfileXP(user.id)
       } catch (error) {
         console.error('Erreur attribution XP:', error)
         // Ne pas bloquer la mise à jour même si XP échoue

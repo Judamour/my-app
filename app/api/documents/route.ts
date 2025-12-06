@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 
 // GET : Liste des documents
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
@@ -21,9 +22,9 @@ export async function GET(request: NextRequest) {
         where: { id: leaseId },
         include: {
           property: { select: { ownerId: true } },
-          tenants: { 
+          tenants: {
             where: { leftAt: null },
-            select: { tenantId: true } 
+            select: { tenantId: true }
           },
         },
       })
@@ -33,9 +34,9 @@ export async function GET(request: NextRequest) {
       }
 
       // Vérifier accès : propriétaire, tenant principal, ou colocataire
-      const isOwner = lease.property.ownerId === session.user.id
-      const isMainTenant = lease.tenantId === session.user.id
-      const isCoTenant = lease.tenants.some(t => t.tenantId === session.user.id)
+      const isOwner = lease.property.ownerId === user.id
+      const isMainTenant = lease.tenantId === user.id
+      const isCoTenant = lease.tenants.some(t => t.tenantId === user.id)
 
       if (!isOwner && !isMainTenant && !isCoTenant) {
         return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest) {
         select: { ownerId: true },
       })
 
-      if (!property || property.ownerId !== session.user.id) {
+      if (!property || property.ownerId !== user.id) {
         return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
       }
 
@@ -89,7 +90,7 @@ export async function GET(request: NextRequest) {
 
     // Sinon, documents personnels de l'utilisateur
     const documents = await prisma.document.findMany({
-      where: { ownerId: session.user.id },
+      where: { ownerId: user.id },
       include: {
         owner: {
           select: {
@@ -112,9 +113,10 @@ export async function GET(request: NextRequest) {
 // POST : Créer un document
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
@@ -135,9 +137,9 @@ export async function POST(request: NextRequest) {
         where: { id: leaseId },
         include: {
           property: { select: { ownerId: true } },
-          tenants: { 
+          tenants: {
             where: { leftAt: null },
-            select: { tenantId: true } 
+            select: { tenantId: true }
           },
         },
       })
@@ -146,9 +148,9 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Bail introuvable' }, { status: 404 })
       }
 
-      const isOwner = lease.property.ownerId === session.user.id
-      const isMainTenant = lease.tenantId === session.user.id
-      const isCoTenant = lease.tenants.some(t => t.tenantId === session.user.id)
+      const isOwner = lease.property.ownerId === user.id
+      const isMainTenant = lease.tenantId === user.id
+      const isCoTenant = lease.tenants.some(t => t.tenantId === user.id)
 
       if (!isOwner && !isMainTenant && !isCoTenant) {
         return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
@@ -158,7 +160,7 @@ export async function POST(request: NextRequest) {
     // Créer le document
     const document = await prisma.document.create({
       data: {
-        ownerId: session.user.id,
+        ownerId: user.id,
         type,
         name,
         url,

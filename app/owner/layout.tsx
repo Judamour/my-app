@@ -1,32 +1,49 @@
-import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
-import { SessionProvider } from 'next-auth/react'
 import Header from '@/components/layout/header'
 import ErrorBoundary from '@/components/ui/ErrorBoundary'
+import { UserProvider } from '@/components/providers/UserProvider'
+import { createClient } from '@/lib/supabase/server'
+import { prisma } from '@/lib/prisma'
 
 export default async function OwnerLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const session = await auth()
+  const supabase = await createClient()
+  const { data: { user: authUser } } = await supabase.auth.getUser()
 
-  if (!session?.user) {
+  if (!authUser) {
     redirect('/login')
   }
 
-  if (!session.user.isOwner) {
+  const dbUser = await prisma.user.findUnique({
+    where: { id: authUser.id },
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      role: true,
+      isOwner: true,
+      isTenant: true,
+      emailVerified: true,
+      avatar: true,
+    },
+  })
+
+  if (!dbUser?.isOwner) {
     redirect('/tenant')
   }
 
   return (
-    <SessionProvider session={session}>
+    <UserProvider initialUser={dbUser}>
       <ErrorBoundary>
         <div className="min-h-screen bg-gray-50">
           <Header />
           <main>{children}</main>
         </div>
       </ErrorBoundary>
-    </SessionProvider>
+    </UserProvider>
   )
 }

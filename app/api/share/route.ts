@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { nanoid } from 'nanoid'
 
@@ -10,9 +10,10 @@ function generateShortCode(): string {
 
 export async function POST(request: Request) {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Non authentifié' },
         { status: 401 }
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
       const property = await prisma.property.findFirst({
         where: {
           id: propertyId,
-          ownerId: session.user.id,
+          ownerId: user.id,
         },
       })
 
@@ -87,7 +88,7 @@ export async function POST(request: Request) {
       let shareLink = await prisma.shareLink.findFirst({
         where: {
           type: 'PROFILE',
-          userId: session.user.id,
+          userId: user.id,
         },
       })
 
@@ -97,7 +98,7 @@ export async function POST(request: Request) {
           data: {
             shortCode: generateShortCode(),
             type: 'PROFILE',
-            userId: session.user.id,
+            userId: user.id,
           },
         })
       }

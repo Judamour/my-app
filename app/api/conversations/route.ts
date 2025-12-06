@@ -1,21 +1,22 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 
 // GET - Récupérer mes conversations
 export async function GET() {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
     const conversations = await prisma.conversation.findMany({
       where: {
         OR: [
-          { user1Id: session.user.id },
-          { user2Id: session.user.id },
+          { user1Id: user.id },
+          { user2Id: user.id },
         ],
       },
       include: {
@@ -42,7 +43,7 @@ export async function GET() {
         const unreadCount = await prisma.message.count({
           where: {
             conversationId: conv.id,
-            senderId: { not: session.user.id },
+            senderId: { not: user.id },
             read: false,
           },
         })
@@ -63,9 +64,10 @@ export async function GET() {
 // POST - Créer ou récupérer une conversation
 export async function POST(request: Request) {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
@@ -88,8 +90,8 @@ export async function POST(request: Request) {
     const existingConversation = await prisma.conversation.findFirst({
       where: {
         OR: [
-          { user1Id: session.user.id, user2Id: recipientId, propertyId: propertyId || null },
-          { user1Id: recipientId, user2Id: session.user.id, propertyId: propertyId || null },
+          { user1Id: user.id, user2Id: recipientId, propertyId: propertyId || null },
+          { user1Id: recipientId, user2Id: user.id, propertyId: propertyId || null },
         ],
       },
     })
@@ -101,7 +103,7 @@ export async function POST(request: Request) {
     // Créer une nouvelle conversation
     const conversation = await prisma.conversation.create({
       data: {
-        user1Id: session.user.id,
+        user1Id: user.id,
         user2Id: recipientId,
         propertyId: propertyId || null,
       },

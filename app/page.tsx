@@ -1,8 +1,9 @@
 import Link from 'next/link'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 
 export default async function LandingPage() {
-  const session = await auth()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
   return (
     <div className="min-h-screen bg-white">
@@ -37,7 +38,7 @@ export default async function LandingPage() {
             </div>
 
             <div className="flex items-center gap-4">
-              {session?.user ? (
+              {user ? (
                 <Link
                   href="/dashboard"
                   className="px-5 py-2.5 bg-gray-900 text-white font-medium rounded-xl hover:bg-gray-800 transition-colors"

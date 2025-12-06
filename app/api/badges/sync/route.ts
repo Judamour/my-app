@@ -1,16 +1,17 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { syncUserXPWithBadges } from '@/lib/badges'
 
 export async function POST() {
-  const session = await auth()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  if (!session?.user?.id) {
+  if (!user) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
 
   try {
-    const result = await syncUserXPWithBadges(session.user.id)
+    const result = await syncUserXPWithBadges(user.id)
     
     return NextResponse.json({
       success: true,

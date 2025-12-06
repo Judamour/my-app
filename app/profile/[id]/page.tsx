@@ -1,5 +1,5 @@
 import { notFound, redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import BackButton from '@/components/BackButton'
 import Link from 'next/link'
@@ -39,9 +39,10 @@ interface DocumentAccess {
 export default async function ProfilePage({ params }: PageProps) {
   const { id } = await params
 
-  const session = await auth()
+  const supabase = await createClient()
+  const { data: { user: currentUser } } = await supabase.auth.getUser()
 
-  if (!session?.user?.id) {
+  if (!currentUser?.id) {
     redirect('/auth/signin')
   }
 
@@ -96,8 +97,8 @@ export default async function ProfilePage({ params }: PageProps) {
     })
     .filter(Boolean)
 
-  const isOwnProfile = session.user.id === user.id
-  const currentUserId = session.user.id
+  const isOwnProfile = currentUser.id === user.id
+  const currentUserId = currentUser.id
 
   const reviewStats = user.showReviewStats
     ? await prisma.review.aggregate({

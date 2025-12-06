@@ -1,6 +1,6 @@
 // app/api/properties/route.ts
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { createPropertySchema } from '@/lib/validations/property'
 import { UnauthorizedError, ForbiddenError, handleApiError } from '@/lib/errors'
@@ -14,13 +14,20 @@ import { PRICING_PLANS } from '@/lib/pricing'
  */
 export async function GET() {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (!user) {
       throw new UnauthorizedError()
     }
 
-    if (!session.user.isOwner) {
+    // Check isOwner from database
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { isOwner: true }
+    })
+
+    if (!dbUser?.isOwner) {
       throw new ForbiddenError(
         'Vous devez être propriétaire pour accéder à cette ressource'
       )
@@ -29,8 +36,8 @@ export async function GET() {
     // Récupérer toutes les propriétés de l'owner
     const properties: PropertyWithTenant[] = await prisma.property.findMany({
       where: {
-        ownerId: session.user.id,
-          deletedAt: null, 
+        ownerId: user.id,
+          deletedAt: null,
       },
       orderBy: {
         createdAt: 'desc',
@@ -63,18 +70,19 @@ export async function GET() {
  */
 export async function POST(req: Request) {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
       // ✅ NOUVEAU : Vérifier le statut d'abonnement
-    const subscriptionStatus = await checkSubscriptionStatus(session.user.id)
+    const subscriptionStatus = await checkSubscriptionStatus(user.id)
 
     if (!subscriptionStatus.canAddProperty) {
       const planConfig = PRICING_PLANS[subscriptionStatus.plan]
-      
+
       return NextResponse.json(
         {
           error: 'Limite de propriétés atteinte',
@@ -90,12 +98,12 @@ export async function POST(req: Request) {
 
 
     // Vérifier isOwner depuis DB (pas session)
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
       select: { isOwner: true },
     })
 
-    if (!user?.isOwner) {
+    if (!dbUser?.isOwner) {
       throw new ForbiddenError(
         'Vous devez être propriétaire pour créer une propriété'
       )
@@ -110,14 +118,14 @@ export async function POST(req: Request) {
     const property = await prisma.property.create({
       data: {
         ...validatedData,
-        ownerId: session.user.id,
+        ownerId: user.id,
         available: true,
       },
     })
 
     // Attribution XP pour création de propriété
 try {
-  await awardPropertyCreationXP(session.user.id)
+  await awardPropertyCreationXP(user.id)
 } catch (error) {
   console.error('Erreur attribution XP:', error)
   // Ne pas bloquer la création même si XP échoue

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 
 interface RouteParams {
@@ -9,8 +9,9 @@ interface RouteParams {
 // GET - Liste des colocataires d'un bail
 export async function GET(request: Request, { params }: RouteParams) {
   try {
-    const session = await auth()
-    if (!session?.user) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
@@ -44,8 +45,8 @@ export async function GET(request: Request, { params }: RouteParams) {
     }
 
     // Vérifier que l'utilisateur est propriétaire ou colocataire
-    const isOwner = lease.property.ownerId === session.user.id
-    const isTenant = lease.tenants.some(t => t.tenantId === session.user.id)
+    const isOwner = lease.property.ownerId === user.id
+    const isTenant = lease.tenants.some(t => t.tenantId === user.id)
 
     if (!isOwner && !isTenant) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
@@ -64,8 +65,9 @@ export async function GET(request: Request, { params }: RouteParams) {
 // POST - Ajouter un colocataire
 export async function POST(request: Request, { params }: RouteParams) {
   try {
-    const session = await auth()
-    if (!session?.user) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
@@ -94,7 +96,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: 'Bail introuvable' }, { status: 404 })
     }
 
-    if (lease.property.ownerId !== session.user.id) {
+    if (lease.property.ownerId !== user.id) {
       return NextResponse.json(
         { error: 'Seul le propriétaire peut ajouter des colocataires' },
         { status: 403 }
@@ -192,8 +194,9 @@ export async function POST(request: Request, { params }: RouteParams) {
 // PATCH - Modifier un colocataire (share, isPrimary)
 export async function PATCH(request: Request, { params }: RouteParams) {
   try {
-    const session = await auth()
-    if (!session?.user) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
@@ -218,7 +221,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: 'Bail introuvable' }, { status: 404 })
     }
 
-    if (lease.property.ownerId !== session.user.id) {
+    if (lease.property.ownerId !== user.id) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
     }
 
@@ -261,8 +264,9 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 // DELETE - Retirer un colocataire
 export async function DELETE(request: Request, { params }: RouteParams) {
   try {
-    const session = await auth()
-    if (!session?.user) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
@@ -287,7 +291,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: 'Bail introuvable' }, { status: 404 })
     }
 
-    if (lease.property.ownerId !== session.user.id) {
+    if (lease.property.ownerId !== user.id) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
     }
 

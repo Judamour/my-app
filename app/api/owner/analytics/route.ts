@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
@@ -28,7 +29,7 @@ export async function GET() {
       const payments = await prisma.receipt.findMany({
         where: {
           lease: {
-            property: { ownerId: session.user.id },
+            property: { ownerId: user.id },
           },
           status: 'CONFIRMED',
           paidAt: {
@@ -51,12 +52,12 @@ export async function GET() {
 
     // Taux d'occupation
     const totalProperties = await prisma.property.count({
-      where: { ownerId: session.user.id },
+      where: { ownerId: user.id },
     })
 
     const occupiedProperties = await prisma.property.count({
       where: {
-        ownerId: session.user.id,
+        ownerId: user.id,
         available: false,
       },
     })
@@ -68,7 +69,7 @@ export async function GET() {
 
     // Dernières activités
     const recentActivities = await prisma.notification.findMany({
-      where: { userId: session.user.id },
+      where: { userId: user.id },
       orderBy: { createdAt: 'desc' },
       take: 10,
       select: {

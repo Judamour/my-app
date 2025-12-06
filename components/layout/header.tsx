@@ -1,24 +1,22 @@
 'use client'
 
-import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
 import NotificationBell from '@/components/notifications/NotificationBell'
 import UnreadMessagesButton from '@/components/messages/UnreadMessagesButton'
 import LogoutButton from '@/components/LogoutButton'
+import { useUser } from '@/components/providers/UserProvider'
 
 export default function Header() {
-  const { data: session } = useSession()
+  const { user, loading } = useUser()
   const pathname = usePathname()
   const router = useRouter()
   const [showMobileMenu, setShowMobileMenu] = useState(false)
 
-  if (!session) {
+  if (loading || !user) {
     return null
   }
-
-  const user = session.user
   const isOwner = pathname.startsWith('/owner')
   const isTenant = pathname.startsWith('/tenant')
 

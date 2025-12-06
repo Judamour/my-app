@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 
 interface RouteParams {
@@ -9,10 +9,11 @@ interface RouteParams {
 // PATCH - Propriétaire confirme le paiement
 export async function PATCH(request: Request, { params }: RouteParams) {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
     const { id } = await params
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Non authentifié' },
         { status: 401 }
@@ -58,7 +59,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     }
 
     // Vérifier que c'est le propriétaire
-    if (receipt.lease.property.ownerId !== session.user.id) {
+    if (receipt.lease.property.ownerId !== user.id) {
       return NextResponse.json(
         { error: 'Non autorisé' },
         { status: 403 }

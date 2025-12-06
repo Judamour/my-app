@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 
 // GET - Récupérer les partenaires affiliés
@@ -51,9 +51,19 @@ export async function GET(request: NextRequest) {
 // POST - Créer un partenaire (admin uniquement)
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    if (!user) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
+    }
+
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { role: true },
+    })
+
+    if (dbUser?.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
     }
 

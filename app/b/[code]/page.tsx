@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -10,7 +10,7 @@ interface PageProps {
 
 export default async function PropertyPreviewPage({ params }: PageProps) {
   const { code } = await params
-  
+
   // Récupérer le lien de partage
   const shareLink = await prisma.shareLink.findUnique({
     where: { shortCode: code },
@@ -40,10 +40,11 @@ export default async function PropertyPreviewPage({ params }: PageProps) {
   })
 
   const property = shareLink.property
-  const session = await auth()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
   // Si connecté et locataire → Rediriger vers la fiche complète
-  if (session?.user) {
+  if (user) {
     redirect(`/properties/${property.id}`)
   }
 

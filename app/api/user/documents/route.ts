@@ -1,20 +1,21 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 
 // GET : Récupérer les documents de profil de l'utilisateur connecté
 export async function GET() {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
     // Documents de profil uniquement (leaseId = null)
     const documents = await prisma.document.findMany({
       where: {
-        ownerId: session.user.id,
+        ownerId: user.id,
         leaseId: null,
       },
       orderBy: { createdAt: 'desc' },

@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
@@ -7,9 +7,10 @@ import ServiceStatusSection from '@/components/affiliates/ServiceStatusSection'
 import { AffiliatePartner } from '@prisma/client'
 
 export default async function TenantServicesPage() {
-  const session = await auth()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  if (!session?.user) {
+  if (!user) {
     redirect('/auth/signin')
   }
 
@@ -35,7 +36,7 @@ export default async function TenantServicesPage() {
   // Récupérer le bail actif avec statut services
   const activeLease = await prisma.lease.findFirst({
     where: {
-      tenantId: session.user.id,
+      tenantId: user.id,
       status: 'ACTIVE',
     },
     select: {

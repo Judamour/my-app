@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { sendEmail } from '@/lib/email/send-email'
 import PaymentReceivedEmail from '@/emails/templates/PaymentReceivedEmail'
@@ -7,9 +7,10 @@ import PaymentReceivedEmail from '@/emails/templates/PaymentReceivedEmail'
 // POST - Locataire déclare avoir payé
 export async function POST(request: Request) {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Non authentifié' },
         { status: 401 }
@@ -66,7 +67,7 @@ export async function POST(request: Request) {
     }
 
     // Vérifier que c'est le locataire
-    if (lease.tenantId !== session.user.id) {
+    if (lease.tenantId !== user.id) {
       return NextResponse.json(
         { error: 'Non autorisé' },
         { status: 403 }

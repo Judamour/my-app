@@ -1,20 +1,21 @@
 import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { PRICING_PLANS, type PricingPlan } from '@/lib/pricing'
 import Link from 'next/link'
 import PricingCard from '@/components/pricing/PricingCard'
 
 export default async function PricingPage() {
-  const session = await auth()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  if (!session?.user?.id) {
+  if (!user?.id) {
     redirect('/login')
   }
 
   // Récupérer l'utilisateur avec son plan actuel et nombre de propriétés
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
+  const dbUser = await prisma.user.findUnique({
+    where: { id: user.id },
     select: {
       subscriptionPlan: true,
       stripeCurrentPeriodEnd: true,
@@ -26,15 +27,15 @@ export default async function PricingPage() {
     },
   })
 
-  if (!user) {
+  if (!dbUser) {
     redirect('/login')
   }
 
-  const currentPlan = user.subscriptionPlan as PricingPlan
-  const propertyCount = user._count.ownedProperties
-  const hasActiveSubscription = 
-    user.stripeCurrentPeriodEnd && 
-    user.stripeCurrentPeriodEnd > new Date()
+  const currentPlan = dbUser.subscriptionPlan as PricingPlan
+  const propertyCount = dbUser._count.ownedProperties
+  const hasActiveSubscription =
+    dbUser.stripeCurrentPeriodEnd &&
+    dbUser.stripeCurrentPeriodEnd > new Date()
 
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50 py-12">
@@ -61,7 +62,7 @@ export default async function PricingPage() {
               <span>Plan actuel : {PRICING_PLANS[currentPlan].name}</span>
               {hasActiveSubscription && (
                 <span className="text-blue-600">
-                  • Expire le {user.stripeCurrentPeriodEnd?.toLocaleDateString('fr-FR')}
+                  • Expire le {dbUser.stripeCurrentPeriodEnd?.toLocaleDateString('fr-FR')}
                 </span>
               )}
             </div>

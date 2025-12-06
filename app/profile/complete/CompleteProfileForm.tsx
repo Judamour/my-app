@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
-import { useSession } from 'next-auth/react'
-import AddressInput from '@/components/ui/AddressInput' 
+import AddressInput from '@/components/ui/AddressInput'
+
 interface Session {
   user: {
     id: string
@@ -29,8 +29,6 @@ export default function CompleteProfileForm({
   session: Session
   required?: string
 }) {
-   const { update } = useSession() 
-
   // Étape actuelle (1, 2, 3)
   const [step, setStep] = useState(1)
 
@@ -147,12 +145,6 @@ export default function CompleteProfileForm({
         setLoading(false)
         return
       }
-
-    await update({
-        isOwner,
-        isTenant,
-      })
-
 
       toast.success('Profil complété avec succès !')
       setTimeout(() => {

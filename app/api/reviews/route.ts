@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { awardReviewGivenXP, awardReviewReceivedXP } from '@/lib/xp'
 
@@ -66,9 +66,10 @@ export async function GET(request: Request) {
 // POST - Créer un avis
 export async function POST(request: Request) {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
@@ -114,8 +115,8 @@ export async function POST(request: Request) {
     }
 
     // Déterminer qui évalue qui
-    const isOwner = session.user.id === lease.property.ownerId
-    const isTenant = session.user.id === lease.tenant.id
+    const isOwner = user.id === lease.property.ownerId
+    const isTenant = user.id === lease.tenant.id
 
     if (!isOwner && !isTenant) {
       return NextResponse.json(
@@ -131,7 +132,7 @@ export async function POST(request: Request) {
       where: {
         leaseId_authorId: {
           leaseId,
-          authorId: session.user.id,
+          authorId: user.id,
         },
       },
     })
@@ -147,7 +148,7 @@ export async function POST(request: Request) {
     const review = await prisma.review.create({
       data: {
         leaseId,
-        authorId: session.user.id,
+        authorId: user.id,
         targetId,
         rating,
         criteria,
@@ -160,7 +161,7 @@ export async function POST(request: Request) {
 
     // Attribution XP pour avoir donné un avis
     try {
-      await awardReviewGivenXP(session.user.id)
+      await awardReviewGivenXP(user.id)
 
       // Attribution XP pour la personne qui reçoit l'avis (si positif)
       if (rating >= 4.0) {

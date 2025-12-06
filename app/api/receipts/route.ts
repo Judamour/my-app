@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { awardPaymentXP } from '@/lib/xp'
 
 // POST - Créer une quittance
 export async function POST(request: Request) {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Non authentifié' },
         { status: 401 }
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
     }
 
     // Vérifier que c'est le propriétaire
-    if (lease.property.ownerId !== session.user.id) {
+    if (lease.property.ownerId !== user.id) {
       return NextResponse.json(
         { error: 'Non autorisé' },
         { status: 403 }
@@ -113,9 +114,10 @@ return NextResponse.json(receipt, { status: 201 })
 // GET - Récupérer les quittances
 export async function GET(request: Request) {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Non authentifié' },
         { status: 401 }
@@ -144,14 +146,14 @@ export async function GET(request: Request) {
 
       // Vérifier accès
    // Vérifier accès (propriétaire, tenant principal, ou colocataire)
-const isOwner = lease.property.ownerId === session.user.id
-const isTenant = lease.tenantId === session.user.id
+const isOwner = lease.property.ownerId === user.id
+const isTenant = lease.tenantId === user.id
 
 // 🆕 Vérifier si colocataire
 const isCoTenant = await prisma.leaseTenant.findFirst({
   where: {
     leaseId,
-    tenantId: session.user.id,
+    tenantId: user.id,
     leftAt: null,
   },
 })
@@ -176,7 +178,7 @@ if (!isOwner && !isTenant && !isCoTenant) {
       const receipts = await prisma.receipt.findMany({
         where: {
           lease: {
-            property: { ownerId: session.user.id }
+            property: { ownerId: user.id }
           }
         },
         include: {
@@ -194,7 +196,7 @@ if (!isOwner && !isTenant && !isCoTenant) {
     } else {
       const receipts = await prisma.receipt.findMany({
         where: {
-          lease: { tenantId: session.user.id }
+          lease: { tenantId: user.id }
         },
         include: {
           lease: {

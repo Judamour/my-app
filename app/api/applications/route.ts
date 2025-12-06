@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { awardApplicationSubmissionXP } from '@/lib/xp'
 import { sendEmail } from '@/lib/email/send-email'
@@ -8,19 +8,20 @@ import NewApplicationEmail from '@/emails/templates/NewApplicationEmail'
 // POST - Créer une candidature
 export async function POST(request: Request) {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
     // Vérifier que l'utilisateur est locataire
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
       select: { isTenant: true },
     })
 
-    if (!user?.isTenant) {
+    if (!dbUser?.isTenant) {
       return NextResponse.json(
         { error: 'Vous devez être locataire pour postuler' },
         { status: 403 }
@@ -55,7 +56,7 @@ export async function POST(request: Request) {
     }
 
     // Vérifier qu'on ne postule pas à son propre bien
-    if (property.ownerId === session.user.id) {
+    if (property.ownerId === user.id) {
       return NextResponse.json(
         { error: 'Vous ne pouvez pas postuler à votre propre bien' },
         { status: 400 }
@@ -70,7 +71,7 @@ export async function POST(request: Request) {
     const cancelledApplication = await prisma.application.findFirst({
       where: {
         propertyId,
-        tenantId: session.user.id,
+        tenantId: user.id,
         status: 'CANCELLED',
         updatedAt: { gte: cooldownDate },
       },
@@ -95,14 +96,14 @@ export async function POST(request: Request) {
     const existingApplication = await prisma.application.findFirst({
       where: {
         propertyId,
-        tenantId: session.user.id,
+        tenantId: user.id,
         status: { in: ['PENDING', 'ACCEPTED'] },
       },
       include: {
         property: {
           select: {
             leases: {
-              where: { tenantId: session.user.id },
+              where: { tenantId: user.id },
               select: { status: true },
             },
           },
@@ -135,7 +136,7 @@ export async function POST(request: Request) {
       const validDocuments = await prisma.document.findMany({
         where: {
           id: { in: sharedDocumentIds },
-          ownerId: session.user.id,
+          ownerId: user.id,
         },
         select: { id: true },
       })
@@ -157,7 +158,7 @@ export async function POST(request: Request) {
     const application = await prisma.application.create({
       data: {
         propertyId,
-        tenantId: session.user.id,
+        tenantId: user.id,
         message: message || null,
         status: 'PENDING',
         // 🆕 Créer les liens vers les documents partagés
@@ -191,7 +192,7 @@ export async function POST(request: Request) {
 
     // Attribution XP pour candidature soumise
     try {
-      await awardApplicationSubmissionXP(session.user.id)
+      await awardApplicationSubmissionXP(user.id)
     } catch (error) {
       console.error('Erreur attribution XP:', error)
     }
@@ -247,9 +248,10 @@ export async function POST(request: Request) {
 // GET - Récupérer les candidatures
 export async function GET(request: Request) {
   try {
-    const session = await auth()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
@@ -261,7 +263,7 @@ export async function GET(request: Request) {
       const applications = await prisma.application.findMany({
         where: {
           property: {
-            ownerId: session.user.id,
+            ownerId: user.id,
           },
         },
         include: {
@@ -298,7 +300,7 @@ export async function GET(request: Request) {
       // Mes candidatures envoyées
       const applications = await prisma.application.findMany({
         where: {
-          tenantId: session.user.id,
+          tenantId: user.id,
         },
         include: {
           property: {
