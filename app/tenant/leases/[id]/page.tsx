@@ -6,6 +6,7 @@ import LeaseActions from '@/components/leases/LeaseActions'
 import ReviewButton from '@/components/leases/ReviewButton'
 import ColocationManager from '@/components/leases/ColocationManager'
 import ContactButton from '@/components/messages/ContactButton'
+import UsefulContacts from '@/components/leases/UsefulContacts'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -17,7 +18,16 @@ export default async function TenantLeaseDetailPage({ params }: PageProps) {
 
   const lease = await prisma.lease.findUnique({
     where: { id },
-    include: {
+    select: {
+      id: true,
+      startDate: true,
+      endDate: true,
+      monthlyRent: true,
+      deposit: true,
+      charges: true,
+      status: true,
+      tenantId: true,
+      usefulContacts: true,
       property: {
         select: {
           id: true,
@@ -229,6 +239,13 @@ export default async function TenantLeaseDetailPage({ params }: PageProps) {
               leaseId={lease.id}
               isOwner={false}
               monthlyRent={lease.monthlyRent}
+            />
+
+            {/* Contacts utiles (lecture seule pour locataire) */}
+            <UsefulContacts
+              leaseId={lease.id}
+              isOwner={false}
+              initialContacts={(lease.usefulContacts as { name: string; phone: string; role: string; notes?: string }[]) || []}
             />
 
             {/* Détails du bail */}

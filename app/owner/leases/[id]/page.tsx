@@ -7,6 +7,7 @@ import OwnerDeclarePayment from '@/components/receipts/OwnerDeclarePayment'
 import ReviewButton from '@/components/leases/ReviewButton'
 import ColocationManager from '@/components/leases/ColocationManager'
 import ContactButton from '@/components/messages/ContactButton'
+import UsefulContacts from '@/components/leases/UsefulContacts'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -32,6 +33,7 @@ export default async function LeaseDetailPage({ params }: PageProps) {
       inventoryInAt: true,
       inventoryOutDone: true,
       inventoryOutAt: true,
+      usefulContacts: true,
       property: {
         select: {
           id: true,
@@ -204,6 +206,13 @@ export default async function LeaseDetailPage({ params }: PageProps) {
               leaseId={lease.id}
               isOwner={true}
               monthlyRent={lease.monthlyRent}
+            />
+
+            {/* Contacts utiles */}
+            <UsefulContacts
+              leaseId={lease.id}
+              isOwner={true}
+              initialContacts={(lease.usefulContacts as { name: string; phone: string; role: string; notes?: string }[]) || []}
             />
 
             {/* Propriété */}

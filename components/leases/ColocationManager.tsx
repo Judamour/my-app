@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
+import ConfirmModal from '@/components/ui/ConfirmModal'
 
 interface Tenant {
   id: string
@@ -36,6 +37,12 @@ export default function ColocationManager({
   const [adding, setAdding] = useState(false)
   const [editingShares, setEditingShares] = useState(false)
   const [tempShares, setTempShares] = useState<Record<string, number>>({})
+  const [removeModal, setRemoveModal] = useState<{
+    isOpen: boolean
+    tenantId: string
+    name: string
+  }>({ isOpen: false, tenantId: '', name: '' })
+  const [removing, setRemoving] = useState(false)
 
   // Charger les colocataires
   useEffect(() => {
@@ -103,13 +110,22 @@ export default function ColocationManager({
     }
   }
 
-  // Retirer un colocataire
-  const handleRemove = async (tenantId: string, name: string) => {
-    if (!confirm(`Retirer ${name} de la colocation ?`)) return
+  // Ouvrir la modal de confirmation de suppression
+  const openRemoveModal = (tenantId: string, name: string) => {
+    setRemoveModal({ isOpen: true, tenantId, name })
+  }
 
+  // Fermer la modal de suppression
+  const closeRemoveModal = () => {
+    setRemoveModal({ isOpen: false, tenantId: '', name: '' })
+  }
+
+  // Retirer un colocataire (appelé après confirmation)
+  const handleRemove = async () => {
+    setRemoving(true)
     try {
       const res = await fetch(
-        `/api/leases/${leaseId}/tenants?tenantId=${tenantId}`,
+        `/api/leases/${leaseId}/tenants?tenantId=${removeModal.tenantId}`,
         { method: 'DELETE' }
       )
 
@@ -119,9 +135,12 @@ export default function ColocationManager({
       }
 
       toast.success('Colocataire retiré')
+      closeRemoveModal()
       fetchTenants()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Erreur')
+    } finally {
+      setRemoving(false)
     }
   }
 
@@ -381,7 +400,7 @@ export default function ColocationManager({
                       {tenants.length > 1 && (
                         <button
                           onClick={() =>
-                            handleRemove(
+                            openRemoveModal(
                               t.tenantId,
                               `${t.tenant.firstName} ${t.tenant.lastName}`
                             )
@@ -507,6 +526,18 @@ export default function ColocationManager({
           </div>
         </div>
       )}
+
+      {/* Modal Confirmation Suppression */}
+      <ConfirmModal
+        isOpen={removeModal.isOpen}
+        onClose={closeRemoveModal}
+        onConfirm={handleRemove}
+        title="Retirer un colocataire"
+        message={`Êtes-vous sûr de vouloir retirer ${removeModal.name} de la colocation ? Cette personne n'aura plus accès aux informations du bail.`}
+        confirmText="Retirer"
+        cancelText="Annuler"
+        isLoading={removing}
+      />
     </>
   )
 }
