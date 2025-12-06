@@ -60,9 +60,9 @@ npx prisma migrate dev  # Migrations
 - [x] Notation symétrique caution (proprio 3/5 min si 100% rendu, locataire 4/5 min)
 - [x] Badge Pionnier pour tous les inscrits (+500 XP)
 - [x] Migration Supabase Auth (remplacement NextAuth)
+- [x] Mot de passe oublié (Supabase email recovery)
 
 ## En cours
-- [ ] Mot de passe oublié
 - [ ] Tests avant mise en prod
 
 ## À faire (MVP)
@@ -81,4 +81,4 @@ npx prisma migrate dev  # Migrations
 - [ ] Déploiement Vercel
 
 ---
-*Dernière mise à jour : 6 décembre 2025 (migration Supabase Auth)*
+*Dernière mise à jour : 6 décembre 2025 (mot de passe oublié)*
