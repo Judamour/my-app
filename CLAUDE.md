@@ -57,6 +57,7 @@ npx prisma migrate dev  # Migrations
 - [x] Page d'accueil Renty
 - [x] Suppression colocataire avec modal de confirmation
 - [x] Autocomplétion adresses (API Adresse gouv.fr)
+- [x] Notation symétrique caution (proprio 3/5 min si 100% rendu, locataire 4/5 min)
 
 ## En cours
 - [ ] Mot de passe oublié
@@ -65,6 +66,7 @@ npx prisma migrate dev  # Migrations
 ## À faire (MVP)
 - [ ] Révision automatique du loyer (IRL INSEE + génération lettre)
 - [ ] Relances automatiques impayés (emails J+5, J+15...)
+- [ ] Système de litige caution (contestation, médiation)
 - [ ] Contacts utiles sur fiche bail (plombier, syndic, urgences...)
 - [ ] Bouton "Rapport de bug" sur dashboards owner/tenant → formulaire → dashboard admin
 - [ ] Dashboard admin (gestion bugs, utilisateurs, stats)
@@ -77,4 +79,4 @@ npx prisma migrate dev  # Migrations
 - [ ] Déploiement Vercel
 
 ---
-*Dernière mise à jour : 6 décembre 2025 (autocomplétion adresses)*
+*Dernière mise à jour : 6 décembre 2025 (notation symétrique caution)*

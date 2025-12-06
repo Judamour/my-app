@@ -44,7 +44,7 @@ export default function ReviewForm({
         }
   )
 
-  // Caution (uniquement pour propriétaires)
+  // Caution (pour les deux parties)
   const [depositReturned, setDepositReturned] = useState<boolean>(true) // true par défaut
   const [depositReturnedPercent, setDepositReturnedPercent] =
     useState<number>(100)
@@ -62,8 +62,9 @@ export default function ReviewForm({
   // Calcul note finale en temps réel
   const finalRating = calculateFinalRating(
     criteria,
-    isOwner ? depositReturned ?? undefined : undefined,
-    isOwner ? depositReturnedPercent : undefined
+    depositReturned ?? undefined,
+    depositReturnedPercent,
+    isOwner // isOwnerRating
   )
 
   // Validation
@@ -87,9 +88,9 @@ export default function ReviewForm({
           rating: finalRating,
           criteria,
           comment: comment.trim() || null,
-          depositReturned: isOwner ? depositReturned : null,
-        
-          depositReturnedPercent: isOwner ? depositReturnedPercent : null,
+          depositReturned,
+          depositReturnedPercent,
+          isOwnerRating: isOwner,
         }),
       })
 
@@ -132,11 +133,11 @@ export default function ReviewForm({
         <p className="text-3xl font-bold text-gray-900 mt-2">
           {finalRating.toFixed(1)}/5
         </p>
-        {isOwner && (
-          <p className="text-xs text-gray-500 mt-2">
-            Critères (25%) + Caution (75%)
-          </p>
-        )}
+        <p className="text-xs text-gray-500 mt-2">
+          {isOwner
+            ? 'Caution (80%) + Critères (20%)'
+            : 'Caution (60%) + Critères (40%)'}
+        </p>
       </div>
 
       {/* Critères détaillés */}
@@ -179,97 +180,106 @@ export default function ReviewForm({
         ))}
       </div>
 
-      {/* Caution (propriétaires uniquement) */}
-      {isOwner && (
-        <div className="space-y-4">
-          <h3 className="font-semibold text-gray-900">
-            Restitution de la caution (75% de la note)
-          </h3>
-          <p className="text-sm text-gray-600">
-            La caution est le critère le plus important pour garantir
-            l&apos;équité
-          </p>
+      {/* Caution - différent selon proprio ou locataire */}
+      <div className="space-y-4">
+        <h3 className="font-semibold text-gray-900">
+          {isOwner
+            ? 'Restitution de la caution (80% de la note)'
+            : 'Réception de la caution (60% de la note)'}
+        </h3>
+        <p className="text-sm text-gray-600">
+          {isOwner
+            ? 'La caution est le critère le plus important pour garantir l\'équité'
+            : 'Indiquez si vous avez bien reçu votre caution. Cette information impacte la note du propriétaire.'}
+        </p>
 
-          {/* Slider direct 0-100% */}
-          <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl">
-            <div className="flex items-center justify-between mb-4">
-              <label className="text-sm font-medium text-gray-700">
-                Pourcentage restitué
-              </label>
-              <span className="text-2xl font-bold text-gray-900">
-                {depositReturnedPercent}%
-              </span>
-            </div>
+        {/* Slider direct 0-100% */}
+        <div className={`p-6 rounded-2xl ${isOwner ? 'bg-gradient-to-br from-gray-50 to-gray-100' : 'bg-gradient-to-br from-purple-50 to-indigo-50'}`}>
+          <div className="flex items-center justify-between mb-4">
+            <label className="text-sm font-medium text-gray-700">
+              {isOwner ? 'Pourcentage restitué' : 'Pourcentage reçu'}
+            </label>
+            <span className="text-2xl font-bold text-gray-900">
+              {depositReturnedPercent}%
+            </span>
+          </div>
 
-            {/* Slider */}
-            <input
-              type="range"
-              min="0"
-              max="100"
-              step="5"
-              value={depositReturnedPercent}
-              onChange={e => {
-                const value = parseInt(e.target.value)
-                setDepositReturnedPercent(value)
-                setDepositReturned(value > 0)
-              }}
-              className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-            />
+          {/* Slider */}
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="5"
+            value={depositReturnedPercent}
+            onChange={e => {
+              const value = parseInt(e.target.value)
+              setDepositReturnedPercent(value)
+              setDepositReturned(value > 0)
+            }}
+            className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+          />
 
-            {/* Labels visuels */}
-            <div className="flex justify-between mt-2 text-xs text-gray-500">
-              <span>0%</span>
-              <span>25%</span>
-              <span>50%</span>
-              <span>75%</span>
-              <span>100%</span>
-            </div>
+          {/* Labels visuels */}
+          <div className="flex justify-between mt-2 text-xs text-gray-500">
+            <span>0%</span>
+            <span>25%</span>
+            <span>50%</span>
+            <span>75%</span>
+            <span>100%</span>
+          </div>
 
-            {/* Feedback visuel */}
-            <div className="mt-4 p-3 rounded-lg text-center text-sm font-medium">
-              {depositReturnedPercent === 100 && (
-                <div className="text-emerald-700 bg-emerald-50 rounded-lg p-2">
-                  ✅ Caution intégralement restituée - Maximum d&apos;étoiles !
-                </div>
-              )}
-              {depositReturnedPercent > 0 && depositReturnedPercent < 100 && (
-                <div className="text-orange-700 bg-orange-50 rounded-lg p-2">
-                  ⚠️ Caution partiellement restituée ({depositReturnedPercent}%)
-                </div>
-              )}
-              {depositReturnedPercent === 0 && (
-                <div className="text-red-700 bg-red-50 rounded-lg p-2">
-                  ❌ Caution retenue - Impact significatif sur la note
-                </div>
-              )}
-            </div>
+          {/* Feedback visuel */}
+          <div className="mt-4 p-3 rounded-lg text-center text-sm font-medium">
+            {depositReturnedPercent === 100 && (
+              <div className="text-emerald-700 bg-emerald-50 rounded-lg p-2">
+                {isOwner
+                  ? '✅ Caution intégralement restituée - Maximum d\'étoiles !'
+                  : '✅ Caution intégralement reçue - Le propriétaire obtient un bonus de 3/5 !'}
+              </div>
+            )}
+            {depositReturnedPercent > 0 && depositReturnedPercent < 100 && (
+              <div className="text-orange-700 bg-orange-50 rounded-lg p-2">
+                {isOwner
+                  ? `⚠️ Caution partiellement restituée (${depositReturnedPercent}%)`
+                  : `⚠️ Caution partiellement reçue (${depositReturnedPercent}%)`}
+              </div>
+            )}
+            {depositReturnedPercent === 0 && (
+              <div className="text-red-700 bg-red-50 rounded-lg p-2">
+                {isOwner
+                  ? '❌ Caution retenue - Impact significatif sur la note'
+                  : '❌ Caution non reçue - Impact significatif sur la note du propriétaire'}
+              </div>
+            )}
+          </div>
 
-            {/* Explication du calcul */}
-            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-              <p className="text-xs text-blue-900 font-medium mb-1">
-                💡 Impact sur la note finale :
-              </p>
-              <p className="text-xs text-blue-700">
-                • Critères :{' '}
-                {(
-                  (Object.values(criteria).reduce(
-                    (sum: number, val) => sum + (val as number),
-                    0
-                  ) /
-                    Object.keys(criteria).length) *
-                  0.25
-                ).toFixed(2)}{' '}
-                pts (25%)
-              </p>
-              <p className="text-xs text-blue-700">
-                • Caution :{' '}
-                {((depositReturnedPercent / 100) * 5 * 0.75).toFixed(2)} pts
-                (75%)
-              </p>
-            </div>
+          {/* Explication du calcul */}
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+            <p className="text-xs text-blue-900 font-medium mb-1">
+              💡 Impact sur la note finale :
+            </p>
+            {isOwner ? (
+              <>
+                <p className="text-xs text-blue-700">
+                  • Si 100% restitué : note minimum 4/5, critères ajoutent jusqu&apos;à 1 pt
+                </p>
+                <p className="text-xs text-blue-700">
+                  • Critères seuls si caution retenue (max 1.25 pts)
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-xs text-blue-700">
+                  • Si 100% reçu : note minimum 3/5, critères ajoutent jusqu&apos;à 2 pts
+                </p>
+                <p className="text-xs text-blue-700">
+                  • Critères seuls si caution non reçue (max 2 pts)
+                </p>
+              </>
+            )}
           </div>
         </div>
-      )}
+      </div>
 
       {/* Commentaire */}
       <div className="space-y-2">

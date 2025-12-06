@@ -153,7 +153,7 @@ export async function POST(request: Request) {
         criteria,
         comment: comment || null,
         depositReturned: depositReturned !== undefined ? depositReturned : null,
-        depositReturnedPercent: depositReturnedPercent || null,
+        depositReturnedPercent: depositReturnedPercent !== undefined ? depositReturnedPercent : null,
         status: 'PENDING',
       },
     })
