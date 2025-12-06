@@ -186,12 +186,12 @@ export const ALL_BADGES: Badge[] = [
   {
     id: 'early-adopter',
     name: 'Pionnier',
-    description: 'Parmi les 100 premiers inscrits',
+    description: 'Bienvenue sur Renty !',
     icon: '🚀',
     category: 'SPECIAL',
-    rarity: 'LEGENDARY',
-    condition: 'Être parmi les 100 premiers utilisateurs',
-    points: 1000,
+    rarity: 'COMMON',
+    condition: 'Créer un compte sur Renty',
+    points: 500,
   },
 ]
 

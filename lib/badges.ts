@@ -159,16 +159,8 @@ export async function calculateUserBadges(userId: string): Promise<UserBadge[]> 
     unlockedBadges.push({ badgeId: 'five-star-host', unlockedAt: now })
   }
 
-  // SPECIAL - Early Adopter (vérifier si dans les 100 premiers)
-  const userRank = await prisma.user.count({
-    where: {
-      createdAt: { lt: user.createdAt },
-    },
-  })
-
-  if (userRank < 100) {
-    unlockedBadges.push({ badgeId: 'early-adopter', unlockedAt: now })
-  }
+  // SPECIAL - Pionnier (badge de bienvenue pour tous les inscrits)
+  unlockedBadges.push({ badgeId: 'early-adopter', unlockedAt: user.createdAt })
 
   return unlockedBadges
 }
